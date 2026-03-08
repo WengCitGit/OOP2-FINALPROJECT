@@ -38,17 +38,17 @@ public class MainMenu implements Screen {
         viewport.apply();
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
 
-        background = new Texture("menu_background.jpg");
+        background = new Texture("backgrounds/menu_background.jpg");
 
         // Load both states for each button
-        playBtn = new Texture("play_button.png");
-        playBtnPressed = new Texture("play_button_pressed.png");
+        playBtn = new Texture("buttons/play_button.png");
+        playBtnPressed = new Texture("buttons/play_button_pressed.png");
 
-        creditsBtn = new Texture("credits_button.png");
-        creditsBtnPressed = new Texture("credits_button_pressed.png");
+        creditsBtn = new Texture("buttons/credits_button.png");
+        creditsBtnPressed = new Texture("buttons/credits_button_pressed.png");
 
-        exitBtn = new Texture("exit_button.png");
-        exitBtnPressed = new Texture("exit_button_pressed.png");
+        exitBtn = new Texture("buttons/exit_button.png");
+        exitBtnPressed = new Texture("buttons/exit_button_pressed.png");
 
         float centerX = WORLD_WIDTH / 2f;
         float centerY = WORLD_HEIGHT / 2f;

@@ -39,17 +39,17 @@ public class FirstScreen implements Screen {
         viewport.apply();
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
 
-        background = new Texture("menu_background.jpg");
+        background = new Texture("backgrounds/menu_background.jpg");
 
         // Load Normal States
-        modeBtn = new Texture("game_mode_button.png");
-        loreBtn = new Texture("game_lore_button.png");
-        backBtn = new Texture("back_button.png"); // Using this for the "BACK" button
+        modeBtn = new Texture("buttons/game_mode_button.png");
+        loreBtn = new Texture("buttons/game_lore_button.png");
+        backBtn = new Texture("buttons/back_button.png"); // Using this for the "BACK" button
 
         // Load Pressed States
-        modeBtnPressed = new Texture("game_mode_button_pressed.png");
-        loreBtnPressed = new Texture("game_lore_button_pressed.png");
-        backBtnPressed = new Texture("back_button_pressed.png");
+        modeBtnPressed = new Texture("buttons/game_mode_button_pressed.png");
+        loreBtnPressed = new Texture("buttons/game_lore_button_pressed.png");
+        backBtnPressed = new Texture("buttons/back_button_pressed.png");
 
         float centerX = WORLD_WIDTH / 2f;
         float centerY = WORLD_HEIGHT / 2f;
@@ -97,6 +97,7 @@ public class FirstScreen implements Screen {
         if (Gdx.input.justTouched()) {
             if (modeBounds.contains(touchPoint.x, touchPoint.y)) {
                 // TODO: Logic for Game Mode selection
+                ((Main) Gdx.app.getApplicationListener()).setScreen(new GameModeScreen());
             } else if (loreBounds.contains(touchPoint.x, touchPoint.y)) {
                 // TODO: Logic for Lore screen
             } else if (backBounds.contains(touchPoint.x, touchPoint.y)) {
