@@ -1,45 +1,122 @@
 package io.github.PASAN;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
-/** First screen of the application. Displayed after the application is created. */
 public class FirstScreen implements Screen {
-    @Override
-    public void show() {
-        // Prepare your screen here.
+
+    private SpriteBatch batch;
+    private Texture background;
+
+    // Normal textures
+    private Texture modeBtn, loreBtn, backBtn;
+    // Pressed textures
+    private Texture modeBtnPressed, loreBtnPressed, backBtnPressed;
+
+    private OrthographicCamera camera;
+    private Viewport viewport;
+
+    private static final float WORLD_WIDTH = 1920;
+    private static final float WORLD_HEIGHT = 1080;
+
+    private Rectangle modeBounds, loreBounds, backBounds;
+    private Vector3 touchPoint;
+
+    public FirstScreen() {
+        batch = new SpriteBatch();
+        touchPoint = new Vector3();
+
+        camera = new OrthographicCamera();
+        viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
+        viewport.apply();
+        camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
+
+        background = new Texture("menu_background.jpg");
+
+        // Load Normal States
+        modeBtn = new Texture("game_mode_button.png");
+        loreBtn = new Texture("game_lore_button.png");
+        backBtn = new Texture("back_button.png"); // Using this for the "BACK" button
+
+        // Load Pressed States
+        modeBtnPressed = new Texture("game_mode_button_pressed.png");
+        loreBtnPressed = new Texture("game_lore_button_pressed.png");
+        backBtnPressed = new Texture("back_button_pressed.png");
+
+        float centerX = WORLD_WIDTH / 2f;
+        float centerY = WORLD_HEIGHT / 2f;
+
+        modeBounds = new Rectangle(centerX - 235, centerY + 30, 470, 130);
+        loreBounds = new Rectangle(centerX - 235, centerY - 120, 470, 130);
+        backBounds = new Rectangle(centerX - 235, centerY - 270, 470, 130);
     }
 
     @Override
     public void render(float delta) {
-        // Draw your screen here. "delta" is the time since last render in seconds.
+        camera.update();
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // Update touchPoint coordinates for unprojecting
+        touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0);
+        viewport.unproject(touchPoint);
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+
+        batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+
+        // Helper method to draw based on state
+        drawButton(modeBtn, modeBtnPressed, modeBounds);
+        drawButton(loreBtn, loreBtnPressed, loreBounds);
+        drawButton(backBtn, backBtnPressed, backBounds);
+
+        batch.end();
+
+        handleInput();
     }
 
-    @Override
-    public void resize(int width, int height) {
-        // If the window is minimized on a desktop (LWJGL3) platform, width and height are 0, which causes problems.
-        // In that case, we don't resize anything, and wait for the window to be a normal size before updating.
-        if(width <= 0 || height <= 0) return;
-
-        // Resize your screen here. The parameters represent the new window size.
+    private void drawButton(Texture normal, Texture pressed, Rectangle bounds) {
+        // As long as the mouse/finger is down inside the rectangle, show the pressed PNG
+        if (Gdx.input.isTouched() && bounds.contains(touchPoint.x, touchPoint.y)) {
+            batch.draw(pressed, bounds.x, bounds.y, bounds.width, bounds.height);
+        } else {
+            batch.draw(normal, bounds.x, bounds.y, bounds.width, bounds.height);
+        }
     }
 
-    @Override
-    public void pause() {
-        // Invoked when your application is paused.
+    private void handleInput() {
+        if (Gdx.input.justTouched()) {
+            if (modeBounds.contains(touchPoint.x, touchPoint.y)) {
+                // TODO: Logic for Game Mode selection
+            } else if (loreBounds.contains(touchPoint.x, touchPoint.y)) {
+                // TODO: Logic for Lore screen
+            } else if (backBounds.contains(touchPoint.x, touchPoint.y)) {
+                ((Main) Gdx.app.getApplicationListener()).setScreen(new MainMenu());
+            }
+        }
     }
 
-    @Override
-    public void resume() {
-        // Invoked when your application is resumed after pause.
-    }
-
-    @Override
-    public void hide() {
-        // This method is called when another screen replaces this one.
-    }
+    @Override public void resize(int width, int height) { viewport.update(width, height); }
+    @Override public void show() {}
+    @Override public void pause() {}
+    @Override public void resume() {}
+    @Override public void hide() {}
 
     @Override
     public void dispose() {
-        // Destroy screen's assets here.
+        batch.dispose();
+        background.dispose();
+        modeBtn.dispose(); modeBtnPressed.dispose();
+        loreBtn.dispose(); loreBtnPressed.dispose();
+        backBtn.dispose(); backBtnPressed.dispose();
     }
 }

@@ -1,14 +1,24 @@
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 eclipse.project.name = appName + '-core'
 
+// Tell Gradle where the assets folder is
+sourceSets.main.resources.srcDirs = ["../assets"]
+
 dependencies {
+  // core LibGDX library
   api "com.badlogicgames.gdx:gdx:$gdxVersion"
 
+  // desktop backend so DesktopLauncher can run
+  implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+  implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+
+  // GraalVM native support (optional)
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
   }
 }
 
+// Ensure duplicate files are excluded in jar
 jar {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
