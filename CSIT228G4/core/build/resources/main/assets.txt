@@ -1,5 +1,7 @@
+backgrounds/characterselector_background.jpg
 backgrounds/gamemode_background.jpg
 backgrounds/menu_background.jpg
+backgrounds/usernameScreen_background.jpg
 buttons/arcade_button.png
 buttons/arcade_button_pressed.png
 buttons/back_button.png
