@@ -114,7 +114,9 @@ public class FirstScreen implements Screen {
         {
 
             if (modePressed && modeBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new GameModeScreen());
-            else if (lorePressed && loreBounds.contains(touchPoint.x, touchPoint.y)){}// TODO: Lore screen
+            else if (lorePressed && loreBounds.contains(touchPoint.x, touchPoint.y)){
+                game.setScreen(new GameLoreScreen(game));
+            }// TODO: Lore screen
             else if (backPressed && backBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new MainMenu());
 
             modePressed = false;
