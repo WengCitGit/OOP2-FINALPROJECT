@@ -30,6 +30,10 @@ public class FirstScreen implements Screen {
     private Rectangle modeBounds, loreBounds, backBounds;
     private Vector3 touchPoint;
 
+    private boolean modePressed = false;
+    private boolean lorePressed = false;
+    private boolean backPressed = false;
+
     public FirstScreen() {
         batch = new SpriteBatch();
         touchPoint = new Vector3();
@@ -93,16 +97,29 @@ public class FirstScreen implements Screen {
         }
     }
 
-    private void handleInput() {
-        if (Gdx.input.justTouched()) {
-            if (modeBounds.contains(touchPoint.x, touchPoint.y)) {
-                // TODO: Logic for Game Mode selection
-                ((Main) Gdx.app.getApplicationListener()).setScreen(new GameModeScreen());
-            } else if (loreBounds.contains(touchPoint.x, touchPoint.y)) {
-                // TODO: Logic for Lore screen
-            } else if (backBounds.contains(touchPoint.x, touchPoint.y)) {
-                ((Main) Gdx.app.getApplicationListener()).setScreen(new MainMenu());
-            }
+    private void handleInput()
+    {
+        Main game = (Main) Gdx.app.getApplicationListener();
+
+        // Detect initial press
+        if (Gdx.input.justTouched())
+        {
+            if (modeBounds.contains(touchPoint.x, touchPoint.y)) modePressed = true;
+            else if (loreBounds.contains(touchPoint.x, touchPoint.y)) lorePressed = true;
+            else if (backBounds.contains(touchPoint.x, touchPoint.y)) backPressed = true;
+        }
+
+        // Detect release
+        if (!Gdx.input.isTouched())
+        {
+
+            if (modePressed && modeBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new GameModeScreen());
+            else if (lorePressed && loreBounds.contains(touchPoint.x, touchPoint.y)){}// TODO: Lore screen
+            else if (backPressed && backBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new MainMenu());
+
+            modePressed = false;
+            lorePressed = false;
+            backPressed = false;
         }
     }
 

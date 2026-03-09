@@ -29,6 +29,10 @@ public class MainMenu implements Screen {
     private Rectangle playBounds, creditsBounds, exitBounds;
     private Vector3 touchPoint;
 
+    private boolean playPressed = false;
+    private boolean creditsPressed = false;
+    private boolean exitPressed = false;
+
     public MainMenu() {
         batch = new SpriteBatch();
         touchPoint = new Vector3();
@@ -95,16 +99,30 @@ public class MainMenu implements Screen {
         }
     }
 
-    private void handleInput() {
-        // justTouched() is only true on the initial "click" frame
-        if (Gdx.input.justTouched()) {
-            if (playBounds.contains(touchPoint.x, touchPoint.y)) {
-                ((Main) Gdx.app.getApplicationListener()).setScreen(new FirstScreen());
-            } else if (creditsBounds.contains(touchPoint.x, touchPoint.y)) {
+    private void handleInput()
+    {
+        Main game = (Main) Gdx.app.getApplicationListener();
+        //Detect Initial press
+        if (Gdx.input.justTouched())
+        {
+            if (playBounds.contains(touchPoint.x, touchPoint.y)) playPressed = true;
+            else if (creditsBounds.contains(touchPoint.x, touchPoint.y)) creditsPressed = true;
+            else if (exitBounds.contains(touchPoint.x, touchPoint.y)) exitPressed = true;
+        }
+        //Detect Release
+        if (!Gdx.input.isTouched())
+        {
+
+            if (playPressed && playBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new FirstScreen());
+            else if (creditsPressed && creditsBounds.contains(touchPoint.x, touchPoint.y))
+            {
                 // Navigate to Credits
-            } else if (exitBounds.contains(touchPoint.x, touchPoint.y)) {
-                Gdx.app.exit();
             }
+            else if (exitPressed && exitBounds.contains(touchPoint.x, touchPoint.y)) Gdx.app.exit();
+
+            playPressed = false;
+            creditsPressed = false;
+            exitPressed = false;
         }
     }
 

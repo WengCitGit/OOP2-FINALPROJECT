@@ -28,6 +28,12 @@ public class GameModeScreen implements Screen {
     private Rectangle pvpBounds, pvcBounds, arcadeBounds, endlessBounds, backBounds;
     private Vector3 touchPoint;
 
+    private boolean pvpPressed = false;
+    private boolean pvcPressed = false;
+    private boolean arcadePressed = false;
+    private boolean endlessPressed = false;
+    private boolean backPressed = false;
+
     public GameModeScreen() {
         batch = new SpriteBatch();
         touchPoint = new Vector3();
@@ -101,20 +107,32 @@ public class GameModeScreen implements Screen {
         }
     }
 
-    private void handleInput() {
-        if (Gdx.input.justTouched()) {
-            if (pvpBounds.contains(touchPoint.x, touchPoint.y)) {
-                // Start PVP logic
-            } else if (pvcBounds.contains(touchPoint.x, touchPoint.y)) {
-                // Start PVC logic
-            } else if (arcadeBounds.contains(touchPoint.x, touchPoint.y)) {
-                // Start Arcade logic
-            } else if (endlessBounds.contains(touchPoint.x, touchPoint.y)) {
-                // Start Endless logic
-            } else if (backBounds.contains(touchPoint.x, touchPoint.y)) {
-                // Go back to the screen that called this (usually FirstScreen)
-                ((Main) Gdx.app.getApplicationListener()).setScreen(new FirstScreen());
-            }
+    private void handleInput()
+    {
+        Main game = (Main) Gdx.app.getApplicationListener();
+
+        if (Gdx.input.justTouched())
+        {
+            if (pvpBounds.contains(touchPoint.x, touchPoint.y)) pvpPressed = true;
+            else if (pvcBounds.contains(touchPoint.x, touchPoint.y)) pvcPressed = true;
+            else if (arcadeBounds.contains(touchPoint.x, touchPoint.y)) arcadePressed = true;
+            else if (endlessBounds.contains(touchPoint.x, touchPoint.y)) endlessPressed = true;
+            else if (backBounds.contains(touchPoint.x, touchPoint.y)) backPressed = true;
+        }
+
+        if (!Gdx.input.isTouched())
+        {
+            if (pvpPressed && pvpBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new UsernameScreen("PVP"));
+            else if (pvcPressed && pvcBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new UsernameScreen("PVC"));
+            else if (arcadePressed && arcadeBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new UsernameScreen("ARCADE"));
+            else if (endlessPressed && endlessBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new UsernameScreen("ENDLESS"));
+            else if (backPressed && backBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new FirstScreen());
+
+            pvpPressed = false;
+            pvcPressed = false;
+            arcadePressed = false;
+            endlessPressed = false;
+            backPressed = false;
         }
     }
 
