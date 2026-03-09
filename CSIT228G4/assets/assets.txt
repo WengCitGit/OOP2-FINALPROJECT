@@ -20,3 +20,4 @@ buttons/pvc_button.png
 buttons/pvc_button_pressed.png
 buttons/pvp_button.png
 buttons/pvp_button_pressed.png
+icons/jollibee_icon.png

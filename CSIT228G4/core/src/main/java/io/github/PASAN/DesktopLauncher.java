@@ -8,6 +8,8 @@ public class DesktopLauncher {
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("Fast Feud");
         config.setWindowedMode(800, 600);
+
+        config.setWindowIcon("icons/jollibee_icon.png");
         new Lwjgl3Application(new Main(), config);
     }
 }
