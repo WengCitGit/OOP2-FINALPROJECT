@@ -36,6 +36,10 @@ public class UsernameScreen implements Screen {
     private boolean showCursor = true;
     private boolean backPressed = false;
 
+    private int playerNum = 1;
+    private String p1Name = "";
+    private String p1Char = "";
+
     public UsernameScreen(String mode) {
         this.gameMode = mode;
 
@@ -45,6 +49,9 @@ public class UsernameScreen implements Screen {
 
         backBtn = new Texture("buttons/back_button.png");
         backBtnP = new Texture("buttons/back_button_pressed.png");
+
+        if(mode != null && mode.contains("PVP")) background = new Texture("backgrounds/usernameScreenPlayer1_background.jpg");
+        else background = new Texture("backgrounds/usernameScreen_background.jpg");
         background = new Texture("backgrounds/usernameScreen_background.jpg");
         enterBtn = new Texture("buttons/enter_button.png");
         enterBtnP = new Texture("buttons/enter_button_pressed.png");
@@ -60,6 +67,20 @@ public class UsernameScreen implements Screen {
         textFieldBounds = new Rectangle(centerX - 320, 650, 620, 80);
         enterBounds = new Rectangle(centerX + 40, 450, 250, 100);
         backBounds = new Rectangle(centerX - 300, 450, 250, 100);
+    }
+
+    public UsernameScreen(String mode, int playerNum, String p1Name, String p1Char)
+    {
+        this(mode);
+        this.playerNum = playerNum;
+        this.p1Name = p1Name;
+        this.p1Char = p1Char;
+
+        if(this.playerNum == 2)
+        {
+            background.dispose();
+            background = new Texture("backgrounds/usernameScreenPlayer2_background.jpg");
+        }
     }
 
     @Override
@@ -118,6 +139,8 @@ public class UsernameScreen implements Screen {
             batch.draw(enterBtn, enterBounds.x, enterBounds.y, enterBounds.width, enterBounds.height);
         }
         font.getData().setScale(3);
+        //if(playerNum == 1) font.draw(batch, "ENTER PLAYER 1 USERNAME", 750, 700);
+        //else font.draw(batch, "ENTER PLAYER 2 USERNAME", 750, 700);
         //font.draw(batch, "ENTER USERNAME", 820, 750);
 
         String displayName = username;
@@ -155,7 +178,7 @@ public class UsernameScreen implements Screen {
         if (gameMode == null || gameMode.isEmpty()) gameMode = "DEFAULT";
 
         try {
-            ((Main) Gdx.app.getApplicationListener()).setScreen(new CharacterSelector(username, gameMode));
+            ((Main) Gdx.app.getApplicationListener()).setScreen(new CharacterSelector(username, gameMode, playerNum, p1Name, p1Char));
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -11,10 +11,15 @@ public class VSScreen implements Screen {
     private OrthographicCamera camera;
     private Viewport viewport;
 
-    private String username;
+    //private String username;
     private String mode;
-    private String playerCharacterName;
-    private String enemyCharacterName;
+    //private String playerCharacterName;
+    //private String enemyCharacterName;
+
+    private String player1Name;
+    private String player2Name;
+    private String player1Char;
+    private String player2Char;
 
     private String[] allCharacters = {
             "Jollibee", "McDonald", "Colonel Sanders", "Burger King",
@@ -36,15 +41,18 @@ public class VSScreen implements Screen {
     private static final float WORLD_WIDTH = 1920;
     private static final float WORLD_HEIGHT = 1080;
 
-    public VSScreen(String username, String mode, String playerCharacterName) {
-        this.username = username;
+    public VSScreen(String p1Name, String p2Name, String mode, String p1Char, String p2Char)
+    {
+        this.player1Name = p1Name;
+        this.player2Name = p2Name;
         this.mode = mode;
-        this.playerCharacterName = playerCharacterName;
+        this.player1Char = p1Char;
+        this.player2Char = p2Char;
 
         // random enemy character
         //this.enemyCharacterName = allCharacters[MathUtils.random(0, allCharacters.length - 1)];
         //kfc for now
-        this.enemyCharacterName = "Colonel Sanders";
+        //this.enemyCharacterName = "Colonel Sanders";
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
@@ -58,8 +66,8 @@ public class VSScreen implements Screen {
         startBtn = new Texture("buttons/exit_button.png");
         startBtnP = new Texture("buttons/exit_button_pressed.png");
 
-        playerSprite = new Texture("characters/" + playerCharacterName.replace(" ", "") + ".png");
-        enemySprite = new Texture("characters/" + enemyCharacterName.replace(" ", "") + ".png");
+        playerSprite = new Texture("characters/" + player1Char.replace(" ", "") + ".png");
+        enemySprite = new Texture("characters/" + player2Char.replace(" ", "") + ".png");
 
 
         startBounds = new Rectangle((WORLD_WIDTH / 2) - 150, 150, 300, 100);
@@ -113,9 +121,9 @@ public class VSScreen implements Screen {
 
         if (!Gdx.input.isTouched()) {
             if (startPressed && startBounds.contains(touch.x, touch.y)) {
-                System.out.println("BATTLE STARTING: " + playerCharacterName + " VS " + enemyCharacterName);
+                System.out.println("BATTLE STARTING: " + player1Char + " VS " + player2Char);
 
-                ((Main) Gdx.app.getApplicationListener()).setScreen(new BattleScreen(username, playerCharacterName, enemyCharacterName));}
+                ((Main) Gdx.app.getApplicationListener()).setScreen(new BattleScreen(player1Name, player1Char, player2Char));}
             startPressed = false;
         }
     }

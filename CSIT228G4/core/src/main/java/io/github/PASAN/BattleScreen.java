@@ -44,7 +44,7 @@ public class BattleScreen implements Screen {
 
         batch = new SpriteBatch();
         font = new BitmapFont();
-        font.getData().setScale(2.5f);
+        font.getData().setScale(2.5f); // Make text readable
 
         camera = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
@@ -141,7 +141,6 @@ public class BattleScreen implements Screen {
         font.draw(batch, "- " + player.getSkills().get(2).getName(), skill3Bounds.x + 280, skill3Bounds.y + 50);
 
         batch.end();
-
         handleInput();
     }
 
