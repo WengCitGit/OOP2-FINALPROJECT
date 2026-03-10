@@ -1,7 +1,13 @@
+backgrounds/battle_bg1.png
 backgrounds/characterselector_background.jpg
+backgrounds/dialogue-box.png
 backgrounds/gamemode_background.jpg
 backgrounds/menu_background.jpg
+backgrounds/red_bg.png
+backgrounds/temp_bg.png
 backgrounds/usernameScreen_background.jpg
+backgrounds/vsbg.png
+backgrounds/yellow_bg.png
 buttons/arcade_button.png
 buttons/arcade_button_pressed.png
 buttons/back_button.png
@@ -10,6 +16,8 @@ buttons/credits_button.png
 buttons/credits_button_pressed.png
 buttons/endless_button.png
 buttons/endless_button_pressed.png
+buttons/enter_button.png
+buttons/enter_button_pressed.png
 buttons/exit_button.png
 buttons/exit_button_pressed.png
 buttons/game_lore_button.png
@@ -22,4 +30,6 @@ buttons/pvc_button.png
 buttons/pvc_button_pressed.png
 buttons/pvp_button.png
 buttons/pvp_button_pressed.png
+characters/ColonelSanders.png
+characters/McDonald.png
 icons/jollibee_icon.png
