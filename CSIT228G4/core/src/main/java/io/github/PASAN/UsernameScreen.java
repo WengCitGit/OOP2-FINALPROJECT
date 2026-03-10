@@ -52,7 +52,6 @@ public class UsernameScreen implements Screen {
 
         if(mode != null && mode.contains("PVP")) background = new Texture("backgrounds/usernameScreenPlayer1_background.jpg");
         else background = new Texture("backgrounds/usernameScreen_background.jpg");
-        background = new Texture("backgrounds/usernameScreen_background.jpg");
         enterBtn = new Texture("buttons/enter_button.png");
         enterBtnP = new Texture("buttons/enter_button_pressed.png");
 
