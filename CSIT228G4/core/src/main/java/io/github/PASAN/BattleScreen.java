@@ -108,6 +108,9 @@ public class BattleScreen implements Screen {
         // Left Box Text
         font.draw(batch, "What will\n" + player.getName() + "\ndo?", 100, 220);
         // Middle Box Text
+        String skill1 = (player.getSkills() != null && player.getSkills().size() > 0) ? player.getSkills().get(0).getName() : "Basic Attack";
+        String skill2 = (player.getSkills() != null && player.getSkills().size() > 1) ? player.getSkills().get(1).getName() : "Secondary Skill";
+        String skill3 = (player.getSkills() != null && player.getSkills().size() > 2) ? player.getSkills().get(2).getName() : "Ultimate Skill";
         font.draw(batch, "SKILL 1 - " + player.getSkills().get(0).getName(), skill1Bounds.x + 20, skill1Bounds.y + 50);
         font.draw(batch, "SKILL 2 - " + player.getSkills().get(1).getName(), skill2Bounds.x + 20, skill2Bounds.y + 50);
         font.draw(batch, "SKILL 3 - " + player.getSkills().get(2).getName(), skill3Bounds.x + 20, skill3Bounds.y + 50);

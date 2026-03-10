@@ -39,12 +39,19 @@ public class CharacterSelector implements Screen {
     //tracks selected character
     private int selectedCharacter = -1;
 
+    private int playerNum;
+    private String p1Name;
+    private String p1Char;
+
     private static final float WORLD_WIDTH = 1920;
     private static final float WORLD_HEIGHT = 1080;
 
-    public CharacterSelector(String username, String mode) {
+    public CharacterSelector(String username, String mode, int playerNum, String p1Name, String p1Char) {
         this.username = username;
         this.mode = mode;
+        this.playerNum = playerNum;
+        this.p1Name = p1Name;
+        this.p1Char = p1Char;
 
         batch = new SpriteBatch();
         font = new BitmapFont();
@@ -145,18 +152,36 @@ public class CharacterSelector implements Screen {
         }
 
         if (!Gdx.input.isTouched()) {
-            if (backPressed && backBounds.contains(touch.x, touch.y)) {
-                ((Main) Gdx.app.getApplicationListener()).setScreen(new UsernameScreen(mode));
+            if (backPressed && backBounds.contains(touch.x, touch.y))
+            {
+                if(playerNum == 2) ((Main) Gdx.app.getApplicationListener()).setScreen(new UsernameScreen(mode, 2, p1Name, p1Char));
+                else ((Main) Gdx.app.getApplicationListener()).setScreen(new UsernameScreen(mode));
+
             }
+
             if (characterPressed != -1 && characters[characterPressed].contains(touch.x, touch.y)) {
                 selectedCharacter = characterPressed;
                 System.out.println("Selected: " + characterNames[characterPressed]);
             }
-            if (confirmPressed && confirmBounds.contains(touch.x, touch.y) && selectedCharacter != -1) {
-                System.out.println("FINALIZED SELECTION: " + characterNames[selectedCharacter]);
+
+            if (confirmPressed && confirmBounds.contains(touch.x, touch.y) && selectedCharacter != -1)
+            {
                 String chosenCharacter = characterNames[selectedCharacter];
-                ((Main) Gdx.app.getApplicationListener()).setScreen(new VSScreen(username, mode, chosenCharacter));
+
+                if(mode.contains("PVP") && playerNum == 1) ((Main) Gdx.app.getApplicationListener()).setScreen(new UsernameScreen(mode, 2, username, chosenCharacter));
+                else
+                {
+                    String finalP1Name = (playerNum == 1) ? username : p1Name;
+                    String finalP2Name = (playerNum == 1) ? "CPU" : username;
+                    String finalP1Char = (playerNum == 1) ? chosenCharacter : p1Char;
+                    String finalP2Char = (playerNum == 1) ? "Colonel Sanders" : chosenCharacter;
+                    ((Main) Gdx.app.getApplicationListener()).setScreen(new VSScreen(finalP1Name, finalP2Name, mode, finalP1Char, finalP2Char));
+                }
+//                System.out.println("FINALIZED SELECTION: " + characterNames[selectedCharacter]);
+//                String chosenCharacter = characterNames[selectedCharacter];
+//                ((Main) Gdx.app.getApplicationListener()).setScreen(new VSScreen(username, mode, chosenCharacter));
             }
+
             backPressed = false;
             confirmPressed = false;
             characterPressed = -1;
