@@ -26,6 +26,7 @@ public class UsernameScreen implements Screen {
     private Viewport viewport;
 
     private Texture backBtn, backBtnP;
+    private Texture enterBtn, enterBtnP;
     private Texture background;
 
     private static final float WORLD_WIDTH = 1920;
@@ -51,6 +52,9 @@ public class UsernameScreen implements Screen {
 
         if(mode != null && mode.contains("PVP")) background = new Texture("backgrounds/usernameScreenPlayer1_background.jpg");
         else background = new Texture("backgrounds/usernameScreen_background.jpg");
+        background = new Texture("backgrounds/usernameScreen_background.jpg");
+        enterBtn = new Texture("buttons/enter_button.png");
+        enterBtnP = new Texture("buttons/enter_button_pressed.png");
 
         touchPoint = new Vector3();
 
@@ -118,7 +122,7 @@ public class UsernameScreen implements Screen {
         viewport.unproject(touchPoint);
 
         boolean isTouchingBack = Gdx.input.isTouched() && backBounds.contains(touchPoint.x, touchPoint.y);
-
+        boolean isTouchingEnter = Gdx.input.isTouched() && enterBounds.contains(touchPoint.x, touchPoint.y);
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
@@ -129,7 +133,11 @@ public class UsernameScreen implements Screen {
         } else {
             batch.draw(backBtn, backBounds.x, backBounds.y, backBounds.width, backBounds.height);
         }
-
+        if (isTouchingEnter) {
+            batch.draw(enterBtnP, enterBounds.x, enterBounds.y, enterBounds.width, enterBounds.height);
+        } else {
+            batch.draw(enterBtn, enterBounds.x, enterBounds.y, enterBounds.width, enterBounds.height);
+        }
         font.getData().setScale(3);
         //if(playerNum == 1) font.draw(batch, "ENTER PLAYER 1 USERNAME", 750, 700);
         //else font.draw(batch, "ENTER PLAYER 2 USERNAME", 750, 700);
@@ -139,7 +147,7 @@ public class UsernameScreen implements Screen {
         if (showCursor) displayName += "|";
         font.draw(batch, displayName, textFieldBounds.x + 20, textFieldBounds.y + 60);
 
-        font.draw(batch, "ENTER", enterBounds.x + 45, enterBounds.y + 70);
+
 
         batch.end();
 
@@ -147,7 +155,7 @@ public class UsernameScreen implements Screen {
         shape.begin(ShapeRenderer.ShapeType.Line);
         shape.setColor(Color.WHITE);
         shape.rect(textFieldBounds.x, textFieldBounds.y, textFieldBounds.width, textFieldBounds.height);
-        shape.rect(enterBounds.x, enterBounds.y, enterBounds.width, enterBounds.height);
+
         shape.end();
 
         handleMouse();
@@ -197,5 +205,7 @@ public class UsernameScreen implements Screen {
         backBtn.dispose();
         backBtnP.dispose();
         background.dispose();
+        enterBtn.dispose();
+        enterBtnP.dispose();
     }
 }

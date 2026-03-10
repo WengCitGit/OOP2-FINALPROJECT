@@ -61,8 +61,8 @@ public class CharacterSelector implements Screen {
         backBtnP = new Texture("buttons/back_button_pressed.png");
 
 
-        confirmBtn = new Texture("buttons/exit_button.png");
-        confirmBtnP = new Texture("buttons/exit_button_pressed.png");
+        confirmBtn = new Texture("buttons/enter_button.png");
+        confirmBtnP = new Texture("buttons/enter_button_pressed.png");
         background = new Texture("backgrounds/characterselector_background.jpg");
         touch = new Vector3();
         camera = new OrthographicCamera();
