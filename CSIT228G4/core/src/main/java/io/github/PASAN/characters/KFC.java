@@ -4,7 +4,7 @@ public class KFC extends Character {
 
     public KFC() {
         //stats: Name, Max HP, Max Mana, Mana Regen
-        super("Kentucky Fried Chicken", 165, 60, 7);
+        super("Colonel Sanders", 165, 60, 7);
 
         skills.add(new Skill("DrumStick Smash", 0, 12, 17));
         skills.add(new Skill("Shooting Flaming Hotshot", 15, 20, 30));
