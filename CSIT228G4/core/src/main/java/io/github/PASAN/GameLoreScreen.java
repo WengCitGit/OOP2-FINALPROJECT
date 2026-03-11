@@ -16,7 +16,11 @@ public class GameLoreScreen implements Screen {
     private Main game;
     private SpriteBatch batch;
     private Texture background;
+
+    // Buttons
     private Texture backBtn, backBtnP;
+    private Texture mainStoryImg;
+    private Texture characterInfoImg;
 
     private OrthographicCamera camera;
     private Viewport viewport;
@@ -24,9 +28,17 @@ public class GameLoreScreen implements Screen {
     private static final float WORLD_WIDTH = 1920;
     private static final float WORLD_HEIGHT = 1080;
 
+    // Rectangles
     private Rectangle backBounds;
+    private Rectangle mainStoryBounds;
+    private Rectangle characterInfoBounds;
+
     private Vector3 touchPoint;
+
+    // Press states
     private boolean backPressed = false;
+    private boolean mainStoryPressed = false;
+    private boolean characterPressed = false;
 
     public GameLoreScreen(Main game) {
         this.game = game;
@@ -39,24 +51,38 @@ public class GameLoreScreen implements Screen {
         viewport.apply();
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
 
-        // Background for lore screen
+        // Background
         background = new Texture("backgrounds/gamemode_background.jpg");
 
-        // Back button
+        // Buttons
         backBtn = new Texture("buttons/back_button.png");
         backBtnP = new Texture("buttons/back_button_pressed.png");
 
-        // Place back button at bottom-center
+        mainStoryImg = new Texture("buttons/mainStory.png");
+        characterInfoImg = new Texture("buttons/characterInfo.png");
+
+        float centerX = WORLD_WIDTH / 2f;
+        float centerY = WORLD_HEIGHT / 2f;
+
+        float boxW = 400;
+        float boxH = 600;
+
+        // Rectangles for lore options
+        mainStoryBounds = new Rectangle(centerX - boxW - 50, centerY - 250, boxW, boxH);
+        characterInfoBounds = new Rectangle(centerX + 50, centerY - 250, boxW, boxH);
+
+        // Back button
         float btnW = 470;
         float btnH = 110;
-        float centerX = WORLD_WIDTH / 2f;
-        float startY = 100; // Distance from bottom
+        float startY = 100;
+
         backBounds = new Rectangle(centerX - btnW / 2, startY, btnW, btnH);
     }
 
     @Override
     public void render(float delta) {
         camera.update();
+
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -69,6 +95,19 @@ public class GameLoreScreen implements Screen {
 
         // Draw background
         batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+
+        // Draw lore panels
+        batch.draw(mainStoryImg,
+                mainStoryBounds.x,
+                mainStoryBounds.y,
+                mainStoryBounds.width,
+                mainStoryBounds.height);
+
+        batch.draw(characterInfoImg,
+                characterInfoBounds.x,
+                characterInfoBounds.y,
+                characterInfoBounds.width,
+                characterInfoBounds.height);
 
         // Draw back button
         if (Gdx.input.isTouched() && backBounds.contains(touchPoint.x, touchPoint.y)) {
@@ -83,22 +122,49 @@ public class GameLoreScreen implements Screen {
     }
 
     private void handleInput() {
-        // Detect initial press
+
         if (Gdx.input.justTouched()) {
-            if (backBounds.contains(touchPoint.x, touchPoint.y)) backPressed = true;
+
+            if (backBounds.contains(touchPoint.x, touchPoint.y)) {
+                backPressed = true;
+            }
+
+            else if (mainStoryBounds.contains(touchPoint.x, touchPoint.y)) {
+                mainStoryPressed = true;
+            }
+
+            else if (characterInfoBounds.contains(touchPoint.x, touchPoint.y)) {
+                characterPressed = true;
+            }
         }
 
-        // Detect release
         if (!Gdx.input.isTouched()) {
+
             if (backPressed && backBounds.contains(touchPoint.x, touchPoint.y)) {
-                // Go back to first screen or menu
                 game.setScreen(new FirstScreen());
             }
+
+            else if (mainStoryPressed && mainStoryBounds.contains(touchPoint.x, touchPoint.y)) {
+                System.out.println("Main Story Clicked");
+               // game.setScreen(new CharacterSelector(game));
+            }
+
+            else if (characterPressed && characterInfoBounds.contains(touchPoint.x, touchPoint.y)) {
+                System.out.println("Character Info Clicked");
+                ((Main) Gdx.app.getApplicationListener()).setScreen(new CharacterInfo(game));
+            }
+
             backPressed = false;
+            mainStoryPressed = false;
+            characterPressed = false;
         }
     }
 
-    @Override public void resize(int width, int height) { viewport.update(width, height); }
+    @Override
+    public void resize(int width, int height) {
+        viewport.update(width, height);
+    }
+
     @Override public void show() {}
     @Override public void pause() {}
     @Override public void resume() {}
@@ -110,5 +176,7 @@ public class GameLoreScreen implements Screen {
         background.dispose();
         backBtn.dispose();
         backBtnP.dispose();
+        mainStoryImg.dispose();
+        characterInfoImg.dispose();
     }
 }
