@@ -14,7 +14,8 @@ buttons/arcade_button.png
 buttons/arcade_button_pressed.png
 buttons/back_button.png
 buttons/back_button_pressed.png
-buttons/characterInfo.PNG
+buttons/character_info_button.png
+buttons/character_info_button_pressed.png
 buttons/credits_button.png
 buttons/credits_button_pressed.png
 buttons/endless_button.png
@@ -27,7 +28,8 @@ buttons/game_lore_button.png
 buttons/game_lore_button_pressed.png
 buttons/game_mode_button.png
 buttons/game_mode_button_pressed.png
-buttons/mainStory.PNG
+buttons/main_story_button.png
+buttons/main_story_button_pressed.png
 buttons/play_button.png
 buttons/play_button_pressed.png
 buttons/pvc_button.png
