@@ -38,7 +38,9 @@ buttons/skill2_button.png
 buttons/skill2_button_pressed.png
 buttons/skill3_button.png
 buttons/skill3_button_pressed.png
+characters/BurgerKing.png
 characters/ColonelSanders.png
 characters/McDonald.png
+characters/Wendy.png
 icons/jollibee_icon.png
 musics/bgm.wav

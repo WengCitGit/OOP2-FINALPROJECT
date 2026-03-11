@@ -18,12 +18,12 @@ public class BattleScreen implements Screen {
     private Texture background;
     private Texture playerSprite;
     private Texture enemySprite;
+    private TextureRegion enemyRegion;
 
-    // --- UI TEXTURES ---
     private Texture redUi;
     private Texture yellowUi;
 
-    // --- SKILL BUTTON TEXTURES ---
+
     private Texture skill1Btn, skill1BtnP;
     private Texture skill2Btn, skill2BtnP;
     private Texture skill3Btn, skill3BtnP;
@@ -44,7 +44,7 @@ public class BattleScreen implements Screen {
 
         batch = new SpriteBatch();
         font = new BitmapFont();
-        font.getData().setScale(2.5f); // Make text readable
+        font.getData().setScale(2.5f);
 
         camera = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
@@ -54,12 +54,13 @@ public class BattleScreen implements Screen {
         background = new Texture("backgrounds/battle_bg1.png");
         playerSprite = new Texture("characters/" + playerCharName.replace(" ", "") + ".png");
         enemySprite = new Texture("characters/" + enemyCharName.replace(" ", "") + ".png");
+        enemyRegion = new TextureRegion(enemySprite);
+        enemyRegion.flip(true, false);
 
-        // --- LOAD UI TEXTURES ---
         redUi = new Texture("backgrounds/red_background.png");
         yellowUi = new Texture("backgrounds/yellow_background.png");
 
-        // --- LOAD SKILL BUTTON TEXTURES ---
+
         skill1Btn = new Texture("buttons/skill1_button.png");
         skill1BtnP = new Texture("buttons/skill1_button_pressed.png");
 
@@ -73,7 +74,7 @@ public class BattleScreen implements Screen {
         player = createCharacterInstance(playerCharName);
         enemy = createCharacterInstance(enemyCharName);
 
-        // Bounds for clicking the buttons
+
         skill1Bounds = new Rectangle(555, 230, 800, 70); // Top
         skill2Bounds = new Rectangle(555, 145, 800, 70); // Middle
         skill3Bounds = new Rectangle(555, 60, 800, 70);  // Bottom
@@ -110,7 +111,7 @@ public class BattleScreen implements Screen {
 
         batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         batch.draw(playerSprite, 200, 350, 300, 450);
-        batch.draw(enemySprite, WORLD_WIDTH - 500, 350, 300, 450);
+        batch.draw(enemyRegion, WORLD_WIDTH - 500, 350, 300, 450);
 
         batch.draw(yellowUi, 40, 20, 1420, 320);
         batch.draw(redUi, 140, 60, 350, 250);
