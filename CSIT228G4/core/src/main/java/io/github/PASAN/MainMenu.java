@@ -1,21 +1,20 @@
 package io.github.PASAN;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.*;
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.PASAN.screens.FirstScreen;
 
 public class MainMenu implements Screen {
 
+    private Game game; // <- add this
+
     private SpriteBatch batch;
     private Texture background;
-    // Separate textures for normal and pressed states
     private Texture playBtn, playBtnPressed;
     private Texture creditsBtn, creditsBtnPressed;
     private Texture exitBtn, exitBtnPressed;
@@ -33,7 +32,10 @@ public class MainMenu implements Screen {
     private boolean creditsPressed = false;
     private boolean exitPressed = false;
 
-    public MainMenu() {
+    // Update constructor to take Game instance
+    public MainMenu(Game game) {
+        this.game = game;
+
         batch = new SpriteBatch();
         touchPoint = new Vector3();
 
@@ -44,7 +46,6 @@ public class MainMenu implements Screen {
 
         background = new Texture("backgrounds/menu_background.jpg");
 
-        // Load both states for each button
         playBtn = new Texture("buttons/play_button.png");
         playBtnPressed = new Texture("buttons/play_button_pressed.png");
 
@@ -62,13 +63,13 @@ public class MainMenu implements Screen {
         exitBounds = new Rectangle(centerX - 235, centerY - 270, 470, 130);
     }
 
+
     @Override
     public void render(float delta) {
         camera.update();
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Update touchPoint coordinates for the current frame
         touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0);
         viewport.unproject(touchPoint);
 
@@ -76,8 +77,6 @@ public class MainMenu implements Screen {
         batch.begin();
 
         batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-
-        // Draw buttons with the state check
         drawButton(playBtn, playBtnPressed, playBounds);
         drawButton(creditsBtn, creditsBtnPressed, creditsBounds);
         drawButton(exitBtn, exitBtnPressed, exitBounds);
@@ -87,11 +86,7 @@ public class MainMenu implements Screen {
         handleInput();
     }
 
-    /**
-     * Helper method to draw the correct texture based on touch state
-     */
     private void drawButton(Texture normal, Texture pressed, Rectangle bounds) {
-        // isTouched() is true as long as the mouse/finger is held down
         if (Gdx.input.isTouched() && bounds.contains(touchPoint.x, touchPoint.y)) {
             batch.draw(pressed, bounds.x, bounds.y, bounds.width, bounds.height);
         } else {
@@ -99,26 +94,22 @@ public class MainMenu implements Screen {
         }
     }
 
-    private void handleInput()
-    {
-        Main game = (Main) Gdx.app.getApplicationListener();
-        //Detect Initial press
-        if (Gdx.input.justTouched())
-        {
+    private void handleInput() {
+        if (Gdx.input.justTouched()) {
             if (playBounds.contains(touchPoint.x, touchPoint.y)) playPressed = true;
             else if (creditsBounds.contains(touchPoint.x, touchPoint.y)) creditsPressed = true;
             else if (exitBounds.contains(touchPoint.x, touchPoint.y)) exitPressed = true;
         }
-        //Detect Release
-        if (!Gdx.input.isTouched())
-        {
 
-            if (playPressed && playBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new FirstScreen());
-            else if (creditsPressed && creditsBounds.contains(touchPoint.x, touchPoint.y))
-            {
-                // Navigate to Credits
+        if (!Gdx.input.isTouched()) {
+            if (playPressed && playBounds.contains(touchPoint.x, touchPoint.y)) {
+                // Example: start game on FirstScreen
+                game.setScreen(new FirstScreen(game));
+            } else if (creditsPressed && creditsBounds.contains(touchPoint.x, touchPoint.y)) {
+                // Go to credits screen
+            } else if (exitPressed && exitBounds.contains(touchPoint.x, touchPoint.y)) {
+                Gdx.app.exit();
             }
-            else if (exitPressed && exitBounds.contains(touchPoint.x, touchPoint.y)) Gdx.app.exit();
 
             playPressed = false;
             creditsPressed = false;
@@ -131,7 +122,6 @@ public class MainMenu implements Screen {
     @Override public void pause() {}
     @Override public void resume() {}
     @Override public void hide() {}
-
     @Override
     public void dispose() {
         batch.dispose();

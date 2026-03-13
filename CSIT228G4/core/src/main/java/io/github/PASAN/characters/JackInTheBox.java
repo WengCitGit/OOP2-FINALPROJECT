@@ -4,9 +4,9 @@ public class JackInTheBox extends Character {
 
     public JackInTheBox() {
         super("Jack In The Box", 160, 60, 7);
-        skills.add(new Skill("Giant Headbutt Express", 0, 11, 16));
+        skills.add(new Skill("Headbutt Express", 0, 11, 16));
         skills.add(new Skill("Drive-Thru Confusion", 15, 19, 29));
-        skills.add(new Skill("Titanic Jumbo Jack Combo", 30, 32, 50));
+        skills.add(new Skill("Jumbo Jack Combo", 30, 32, 50));
     }
 
     @Override

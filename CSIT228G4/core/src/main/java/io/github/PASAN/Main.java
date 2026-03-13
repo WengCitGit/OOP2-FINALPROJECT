@@ -14,7 +14,7 @@ public class Main extends Game
         bgm = Gdx.audio.newMusic(Gdx.files.internal("musics/bgm.wav"));
         bgm.setLooping(true);
         bgm.play();
-        setScreen(new MainMenu());
+        setScreen(new MainMenu(this));
     }
 
     @Override public void dispose()

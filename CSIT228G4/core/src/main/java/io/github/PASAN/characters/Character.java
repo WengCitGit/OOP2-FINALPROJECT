@@ -12,10 +12,8 @@ public abstract class Character {
     private int currMana;
     private int maxMana;
     private int regenMana;
-    private Random random;
-
     protected List<Skill> skills;
-
+    private Random random;
 
     public Character(String name, int maxHp, int maxMana, int regenMana) {
         this.name = name;
@@ -26,61 +24,67 @@ public abstract class Character {
         this.regenMana = regenMana;
 
         this.random = new Random();
-        this.skills = new ArrayList<>(); // Initialize the list
+        this.skills = new ArrayList<>();
     }
 
     protected void performAttack(Character target, Skill skill) {
-        if (this.currMana < skill.getManaCost()) {
-            currMana = 0;
-            return;
-        }
+        if (currMana < skill.getManaCost()) return;
+        currMana -= skill.getManaCost();
 
-        this.currMana -= skill.getManaCost();
-        int damage = skill.getMinDmg() + this.random.nextInt(skill.getMaxDmg() - skill.getMinDmg() + 1);
+        int damage = skill.getMinDmg() + random.nextInt(skill.getMaxDmg() - skill.getMinDmg() + 1);
         target.takeDamage(damage);
-
     }
-
 
     public abstract void basicAttack(Character target);
     public abstract void secondarySkill(Character target);
     public abstract void ultimateSkill(Character target);
 
+    // ---- NEW METHODS ----
+    public void skill(Character target) {
+        secondarySkill(target);
+    }
+
+    public void ultimate(Character target) {
+        ultimateSkill(target);
+    }
+
+    // ----------------------
     public void takeDamage(int damage) {
-        this.hp -= damage;
-        if (this.hp < 0) this.hp = 0;
+        hp -= damage;
+        if (hp < 0) hp = 0;
     }
 
     public boolean isAlive() {
-        return this.hp > 0;
+        return hp > 0;
     }
 
     public void addMana(int amount) {
-        this.currMana = Math.min(this.maxMana, this.currMana + amount);
+        currMana = Math.min(maxMana, currMana + amount);
     }
 
     public void restoreHP() {
-        this.hp = this.maxHp;
+        hp = maxHp;
     }
 
     public void restoreMana() {
-        this.currMana = this.maxMana;
+        currMana = maxMana;
+    }
+
+    public void regenerateMana() {
+        addMana(regenMana);
     }
 
     public void healPercentage(double percent) {
         if (percent <= 0) return;
-        int heal = (int) Math.ceil(this.maxHp * percent);
-        this.hp = Math.min(this.maxHp, this.hp + heal);
+        int heal = (int) Math.ceil(maxHp * percent);
+        hp = Math.min(maxHp, hp + heal);
     }
 
-    public java.util.List<Skill> getSkills() {
-        return this.skills;
-    }
-    public String getName() { return this.name; }
-    public void setName(String name) { this.name = name; }
-    public int getHealth() { return this.hp; }
-    public int getMaxHealth() { return this.maxHp; }
-    public int getCurrentMana() { return this.currMana; }
-    public int getMaxMana() { return this.maxMana; }
-    public int getRegenMana() { return this.regenMana; }
+    public List<Skill> getSkills() { return skills; }
+    public String getName() { return name; }
+    public int getHealth() { return hp; }
+    public int getMaxHealth() { return maxHp; }
+    public int getCurrentMana() { return currMana; }
+    public int getMaxMana() { return maxMana; }
+    public int getRegenMana() { return regenMana; }
 }

@@ -1,3 +1,4 @@
+backgrounds/arcade_intro_bg.jpg
 backgrounds/battle_bg1.png
 backgrounds/characterselector_background.jpg
 backgrounds/dialogue-box.png
@@ -42,6 +43,8 @@ buttons/skill2_button.png
 buttons/skill2_button_pressed.png
 buttons/skill3_button.png
 buttons/skill3_button_pressed.png
+buttons/start_button.png
+buttons/start_button_pressed.png
 characters/BurgerKing.png
 characters/ChiefKhai.png
 characters/ColonelSanders.png
