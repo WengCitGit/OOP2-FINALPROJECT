@@ -67,8 +67,8 @@ public class VSScreen implements Screen {
         background = new Texture("backgrounds/temp_bg.png");
         popupBoard = new Texture("backgrounds/vsbg.png");
 
-        startBtn = new Texture("buttons/exit_button.png");
-        startBtnP = new Texture("buttons/exit_button_pressed.png");
+        startBtn = new Texture("buttons/start_button.png");
+        startBtnP = new Texture("buttons/start_button_pressed.png");
 
         playerSprite = new Texture("characters/" + player1Char.replace(" ", "") + ".png");
         enemySprite = new Texture("characters/" + player2Char.replace(" ", "") + ".png");
