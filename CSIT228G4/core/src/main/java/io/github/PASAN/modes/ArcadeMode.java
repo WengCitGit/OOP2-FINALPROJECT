@@ -1,6 +1,8 @@
 package io.github.PASAN.modes;
 
 import com.badlogic.gdx.Game;
+import io.github.PASAN.screens.GameOverScreen;
+import io.github.PASAN.screens.VictoryScreen;
 import io.github.PASAN.screens.BattleScreen;
 
 import java.util.ArrayList;
@@ -18,7 +20,6 @@ public class ArcadeMode {
     private int currentStage;
 
     private Random random;
-
     private boolean bossStarted = false;
 
     private final String[] allCharacters = {
@@ -38,21 +39,18 @@ public class ArcadeMode {
 
     private boolean playerTurn = true;
 
-    // ===============================
-    // FIX #1: Enemy turn delay timer
-    // ===============================
+    // Enemy turn delay
     private float enemyTurnTimer = 0f;
     private static final float ENEMY_TURN_DELAY = 1.2f;
     private boolean waitingForEnemyTurn = false;
 
     public ArcadeMode(Game game, String username, String playerChar) {
-        this.game = game;
-        this.username = username;
-        this.playerChar = playerChar;
+        this.game        = game;
+        this.username    = username;
+        this.playerChar  = playerChar;
 
-        enemyOrder = new ArrayList<>();
-        random = new Random();
-
+        enemyOrder   = new ArrayList<>();
+        random       = new Random();
         currentStage = 1;
 
         initializeGauntlet();
@@ -60,7 +58,7 @@ public class ArcadeMode {
     }
 
     // ===============================
-    // CREATE ENEMY ORDER (MAX 7)
+    // CREATE ENEMY ORDER (7 enemies)
     // ===============================
 
     private void initializeGauntlet() {
@@ -69,10 +67,7 @@ public class ArcadeMode {
                 enemyOrder.add(name);
             }
         }
-
         Collections.shuffle(enemyOrder);
-
-        // FIX #2: Use new ArrayList to avoid SubList mutation crash
         if (enemyOrder.size() > 7) {
             enemyOrder = new ArrayList<>(enemyOrder.subList(0, 7));
         }
@@ -84,25 +79,22 @@ public class ArcadeMode {
 
     private void resetBattleStats() {
         playerMaxHP = 200;
-        playerHP = playerMaxHP;
+        playerHP    = playerMaxHP;
 
         playerMaxMana = 100;
-        playerMana = playerMaxMana;
+        playerMana    = playerMaxMana;
 
         playerCooldownLeft = 0;
 
         enemyMaxHP = 180;
-        enemyHP = enemyMaxHP;
+        enemyHP    = enemyMaxHP;
 
         enemyMaxMana = 80;
-        enemyMana = enemyMaxMana;
+        enemyMana    = enemyMaxMana;
 
-        enemyCooldownLeft = 0;
-
-        playerTurn = true;
-
-        // FIX #1: Reset enemy turn timer on new battle
-        enemyTurnTimer = 0f;
+        enemyCooldownLeft   = 0;
+        playerTurn          = true;
+        enemyTurnTimer      = 0f;
         waitingForEnemyTurn = false;
     }
 
@@ -111,67 +103,53 @@ public class ArcadeMode {
     // ===============================
 
     public void update(float delta, boolean skillPressed) {
-
         if (playerCooldownLeft > 0) playerCooldownLeft--;
-        if (enemyCooldownLeft > 0) enemyCooldownLeft--;
+        if (enemyCooldownLeft  > 0) enemyCooldownLeft--;
 
         // PLAYER TURN
         if (playerTurn && skillPressed) {
             if (playerMana >= 20 && playerCooldownLeft <= 0) {
                 int dmg = 20 + random.nextInt(21);
-
-                enemyHP -= dmg;
-                playerMana -= 20;
+                enemyHP        -= dmg;
+                playerMana     -= 20;
                 playerCooldownLeft = 3;
 
-                // FIX #1: Don't fire enemy immediately — start delay timer
-                playerTurn = false;
+                playerTurn          = false;
                 waitingForEnemyTurn = true;
-                enemyTurnTimer = 0f;
+                enemyTurnTimer      = 0f;
 
                 System.out.println(username + " used skill! Damage: " + dmg);
             }
         }
 
-        // FIX #1: Enemy turn fires only after delay
+        // Enemy turn fires only after delay
         if (waitingForEnemyTurn && !playerTurn) {
             enemyTurnTimer += delta;
-
             if (enemyTurnTimer >= ENEMY_TURN_DELAY) {
                 waitingForEnemyTurn = false;
-                enemyTurnTimer = 0f;
+                enemyTurnTimer      = 0f;
                 processEnemyTurn();
             }
         }
 
         // PLAYER LOSES
         if (playerHP <= 0) {
-            System.out.println("YOU LOSE! Restarting stage " + currentStage + "...");
-
-            // FIX #3: Reset stats but stay on same stage (retry current fight)
+            System.out.println("YOU LOSE!");
             resetBattleStats();
-
-            game.setScreen(new BattleScreen(
-                    game,
-                    this,
-                    username,
-                    playerChar,
-                    getCurrentEnemy(),
-                    currentStage
-            ));
+            game.setScreen(new GameOverScreen(game, username));
+            return;
         }
 
         // ENEMY DEFEATED
-        else if (enemyHP <= 0) {
+        if (enemyHP <= 0) {
             System.out.println("STAGE " + currentStage + " CLEARED!");
-
             currentStage++;
             nextStage();
         }
     }
 
     // ===============================
-    // FIX #1: Separated enemy turn logic
+    // ENEMY TURN
     // ===============================
 
     private void processEnemyTurn() {
@@ -179,26 +157,22 @@ public class ArcadeMode {
 
         int dmg = 15 + random.nextInt(16);
 
-        // Make sure enemy has mana to attack
         if (enemyMana >= 15) {
-            playerHP -= dmg;
-            enemyMana -= 15;
-            enemyCooldownLeft = 2;
+            playerHP          -= dmg;
+            enemyMana         -= 15;
+            enemyCooldownLeft  = 2;
             System.out.println(getCurrentEnemy() + " attacked! Damage: " + dmg);
         } else {
-            // Enemy regens mana if it can't attack
             enemyMana = Math.min(enemyMaxMana, enemyMana + 20);
             System.out.println(getCurrentEnemy() + " is recovering mana...");
         }
 
-        // FIX #4: Mana regen happens reliably every round end
         endOfRound();
-
         playerTurn = true;
     }
 
     // ===============================
-    // FIX #4: Centralized end-of-round logic
+    // END OF ROUND — mana regen
     // ===============================
 
     private void endOfRound() {
@@ -206,9 +180,10 @@ public class ArcadeMode {
         int eRegen = 5 + random.nextInt(6);
 
         playerMana = Math.min(playerMaxMana, playerMana + pRegen);
-        enemyMana = Math.min(enemyMaxMana, enemyMana + eRegen);
+        enemyMana  = Math.min(enemyMaxMana,  enemyMana  + eRegen);
 
-        System.out.println("Mana regen: " + username + " +" + pRegen + " | " + getCurrentEnemy() + " +" + eRegen);
+        System.out.println("Mana regen: " + username + " +"
+                + pRegen + " | " + getCurrentEnemy() + " +" + eRegen);
     }
 
     // ===============================
@@ -217,9 +192,8 @@ public class ArcadeMode {
 
     public void nextStage() {
 
-        // STAGE 1–7 NORMAL ENEMIES
+        // STAGES 1–7: normal enemies
         if (currentStage <= 7) {
-            // FIX #5: Safe index access with bounds check
             if (currentStage - 1 >= enemyOrder.size()) {
                 System.out.println("ERROR: Stage index out of bounds! Stage=" + currentStage);
                 handleFinalVictory();
@@ -227,31 +201,21 @@ public class ArcadeMode {
             }
 
             String enemyName = enemyOrder.get(currentStage - 1);
-
             System.out.println("STAGE " + currentStage + " VS " + enemyName);
 
             resetBattleStats();
-
-            game.setScreen(new BattleScreen(
-                    game,
-                    this,
-                    username,
-                    playerChar,
-                    enemyName,
-                    currentStage
-            ));
-
+            game.setScreen(new BattleScreen(username, playerChar, enemyName));
             return;
         }
 
-        // STAGE 8: FINAL BOSS
+        // STAGE 8: final boss
         if (!bossStarted) {
             startBossBattle();
             bossStarted = true;
             return;
         }
 
-        // GAME COMPLETE
+        // ALL STAGES COMPLETE
         handleFinalVictory();
     }
 
@@ -261,34 +225,22 @@ public class ArcadeMode {
 
     private void startBossBattle() {
         String[] devBosses = {
-                "Dev Kishanta",
-                "Dev Rothesa",
-                "Dev Wengie",
-                "Dev Kunihiko",
-                "Dev Diane"
+                "Dev Kishanta", "Dev Rothesa", "Dev Wengie",
+                "Dev Kunihiko", "Dev Diane"
         };
 
         String finalBoss = devBosses[random.nextInt(devBosses.length)];
-
         System.out.println("FINAL BOSS -> " + finalBoss);
 
         resetBattleStats();
 
-        // Boss has boosted stats
-        enemyMaxHP = 350;
-        enemyHP = enemyMaxHP;
-
+        // Boss boosted stats
+        enemyMaxHP   = 350;
+        enemyHP      = enemyMaxHP;
         enemyMaxMana = 150;
-        enemyMana = enemyMaxMana;
+        enemyMana    = enemyMaxMana;
 
-        game.setScreen(new BattleScreen(
-                game,
-                this,
-                username,
-                playerChar,
-                finalBoss,
-                8
-        ));
+        game.setScreen(new BattleScreen(username, playerChar, finalBoss));
     }
 
     // ===============================
@@ -297,9 +249,7 @@ public class ArcadeMode {
 
     private void handleFinalVictory() {
         System.out.println("ARCADE COMPLETE! YOU BEAT THE FINAL BOSS!");
-
-        // TODO: Load VictoryScreen here
-        // game.setScreen(new VictoryScreen(game));
+        game.setScreen(new VictoryScreen(game, username));
     }
 
     // ===============================
@@ -341,12 +291,9 @@ public class ArcadeMode {
 
     public void reset() {
         currentStage = 1;
-        bossStarted = false;
-
-        // FIX #2: Safe clear — enemyOrder is always a proper ArrayList now
+        bossStarted  = false;
         enemyOrder.clear();
         initializeGauntlet();
-
         resetBattleStats();
     }
 }

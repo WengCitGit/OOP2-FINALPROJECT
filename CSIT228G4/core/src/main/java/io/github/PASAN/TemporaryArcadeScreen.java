@@ -9,6 +9,9 @@ import com.badlogic.gdx.utils.viewport.*;
 import io.github.PASAN.characters.*;
 import io.github.PASAN.characters.Character;
 import io.github.PASAN.screens.FirstScreen;
+import io.github.PASAN.screens.GameOverScreen;
+import io.github.PASAN.screens.VictoryScreen;
+
 import java.util.*;
 
 public class TemporaryArcadeScreen implements Screen {
@@ -19,6 +22,10 @@ public class TemporaryArcadeScreen implements Screen {
     private OrthographicCamera camera;
     private Viewport viewport;
     private ShapeRenderer shapeRenderer;
+
+    // --- FIELDS ---
+    private String playerName;
+    private boolean isDefeated = false;
 
     private Texture background, redUi, yellowUi;
     private Texture skill1Btn, skill1BtnP;
@@ -45,7 +52,6 @@ public class TemporaryArcadeScreen implements Screen {
     private float transitionTimer = 0;
     private String transitionMessage = "";
 
-    // FIX #6: 3 cooldown slots for 3 skills
     private int[] playerCD = {0, 0, 0};
     private int[] enemyCD  = {0, 0, 0};
 
@@ -53,35 +59,57 @@ public class TemporaryArcadeScreen implements Screen {
     private Character enemy;
     private Random random = new Random();
 
+    // --- ARCADE STAGE TRACKING ---
+    private String playerCharName;
+    private List<String> enemyQueue;
+    private int currentStage = 1;
+    private static final int TOTAL_STAGES = 8;
+
+    // --- VS INTRO POPUP ---
+    private boolean showingIntro = true;
+    private float introTimer = 0f;
+    private static final float INTRO_DURATION = 3.0f;
+
     private static final float WORLD_WIDTH  = 1920;
     private static final float WORLD_HEIGHT = 1080;
 
+    private static final String[] ALL_CHARACTERS = {
+            "Jollibee", "Colonel Sanders", "McDonald",
+            "Burger King", "Wendy", "Jack in the Box",
+            "Little Caesar", "Chief Khai"
+    };
+
+    private static final String[] FINAL_BOSSES = {
+            "Dev Kishanta", "Dev Rothesa", "Dev Wengie",
+            "Dev Kunihiko", "Dev Diane"
+    };
+
     public TemporaryArcadeScreen(Game game, String playerName, String playerCharName) {
-        this.game = game;
-        batch        = new SpriteBatch();
+        this.game           = game;
+        this.playerName     = playerName;
+        this.playerCharName = playerCharName;
+
+        batch         = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
-        font         = new BitmapFont();
+        font          = new BitmapFont();
         font.getData().setScale(2.5f);
 
-        camera = new OrthographicCamera();
+        camera   = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
         touch = new Vector3();
 
-        // Setup player
+        // Build shuffled enemy queue (all characters except player's choice)
+        enemyQueue = new ArrayList<>();
+        for (String c : ALL_CHARACTERS) {
+            if (!c.equalsIgnoreCase(playerCharName)) {
+                enemyQueue.add(c);
+            }
+        }
+        Collections.shuffle(enemyQueue);
+
         player = createCharacterInstance(playerCharName);
-
-        // Setup randomized enemy (not the player)
-        String[] possibleEnemies = {
-                "Jollibee", "Colonel Sanders", "McDonald",
-                "Burger King", "Wendy", "Jack in the Box", "Little Caesar"
-        };
-        String randomEnemyName;
-        do {
-            randomEnemyName = possibleEnemies[random.nextInt(possibleEnemies.length)];
-        } while (randomEnemyName.equals(playerCharName));
-
-        enemy = createCharacterInstance(randomEnemyName);
+        enemy  = createCharacterInstance(enemyQueue.get(0));
 
         loadAssetsSafely(playerCharName, enemy.getName());
 
@@ -89,7 +117,8 @@ public class TemporaryArcadeScreen implements Screen {
         skill2Bounds = new Rectangle(555, 145, 250, 70);
         skill3Bounds = new Rectangle(555,  60, 250, 70);
 
-        System.out.println("MATCH START: " + player.getName() + " VS " + enemy.getName());
+        System.out.println("ARCADE START | Stage 1: "
+                + player.getName() + " VS " + enemy.getName());
     }
 
     // ===============================
@@ -97,23 +126,26 @@ public class TemporaryArcadeScreen implements Screen {
     // ===============================
 
     private void loadAssetsSafely(String pName, String eName) {
-        try { background  = new Texture("backgrounds/temp_bg.png");          } catch (Exception e) { logMissing(e); }
-        try { redUi       = new Texture("backgrounds/red_background.png");   } catch (Exception e) { logMissing(e); }
-        try { yellowUi    = new Texture("backgrounds/yellow_background.png");} catch (Exception e) { logMissing(e); }
-        try { skill1Btn   = new Texture("buttons/skill1_button.png");         } catch (Exception e) { logMissing(e); }
-        try { skill1BtnP  = new Texture("buttons/skill1_button_pressed.png"); } catch (Exception e) { logMissing(e); }
-        try { skill2Btn   = new Texture("buttons/skill2_button.png");         } catch (Exception e) { logMissing(e); }
-        try { skill2BtnP  = new Texture("buttons/skill2_button_pressed.png"); } catch (Exception e) { logMissing(e); }
-        try { skill3Btn   = new Texture("buttons/skill3_button.png");         } catch (Exception e) { logMissing(e); }
-        try { skill3BtnP  = new Texture("buttons/skill3_button_pressed.png"); } catch (Exception e) { logMissing(e); }
+        try { background  = new Texture("backgrounds/temp_bg.png");           } catch (Exception e) { logMissing(e); }
+        try { redUi       = new Texture("backgrounds/red_background.png");    } catch (Exception e) { logMissing(e); }
+        try { yellowUi    = new Texture("backgrounds/yellow_background.png"); } catch (Exception e) { logMissing(e); }
+        try { skill1Btn   = new Texture("buttons/skill1_button.png");          } catch (Exception e) { logMissing(e); }
+        try { skill1BtnP  = new Texture("buttons/skill1_button_pressed.png");  } catch (Exception e) { logMissing(e); }
+        try { skill2Btn   = new Texture("buttons/skill2_button.png");          } catch (Exception e) { logMissing(e); }
+        try { skill2BtnP  = new Texture("buttons/skill2_button_pressed.png");  } catch (Exception e) { logMissing(e); }
+        try { skill3Btn   = new Texture("buttons/skill3_button.png");          } catch (Exception e) { logMissing(e); }
+        try { skill3BtnP  = new Texture("buttons/skill3_button_pressed.png");  } catch (Exception e) { logMissing(e); }
+
+        if (playerSprite != null) { playerSprite.dispose(); playerSprite = null; }
+        if (enemySprite  != null) { enemySprite.dispose();  enemySprite  = null; }
 
         try {
             playerSprite = new Texture("characters/" + pName.replace(" ", "") + ".png");
         } catch (Exception e) { logMissing(e); }
 
         try {
-            enemySprite  = new Texture("characters/" + eName.replace(" ", "") + ".png");
-            enemyRegion  = new TextureRegion(enemySprite);
+            enemySprite = new Texture("characters/" + eName.replace(" ", "") + ".png");
+            enemyRegion = new TextureRegion(enemySprite);
             enemyRegion.flip(true, false);
         } catch (Exception e) { logMissing(e); }
     }
@@ -128,14 +160,17 @@ public class TemporaryArcadeScreen implements Screen {
 
     private Character createCharacterInstance(String name) {
         switch (name) {
-            case "Jollibee":       return new Jollibee();
-            case "Colonel Sanders":return new ColonelSanders();
-            case "McDonald":       return new McDonald();
-            case "Burger King":    return new BurgerKing();
-            case "Wendy":          return new Wendy();
-            case "Jack in the Box":return new JackInTheBox();
-            case "Little Caesar":  return new LittleCaesar();
-            default:               return new Jollibee();
+            case "Jollibee":        return new Jollibee();
+            case "Colonel Sanders": return new ColonelSanders();
+            case "McDonald":        return new McDonald();
+            case "Burger King":     return new BurgerKing();
+            case "Wendy":           return new Wendy();
+            case "Jack in the Box": return new JackInTheBox();
+            case "Little Caesar":   return new LittleCaesar();
+            case "Chief Khai":      return new ChiefKhai();
+            default:
+                Gdx.app.log("CHARACTER", "Unknown character: " + name + " — falling back to Jollibee.");
+                return new Jollibee();
         }
     }
 
@@ -154,43 +189,52 @@ public class TemporaryArcadeScreen implements Screen {
 
         batch.setProjectionMatrix(camera.combined);
 
-        // Background
+        // Always draw background first
         batch.begin();
         if (background != null) batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         batch.end();
 
+        // VS INTRO POPUP — blocks gameplay until done
+        if (showingIntro) {
+            introTimer += delta;
+            drawIntroPopup();
+            if (introTimer >= INTRO_DURATION) {
+                showingIntro = false;
+                introTimer   = 0f;
+            }
+            return;
+        }
+
+        // NORMAL BATTLE RENDER
         drawHealthBars();
 
         batch.begin();
 
-        // Characters
         if (playerSprite != null) batch.draw(playerSprite, 200, 350, 300, 450);
         if (enemyRegion  != null) batch.draw(enemyRegion, WORLD_WIDTH - 500, 350, 300, 450);
 
-        // UI Panels
         if (yellowUi != null) batch.draw(yellowUi, 40, 20, 1420, 320);
         if (redUi != null) {
             batch.draw(redUi, 140, 60, 350, 250);
             batch.draw(redUi, 1480, 20, 400, 300);
         }
 
-        // Skill buttons
         if (player.getSkills() != null && player.getSkills().size() >= 3) {
             drawSkillUI(0, player.getSkills().get(0).getName(), skill1Bounds, playerCD[0]);
             drawSkillUI(1, player.getSkills().get(1).getName(), skill2Bounds, playerCD[1]);
             drawSkillUI(2, player.getSkills().get(2).getName(), skill3Bounds, playerCD[2]);
         }
 
-        // HUD Text
         font.setColor(Color.WHITE);
         font.draw(batch, "What will\n" + player.getName() + "\ndo?", 170, 240);
-        font.draw(batch, "HP  - " + player.getHealth() + "/" + player.getMaxHealth(), 1510, 220);
-        font.draw(batch, "Mana- " + player.getCurrentMana() + "/" + player.getMaxMana(), 1510, 140);
+        font.draw(batch, "HP  - " + player.getHealth()      + "/" + player.getMaxHealth(), 1510, 220);
+        font.draw(batch, "Mana- " + player.getCurrentMana() + "/" + player.getMaxMana(),   1510, 140);
         font.draw(batch,
-                "ROUND: " + currentRound + " | Score: " + playerWins + "-" + enemyWins,
-                WORLD_WIDTH / 2 - 200, 1030);
+                "STAGE: " + currentStage + "/" + TOTAL_STAGES
+                        + "  |  ROUND: " + currentRound
+                        + "  |  Score: " + playerWins + "-" + enemyWins,
+                WORLD_WIDTH / 2 - 350, 1030);
 
-        // Turn / Transition message
         if (isTransitioning) {
             font.getData().setScale(5.0f);
             font.setColor(Color.GOLD);
@@ -211,7 +255,13 @@ public class TemporaryArcadeScreen implements Screen {
             transitionTimer += delta;
             if (transitionTimer >= 3.0f) {
                 if (matchIsOver) {
-                    game.setScreen(new FirstScreen(game));
+                    if (isDefeated) {
+                        game.setScreen(new GameOverScreen(game, playerName));
+                    } else if (currentStage < TOTAL_STAGES) {
+                        loadNextStage();
+                    } else {
+                        game.setScreen(new VictoryScreen(game, playerName));
+                    }
                 } else {
                     isTransitioning = false;
                     transitionTimer = 0;
@@ -224,6 +274,118 @@ public class TemporaryArcadeScreen implements Screen {
     }
 
     // ===============================
+    // VS INTRO POPUP DRAWING
+    // ===============================
+
+    private void drawIntroPopup() {
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0, 0, 0, 0.82f);
+        shapeRenderer.rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        shapeRenderer.end();
+
+        batch.begin();
+
+        // Stage label — centered
+        font.getData().setScale(3.5f);
+        font.setColor(Color.ORANGE);
+        String stageLabel = currentStage < TOTAL_STAGES ? "STAGE " + currentStage : "FINAL STAGE";
+        GlyphLayout stageLayout = new GlyphLayout(font, stageLabel);
+        font.draw(batch, stageLayout,
+                WORLD_WIDTH / 2f - stageLayout.width / 2f,
+                WORLD_HEIGHT / 2f + 280);
+
+        // Player sprite on left
+        if (playerSprite != null)
+            batch.draw(playerSprite, 250, WORLD_HEIGHT / 2 - 180, 300, 400);
+
+        // Enemy sprite on right (flipped)
+        if (enemyRegion != null)
+            batch.draw(enemyRegion, WORLD_WIDTH - 550, WORLD_HEIGHT / 2 - 180, 300, 400);
+
+        // Player name
+        font.getData().setScale(4f);
+        font.setColor(Color.WHITE);
+        font.draw(batch, player.getName(), 200, WORLD_HEIGHT / 2 + 170);
+
+        // VS — centered
+        font.getData().setScale(6f);
+        font.setColor(Color.RED);
+        GlyphLayout vsLayout = new GlyphLayout(font, "VS");
+        font.draw(batch, vsLayout,
+                WORLD_WIDTH / 2f - vsLayout.width / 2f,
+                WORLD_HEIGHT / 2f + 170);
+
+        // Enemy name — right side
+        font.getData().setScale(4f);
+        font.setColor(Color.WHITE);
+        GlyphLayout enemyNameLayout = new GlyphLayout(font, enemy.getName());
+        font.draw(batch, enemyNameLayout,
+                WORLD_WIDTH - 250 - enemyNameLayout.width,
+                WORLD_HEIGHT / 2f + 170);
+
+        // "Starting..." after 1.5s — centered
+        if (introTimer >= 1.5f) {
+            font.getData().setScale(3f);
+            font.setColor(Color.YELLOW);
+            GlyphLayout startLayout = new GlyphLayout(font, "Starting...");
+            font.draw(batch, startLayout,
+                    WORLD_WIDTH / 2f - startLayout.width / 2f,
+                    WORLD_HEIGHT / 2f - 230);
+        }
+
+        font.getData().setScale(2.5f);
+        batch.end();
+    }
+
+    // ===============================
+    // LOAD NEXT STAGE
+    // ===============================
+
+    private void loadNextStage() {
+        currentStage++;
+        currentRound    = 1;
+        playerWins      = 0;
+        enemyWins       = 0;
+        isTransitioning = false;
+        transitionTimer = 0;
+        matchIsOver     = false;
+        isDefeated      = false;
+
+        player.restoreHP();
+        player.restoreMana();
+        playerCD   = new int[]{0, 0, 0};
+        enemyCD    = new int[]{0, 0, 0};
+        playerTurn = true;
+        turnTimer  = 0;
+
+        String nextEnemyName;
+        if (currentStage <= 7) {
+            nextEnemyName = enemyQueue.get(currentStage - 1);
+        } else {
+            nextEnemyName = FINAL_BOSSES[random.nextInt(FINAL_BOSSES.length)];
+        }
+
+        enemy = createCharacterInstance(nextEnemyName);
+
+        if (enemySprite != null) { enemySprite.dispose(); enemySprite = null; }
+        try {
+            enemySprite = new Texture("characters/" + nextEnemyName.replace(" ", "") + ".png");
+            enemyRegion = new TextureRegion(enemySprite);
+            enemyRegion.flip(true, false);
+        } catch (Exception e) {
+            logMissing(e);
+            enemyRegion = null;
+        }
+
+        showingIntro = true;
+        introTimer   = 0f;
+
+        System.out.println("STAGE " + currentStage + ": "
+                + player.getName() + " VS " + enemy.getName());
+    }
+
+    // ===============================
     // HEALTH BARS
     // ===============================
 
@@ -231,14 +393,12 @@ public class TemporaryArcadeScreen implements Screen {
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        // Player bar
         shapeRenderer.setColor(Color.DARK_GRAY);
         shapeRenderer.rect(50, 950, 450, 50);
         float pPercent = (float) player.getHealth() / player.getMaxHealth();
         shapeRenderer.setColor(pPercent > 0.3f ? Color.GREEN : Color.RED);
         shapeRenderer.rect(55, 955, 440 * pPercent, 40);
 
-        // Enemy bar
         shapeRenderer.setColor(Color.DARK_GRAY);
         shapeRenderer.rect(WORLD_WIDTH - 500, 950, 450, 50);
         float ePercent = (float) enemy.getHealth() / enemy.getMaxHealth();
@@ -258,9 +418,9 @@ public class TemporaryArcadeScreen implements Screen {
 
         if (normal == null) return;
 
-        int cost     = player.getSkills().get(i).getManaCost();
-        boolean canAfford = player.getCurrentMana() >= cost;
-        boolean onCD      = cd > 0;
+        int cost           = player.getSkills().get(i).getManaCost();
+        boolean canAfford  = player.getCurrentMana() >= cost;
+        boolean onCD       = cd > 0;
         boolean isTouching = Gdx.input.isTouched() && bounds.contains(touch.x, touch.y);
 
         boolean usePressed = !canAfford || onCD || (playerTurn && isTouching);
@@ -268,7 +428,6 @@ public class TemporaryArcadeScreen implements Screen {
 
         batch.draw(toUse, bounds.x, bounds.y, 250, 70);
 
-        // Label + cooldown indicator
         font.setColor(onCD || !canAfford ? Color.GRAY : Color.BLACK);
         String label = "- " + name + (onCD ? " (" + cd + ")" : "");
         font.draw(batch, label, bounds.x + 280, bounds.y + 50);
@@ -280,13 +439,11 @@ public class TemporaryArcadeScreen implements Screen {
 
     private void handleGameLogic(float delta) {
         if (playerTurn) {
-            // Detect tap
             if (Gdx.input.justTouched()) {
                 if      (skill1Bounds.contains(touch.x, touch.y)) pressedSkillIndex = 0;
                 else if (skill2Bounds.contains(touch.x, touch.y)) pressedSkillIndex = 1;
                 else if (skill3Bounds.contains(touch.x, touch.y)) pressedSkillIndex = 2;
             }
-            // Confirm on release
             if (!Gdx.input.isTouched() && pressedSkillIndex != -1) {
                 if (getBounds(pressedSkillIndex).contains(touch.x, touch.y)) {
                     processPlayerAction(pressedSkillIndex);
@@ -294,7 +451,6 @@ public class TemporaryArcadeScreen implements Screen {
                 pressedSkillIndex = -1;
             }
         } else {
-            // Enemy turn with delay
             turnTimer += delta;
             if (turnTimer >= turnDelay) {
                 turnTimer = 0;
@@ -308,7 +464,6 @@ public class TemporaryArcadeScreen implements Screen {
     // ===============================
 
     private void processPlayerAction(int index) {
-        // FIX #6: Proper 3-slot cooldown check
         if (index < 0 || index > 2) return;
 
         int cost = player.getSkills().get(index).getManaCost();
@@ -319,9 +474,9 @@ public class TemporaryArcadeScreen implements Screen {
         int oldHP = enemy.getHealth();
 
         switch (index) {
-            case 0: player.basicAttack(enemy);     break;
-            case 1: player.secondarySkill(enemy);  playerCD[1] = 3; break;
-            case 2: player.ultimateSkill(enemy);   playerCD[2] = 5; break;
+            case 0: player.basicAttack(enemy);    break;
+            case 1: player.secondarySkill(enemy); playerCD[1] = 3; break;
+            case 2: player.ultimateSkill(enemy);  playerCD[2] = 5; break;
         }
 
         System.out.println("\n[PLAYER TURN] " + player.getName()
@@ -346,7 +501,6 @@ public class TemporaryArcadeScreen implements Screen {
 
         int oldHP = player.getHealth();
 
-        // FIX #7: Enemy uses best available skill
         if (enemyCD[2] == 0 && enemy.getCurrentMana() >= enemy.getSkills().get(2).getManaCost()) {
             enemy.ultimateSkill(player);
             enemyCD[2] = 5;
@@ -362,7 +516,6 @@ public class TemporaryArcadeScreen implements Screen {
 
         System.out.println("> DMG received: " + (oldHP - player.getHealth()));
 
-        // FIX #7: All cooldowns and mana regen in one reliable place
         endOfRound();
 
         playerTurn = true;
@@ -370,17 +523,15 @@ public class TemporaryArcadeScreen implements Screen {
     }
 
     // ===============================
-    // FIX #7: End of round — cooldowns + mana regen always run here
+    // END OF ROUND
     // ===============================
 
     private void endOfRound() {
-        // Tick down all cooldowns
         for (int i = 0; i < 3; i++) {
             if (playerCD[i] > 0) playerCD[i]--;
             if (enemyCD[i]  > 0) enemyCD[i]--;
         }
 
-        // Mana regen
         int pRegen = random.nextInt(6) + 5;
         int eRegen = random.nextInt(6) + 5;
         player.addMana(pRegen);
@@ -406,11 +557,17 @@ public class TemporaryArcadeScreen implements Screen {
                 transitionMessage = enemy.getName() + " WINS ROUND " + currentRound + "!";
             }
 
-            if (playerWins == 2 || enemyWins == 2) {
+            if (playerWins == 2) {
                 matchIsOver = true;
-                transitionMessage = (playerWins == 2)
-                        ? "MATCH OVER: VICTORY!"
-                        : "MATCH OVER: DEFEATED!";
+                if (currentStage >= TOTAL_STAGES) {
+                    transitionMessage = "ARCADE COMPLETE! VICTORY!";
+                } else {
+                    transitionMessage = "STAGE " + currentStage + " CLEARED!";
+                }
+            } else if (enemyWins == 2) {
+                matchIsOver       = true;
+                isDefeated        = true;
+                transitionMessage = "DEFEATED! GAME OVER!";
             } else {
                 currentRound++;
             }
@@ -420,7 +577,7 @@ public class TemporaryArcadeScreen implements Screen {
     }
 
     // ===============================
-    // RESET ROUND
+    // RESET ROUND (within same stage)
     // ===============================
 
     private void resetRound() {
@@ -429,10 +586,8 @@ public class TemporaryArcadeScreen implements Screen {
         enemy.restoreHP();
         enemy.restoreMana();
 
-        // FIX #6: Reset all 3 CD slots
-        playerCD = new int[]{0, 0, 0};
-        enemyCD  = new int[]{0, 0, 0};
-
+        playerCD   = new int[]{0, 0, 0};
+        enemyCD    = new int[]{0, 0, 0};
         playerTurn = true;
         turnTimer  = 0;
     }
@@ -451,33 +606,21 @@ public class TemporaryArcadeScreen implements Screen {
     // SCREEN LIFECYCLE
     // ===============================
 
-    @Override
-    public void resize(int width, int height) {
-        viewport.update(width, height);
-    }
+    @Override public void resize(int width, int height) { viewport.update(width, height); }
+    @Override public void show()   {}
+    @Override public void hide()   {}
+    @Override public void pause()  {}
+    @Override public void resume() {}
 
-    @Override
-    public void show() {}
-
-    @Override
-    public void hide() {}
-
-    @Override
-    public void pause() {}
-
-    @Override
-    public void resume() {}
-
-    // FIX #8: All textures disposed properly including skill buttons
     @Override
     public void dispose() {
         batch.dispose();
         font.dispose();
         shapeRenderer.dispose();
 
-        if (background  != null) background.dispose();
-        if (redUi       != null) redUi.dispose();
-        if (yellowUi    != null) yellowUi.dispose();
+        if (background   != null) background.dispose();
+        if (redUi        != null) redUi.dispose();
+        if (yellowUi     != null) yellowUi.dispose();
         if (playerSprite != null) playerSprite.dispose();
         if (enemySprite  != null) enemySprite.dispose();
 
