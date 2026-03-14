@@ -16,9 +16,9 @@ public class ArcadeMode {
 
     private List<String> enemyOrder;
     private int currentStage;
-    private int wins;
 
     private Random random;
+
     private boolean bossStarted = false;
 
     private final String[] allCharacters = {
@@ -26,105 +26,209 @@ public class ArcadeMode {
             "Wendy", "Jack in the Box", "Little Caesar", "Chief Khai"
     };
 
-    // Gameplay stats
-    private int playerHP, playerMaxHP, playerMana, playerMaxMana, playerSkillCD, playerCooldownLeft;
-    private int enemyHP, enemyMaxHP, enemyMana, enemyMaxMana, enemySkillCD, enemyCooldownLeft;
+    // Player stats
+    private int playerHP, playerMaxHP;
+    private int playerMana, playerMaxMana;
+    private int playerCooldownLeft;
+
+    // Enemy stats
+    private int enemyHP, enemyMaxHP;
+    private int enemyMana, enemyMaxMana;
+    private int enemyCooldownLeft;
+
     private boolean playerTurn = true;
+
+    // ===============================
+    // FIX #1: Enemy turn delay timer
+    // ===============================
+    private float enemyTurnTimer = 0f;
+    private static final float ENEMY_TURN_DELAY = 1.2f;
+    private boolean waitingForEnemyTurn = false;
 
     public ArcadeMode(Game game, String username, String playerChar) {
         this.game = game;
         this.username = username;
         this.playerChar = playerChar;
 
-        this.enemyOrder = new ArrayList<>();
-        this.random = new Random();
-        this.currentStage = 1;
-        this.wins = 0;
+        enemyOrder = new ArrayList<>();
+        random = new Random();
+
+        currentStage = 1;
 
         initializeGauntlet();
         resetBattleStats();
     }
 
-    private void initializeGauntlet() {
-        boolean playerIsChiefKhai = playerChar.equalsIgnoreCase("Chief Khai");
+    // ===============================
+    // CREATE ENEMY ORDER (MAX 7)
+    // ===============================
 
+    private void initializeGauntlet() {
         for (String name : allCharacters) {
-            if (name.equalsIgnoreCase(playerChar))
-                continue;
-            if (!playerIsChiefKhai && name.equalsIgnoreCase("Chief Khai"))
-                continue;
-            enemyOrder.add(name);
+            if (!name.equalsIgnoreCase(playerChar)) {
+                enemyOrder.add(name);
+            }
         }
 
         Collections.shuffle(enemyOrder);
+
+        // FIX #2: Use new ArrayList to avoid SubList mutation crash
+        if (enemyOrder.size() > 7) {
+            enemyOrder = new ArrayList<>(enemyOrder.subList(0, 7));
+        }
     }
+
+    // ===============================
+    // RESET STATS
+    // ===============================
 
     private void resetBattleStats() {
-        playerMaxHP = 200; playerHP = playerMaxHP;
-        playerMaxMana = 100; playerMana = playerMaxMana;
-        playerSkillCD = 3; playerCooldownLeft = 0;
+        playerMaxHP = 200;
+        playerHP = playerMaxHP;
 
-        enemyMaxHP = 180; enemyHP = enemyMaxHP;
-        enemyMaxMana = 80; enemyMana = enemyMaxMana;
-        enemySkillCD = 2; enemyCooldownLeft = 0;
+        playerMaxMana = 100;
+        playerMana = playerMaxMana;
+
+        playerCooldownLeft = 0;
+
+        enemyMaxHP = 180;
+        enemyHP = enemyMaxHP;
+
+        enemyMaxMana = 80;
+        enemyMana = enemyMaxMana;
+
+        enemyCooldownLeft = 0;
 
         playerTurn = true;
+
+        // FIX #1: Reset enemy turn timer on new battle
+        enemyTurnTimer = 0f;
+        waitingForEnemyTurn = false;
     }
 
-    /**
-     * Called every frame in BattleScreen to process player & enemy turns.
-     */
+    // ===============================
+    // BATTLE UPDATE
+    // ===============================
+
     public void update(float delta, boolean skillPressed) {
-        // Tick cooldowns
+
         if (playerCooldownLeft > 0) playerCooldownLeft--;
         if (enemyCooldownLeft > 0) enemyCooldownLeft--;
 
         // PLAYER TURN
-        if (playerTurn && skillPressed && playerMana >= 20 && playerCooldownLeft <= 0) {
-            int dmg = 20 + random.nextInt(21); // 20-40 damage
-            enemyHP -= dmg;
-            playerMana -= 20;
-            playerCooldownLeft = playerSkillCD;
-            playerTurn = false;
-            System.out.println(username + " used Skill! Damage: " + dmg);
-        }
+        if (playerTurn && skillPressed) {
+            if (playerMana >= 20 && playerCooldownLeft <= 0) {
+                int dmg = 20 + random.nextInt(21);
 
-        // ENEMY TURN
-        if (!playerTurn) {
-            if (enemyHP > 0) {
-                int dmg = 15 + random.nextInt(16); // 15-30 damage
-                playerHP -= dmg;
-                enemyMana -= 15;
-                enemyCooldownLeft = enemySkillCD;
-                playerTurn = true;
-                System.out.println(enemyOrder.get(wins) + " attacked! Damage: " + dmg);
+                enemyHP -= dmg;
+                playerMana -= 20;
+                playerCooldownLeft = 3;
+
+                // FIX #1: Don't fire enemy immediately — start delay timer
+                playerTurn = false;
+                waitingForEnemyTurn = true;
+                enemyTurnTimer = 0f;
+
+                System.out.println(username + " used skill! Damage: " + dmg);
             }
         }
 
-        // CHECK DEATHS
+        // FIX #1: Enemy turn fires only after delay
+        if (waitingForEnemyTurn && !playerTurn) {
+            enemyTurnTimer += delta;
+
+            if (enemyTurnTimer >= ENEMY_TURN_DELAY) {
+                waitingForEnemyTurn = false;
+                enemyTurnTimer = 0f;
+                processEnemyTurn();
+            }
+        }
+
+        // PLAYER LOSES
         if (playerHP <= 0) {
-            System.out.println("You Lose!");
+            System.out.println("YOU LOSE! Restarting stage " + currentStage + "...");
+
+            // FIX #3: Reset stats but stay on same stage (retry current fight)
             resetBattleStats();
-            game.setScreen(new BattleScreen(game, this, username, playerChar, enemyOrder.get(wins), currentStage));
-        } else if (enemyHP <= 0) {
-            System.out.println("You Win Stage " + currentStage + "!");
-            registerWin();
+
+            game.setScreen(new BattleScreen(
+                    game,
+                    this,
+                    username,
+                    playerChar,
+                    getCurrentEnemy(),
+                    currentStage
+            ));
+        }
+
+        // ENEMY DEFEATED
+        else if (enemyHP <= 0) {
+            System.out.println("STAGE " + currentStage + " CLEARED!");
+
+            currentStage++;
             nextStage();
         }
     }
 
-    /**
-     * Called after every victory to load the next fight
-     */
+    // ===============================
+    // FIX #1: Separated enemy turn logic
+    // ===============================
+
+    private void processEnemyTurn() {
+        if (enemyHP <= 0) return;
+
+        int dmg = 15 + random.nextInt(16);
+
+        // Make sure enemy has mana to attack
+        if (enemyMana >= 15) {
+            playerHP -= dmg;
+            enemyMana -= 15;
+            enemyCooldownLeft = 2;
+            System.out.println(getCurrentEnemy() + " attacked! Damage: " + dmg);
+        } else {
+            // Enemy regens mana if it can't attack
+            enemyMana = Math.min(enemyMaxMana, enemyMana + 20);
+            System.out.println(getCurrentEnemy() + " is recovering mana...");
+        }
+
+        // FIX #4: Mana regen happens reliably every round end
+        endOfRound();
+
+        playerTurn = true;
+    }
+
+    // ===============================
+    // FIX #4: Centralized end-of-round logic
+    // ===============================
+
+    private void endOfRound() {
+        int pRegen = 5 + random.nextInt(6);
+        int eRegen = 5 + random.nextInt(6);
+
+        playerMana = Math.min(playerMaxMana, playerMana + pRegen);
+        enemyMana = Math.min(enemyMaxMana, enemyMana + eRegen);
+
+        System.out.println("Mana regen: " + username + " +" + pRegen + " | " + getCurrentEnemy() + " +" + eRegen);
+    }
+
+    // ===============================
+    // LOAD NEXT STAGE
+    // ===============================
+
     public void nextStage() {
 
-        boolean playerIsChiefKhai = playerChar.equalsIgnoreCase("Chief Khai");
+        // STAGE 1–7 NORMAL ENEMIES
+        if (currentStage <= 7) {
+            // FIX #5: Safe index access with bounds check
+            if (currentStage - 1 >= enemyOrder.size()) {
+                System.out.println("ERROR: Stage index out of bounds! Stage=" + currentStage);
+                handleFinalVictory();
+                return;
+            }
 
-        // ===== NORMAL ENEMIES =====
-        if (wins < enemyOrder.size()) {
+            String enemyName = enemyOrder.get(currentStage - 1);
 
-            String enemyName = enemyOrder.get(wins);
-            System.out.println("ARCADE: Stage " + currentStage + " vs " + enemyName);
+            System.out.println("STAGE " + currentStage + " VS " + enemyName);
 
             resetBattleStats();
 
@@ -140,27 +244,20 @@ public class ArcadeMode {
             return;
         }
 
-        // ===== SECRET ENDING =====
-        if (playerIsChiefKhai) {
-            triggerSecretEnding();
-            return;
-        }
-
-        // ===== FINAL BOSS =====
+        // STAGE 8: FINAL BOSS
         if (!bossStarted) {
             startBossBattle();
             bossStarted = true;
             return;
         }
 
-        // ===== TOTAL VICTORY =====
+        // GAME COMPLETE
         handleFinalVictory();
     }
 
-    public void registerWin() {
-        wins++;
-        currentStage++;
-    }
+    // ===============================
+    // FINAL BOSS
+    // ===============================
 
     private void startBossBattle() {
         String[] devBosses = {
@@ -173,11 +270,16 @@ public class ArcadeMode {
 
         String finalBoss = devBosses[random.nextInt(devBosses.length)];
 
-        System.out.println("ARCADE: FINAL BOSS -> " + finalBoss);
+        System.out.println("FINAL BOSS -> " + finalBoss);
 
         resetBattleStats();
-        enemyHP = 300; enemyMaxHP = 300;
-        enemyMana = 150; enemyMaxMana = 150;
+
+        // Boss has boosted stats
+        enemyMaxHP = 350;
+        enemyHP = enemyMaxHP;
+
+        enemyMaxMana = 150;
+        enemyMana = enemyMaxMana;
 
         game.setScreen(new BattleScreen(
                 game,
@@ -185,43 +287,66 @@ public class ArcadeMode {
                 username,
                 playerChar,
                 finalBoss,
-                99
+                8
         ));
     }
 
-    private void triggerSecretEnding() {
-        System.out.println("ARCADE: [dev_eye_connected] Chief Khai Secret Ending");
-        // TODO: show secret ending screen
-    }
+    // ===============================
+    // FINAL VICTORY
+    // ===============================
 
     private void handleFinalVictory() {
-        System.out.println("ARCADE: CONGRATULATIONS! You defeated the Final Boss!");
-        // TODO: show final victory screen
+        System.out.println("ARCADE COMPLETE! YOU BEAT THE FINAL BOSS!");
+
+        // TODO: Load VictoryScreen here
+        // game.setScreen(new VictoryScreen(game));
     }
 
-    public int getCurrentStage() { return currentStage; }
-    public String getUsername() { return username; }
-    public String getPlayerChar() { return playerChar; }
+    // ===============================
+    // GET CURRENT ENEMY
+    // ===============================
 
-    public int getPlayerHP() { return playerHP; }
-    public int getPlayerMaxHP() { return playerMaxHP; }
-    public int getPlayerMana() { return playerMana; }
-    public int getPlayerMaxMana() { return playerMaxMana; }
-    public int getPlayerCooldownLeft() { return playerCooldownLeft; }
-    public boolean isPlayerTurn() { return playerTurn; }
+    public String getCurrentEnemy() {
+        if (currentStage <= 7 && currentStage - 1 < enemyOrder.size()) {
+            return enemyOrder.get(currentStage - 1);
+        }
+        return "Final Boss";
+    }
 
-    public int getEnemyHP() { return enemyHP; }
-    public int getEnemyMaxHP() { return enemyMaxHP; }
-    public int getEnemyMana() { return enemyMana; }
-    public int getEnemyMaxMana() { return enemyMaxMana; }
-    public int getEnemyCooldownLeft() { return enemyCooldownLeft; }
+    // ===============================
+    // GETTERS
+    // ===============================
+
+    public int getCurrentStage()        { return currentStage; }
+    public String getUsername()         { return username; }
+    public String getPlayerChar()       { return playerChar; }
+
+    public int getPlayerHP()            { return playerHP; }
+    public int getPlayerMaxHP()         { return playerMaxHP; }
+    public int getPlayerMana()          { return playerMana; }
+    public int getPlayerMaxMana()       { return playerMaxMana; }
+    public int getPlayerCooldownLeft()  { return playerCooldownLeft; }
+    public boolean isPlayerTurn()       { return playerTurn; }
+    public boolean isWaitingForEnemy()  { return waitingForEnemyTurn; }
+
+    public int getEnemyHP()             { return enemyHP; }
+    public int getEnemyMaxHP()          { return enemyMaxHP; }
+    public int getEnemyMana()           { return enemyMana; }
+    public int getEnemyMaxMana()        { return enemyMaxMana; }
+    public int getEnemyCooldownLeft()   { return enemyCooldownLeft; }
+
+    // ===============================
+    // RESET ARCADE
+    // ===============================
 
     public void reset() {
-        this.currentStage = 1;
-        this.wins = 0;
-        this.bossStarted = false;
-        this.enemyOrder.clear();
+        currentStage = 1;
+        bossStarted = false;
+
+        // FIX #2: Safe clear — enemyOrder is always a proper ArrayList now
+        enemyOrder.clear();
         initializeGauntlet();
+
         resetBattleStats();
     }
 }

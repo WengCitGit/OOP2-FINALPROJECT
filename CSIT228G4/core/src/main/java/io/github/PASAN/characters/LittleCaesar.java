@@ -4,7 +4,7 @@ public class LittleCaesar extends Character {
 
     public LittleCaesar() {
         //stats: Name, Max HP, Max Mana, Mana Regen
-        super("Little Caesars", 165, 55, 6);
+        super("Little Caesar", 165, 55, 6);
 
         skills.add(new Skill("Hot-N-Ready Slam", 0, 12, 17));
         skills.add(new Skill("Crazy Bread Barrage", 15, 20, 30));

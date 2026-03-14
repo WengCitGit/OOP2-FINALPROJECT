@@ -4,7 +4,7 @@ public class McDonald extends Character {
 
     public McDonald() {
         //stats: Name, Max HP, Max Mana, Mana Regen
-        super("McDonald's", 160, 60, 7);
+        super("McDonald", 160, 60, 7);
         skills.add(new Skill("McFlurry Blast", 0, 11, 16));
         skills.add(new Skill("BFF Fries Fury", 15, 19, 29));
         skills.add(new Skill("BIG MAC Slam", 30, 34, 52));

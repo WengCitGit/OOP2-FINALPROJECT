@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.PASAN.Main;
+import io.github.PASAN.TemporaryArcadeScreen;
 
 public class ArcadeIntroScreen implements Screen {
     private SpriteBatch batch;
@@ -102,8 +103,8 @@ public class ArcadeIntroScreen implements Screen {
 
     private void startGame() {
         String playerChar = CharacterSelectorScreen.characterNames[characterIndex];
-        ((Main) Gdx.app.getApplicationListener())
-                .setScreen(new VSScreen(username, "CPU", "ARCADE", playerChar, "Colonel Sanders"));
+        Main game = (Main) Gdx.app.getApplicationListener();
+        game.setScreen(new TemporaryArcadeScreen(game, username, playerChar));
     }
 
     @Override public void resize(int width, int height) { viewport.update(width, height); }
