@@ -210,8 +210,8 @@ public class TemporaryArcadeScreen implements Screen {
 
         batch.begin();
 
-        if (playerSprite != null) batch.draw(playerSprite, 200, 350, 300, 450);
-        if (enemyRegion  != null) batch.draw(enemyRegion, WORLD_WIDTH - 500, 350, 300, 450);
+        if (playerSprite != null) batch.draw(playerSprite, 200, 350, 450, 500);
+        if (enemyRegion  != null) batch.draw(enemyRegion, WORLD_WIDTH - 700, 350, 450, 500);
 
         if (yellowUi != null) batch.draw(yellowUi, 40, 20, 1420, 320);
         if (redUi != null) {
@@ -297,11 +297,11 @@ public class TemporaryArcadeScreen implements Screen {
 
         // Player sprite on left
         if (playerSprite != null)
-            batch.draw(playerSprite, 250, WORLD_HEIGHT / 2 - 180, 300, 400);
+            batch.draw(playerSprite, 250, WORLD_HEIGHT / 2 - 180, 450, 500);
 
         // Enemy sprite on right (flipped)
         if (enemyRegion != null)
-            batch.draw(enemyRegion, WORLD_WIDTH - 550, WORLD_HEIGHT / 2 - 180, 300, 400);
+            batch.draw(enemyRegion, WORLD_WIDTH - 550, WORLD_HEIGHT / 2 - 180, 450, 500);
 
         // Player name
         font.getData().setScale(4f);

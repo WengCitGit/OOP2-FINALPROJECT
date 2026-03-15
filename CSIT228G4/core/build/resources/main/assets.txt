@@ -1,8 +1,10 @@
 backgrounds/arcade_intro_bg.jpg
+backgrounds/arcade_intro_bg.png
 backgrounds/battle_bg1.png
 backgrounds/characterselector_background.jpg
 backgrounds/dialogue-box.png
 backgrounds/gamemode_background.jpg
+backgrounds/mainmenu_background.jpg
 backgrounds/menu_background.jpg
 backgrounds/red_background.png
 backgrounds/temp_bg.png
@@ -51,7 +53,7 @@ characters/ColonelSanders.png
 characters/JackInTheBox.png
 characters/Jollibee.png
 characters/LittleCaesar.png
-characters/McDonald.png
+characters/Mcdonald.png
 characters/Wendy.png
 icons/jollibee_icon.png
 musics/bgm.wav
