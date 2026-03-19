@@ -24,6 +24,19 @@ public class CharacterInfoScreen implements Screen {
             "Wendy", "Jack in the Box", "Little Caesar", "Chief Khai"
     };
 
+    private static final String[] characterFiles = {
+            "icons/Jollibee_icon.png",
+            "icons/McDonald_icon.png",
+            "icons/Colonel_icon.png",
+            "icons/BurgerKing_icon.png",
+            "icons/Wendy_icon.png",
+            "icons/Jack_icon.png",
+            "icons/LittleCaesar_icon.png",
+            "icons/ChiefKhai_icon.png"
+    };
+
+    private Texture[] characterTextures;
+
     private String[] characterDescriptions = {
             "A joyful fighter fueled by happiness and fried chicken.",
             "A fast and aggressive fighter with combo attacks.",
@@ -70,6 +83,12 @@ public class CharacterInfoScreen implements Screen {
 
         backBounds = new Rectangle(50, 50, 300, 100);
 
+        // Load character icon textures
+        characterTextures = new Texture[characterFiles.length];
+        for (int i = 0; i < characterFiles.length; i++) {
+            characterTextures[i] = new Texture(characterFiles[i]);
+        }
+
         characters = new Rectangle[8];
 
         for (int i = 0; i < 8; i++) {
@@ -78,8 +97,8 @@ public class CharacterInfoScreen implements Screen {
             int col = i % 4;
 
             characters[i] = new Rectangle(
-                    350 + col * 300,
-                    650 - row * 300,
+                    380 + col * 300,
+                    600 - row * 300,
                     200,
                     200
             );
@@ -110,13 +129,16 @@ public class CharacterInfoScreen implements Screen {
 
         font.getData().setScale(2);
 
-        // Draw character names
+        // Draw character icons and names
         for (int i = 0; i < characters.length; i++) {
 
             Rectangle r = characters[i];
 
-            GlyphLayout layout = new GlyphLayout(font, characterNames[i]);
+            // Draw icon inside the box
+            batch.draw(characterTextures[i], r.x, r.y, r.width, r.height);
 
+            // Draw name centered above the box
+            GlyphLayout layout = new GlyphLayout(font, characterNames[i]);
             font.draw(batch,
                     layout,
                     r.x + (r.width - layout.width) / 2,
@@ -152,25 +174,27 @@ public class CharacterInfoScreen implements Screen {
 
         batch.end();
 
+        // Draw selection highlight border — thick yellow for selected, thin white for others
         shape.setProjectionMatrix(camera.combined);
         shape.begin(ShapeRenderer.ShapeType.Line);
-
+        shape.setColor(Color.WHITE);
         for (int i = 0; i < characters.length; i++) {
-
-            if (i == selectedCharacter)
-                shape.setColor(Color.YELLOW);
-            else
-                shape.setColor(Color.WHITE);
-
-            shape.rect(
-                    characters[i].x,
-                    characters[i].y,
-                    characters[i].width,
-                    characters[i].height
-            );
+            if (i != selectedCharacter)
+                shape.rect(characters[i].x, characters[i].y, characters[i].width, characters[i].height);
         }
-
         shape.end();
+
+        if (selectedCharacter != -1) {
+            float t = 16f;
+            Rectangle r = characters[selectedCharacter];
+            shape.begin(ShapeRenderer.ShapeType.Filled);
+            shape.setColor(Color.YELLOW);
+            shape.rect(r.x - t,       r.y - t,          r.width + t * 2, t);
+            shape.rect(r.x - t,       r.y + r.height,   r.width + t * 2, t);
+            shape.rect(r.x - t,       r.y,               t,              r.height);
+            shape.rect(r.x + r.width, r.y,               t,              r.height);
+            shape.end();
+        }
 
         handleInput();
     }
@@ -227,6 +251,8 @@ public class CharacterInfoScreen implements Screen {
         background.dispose();
         backBtn.dispose();
         backBtnP.dispose();
+        for (Texture t : characterTextures) {
+            if (t != null) t.dispose();
+        }
     }
 }
-

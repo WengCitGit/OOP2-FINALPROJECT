@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.*;
 import io.github.PASAN.Main;
-import io.github.PASAN.TemporaryArcadeScreen;
+import io.github.PASAN.ArcadeBattleScreen;
 
 public class VSScreen implements Screen {
     private SpriteBatch batch;
@@ -130,7 +130,7 @@ public class VSScreen implements Screen {
                 if(mode.equalsIgnoreCase("ARCADE")) {
                     // go to temporary arcade screen instead of normal battle
                     ((Main) Gdx.app.getApplicationListener())
-                            .setScreen(new TemporaryArcadeScreen(game, player1Name, player1Char));
+                            .setScreen(new ArcadeBattleScreen(game, player1Name, player1Char));
                 } else {
                     // normal vs
                     ((Main) Gdx.app.getApplicationListener())

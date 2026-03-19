@@ -8,13 +8,11 @@ import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.*;
 import io.github.PASAN.characters.*;
 import io.github.PASAN.characters.Character;
-import io.github.PASAN.screens.FirstScreen;
 import io.github.PASAN.screens.GameOverScreen;
-import io.github.PASAN.screens.VictoryScreen;
 
 import java.util.*;
 
-public class TemporaryArcadeScreen implements Screen {
+public class EndlessBattleScreen implements Screen {
 
     private Game game;
     private SpriteBatch batch;
@@ -27,7 +25,7 @@ public class TemporaryArcadeScreen implements Screen {
     private String playerName;
     private boolean isDefeated = false;
 
-    private Texture background, redUi, yellowUi;
+    private Texture background, redUi, yellowUi, arcadeBoard;
     private Texture skill1Btn, skill1BtnP;
     private Texture skill2Btn, skill2BtnP;
     private Texture skill3Btn, skill3BtnP;
@@ -59,11 +57,11 @@ public class TemporaryArcadeScreen implements Screen {
     private Character enemy;
     private Random random = new Random();
 
-    // --- ARCADE STAGE TRACKING ---
+    // --- ENDLESS MODE TRACKING ---
     private String playerCharName;
-    private List<String> enemyQueue;
-    private int currentStage = 1;
-    private static final int TOTAL_STAGES = 8;
+    private List<String> enemyQueue;       // shuffled pool of upcoming opponents
+    private int queueIndex = 0;            // position within the current shuffle pass
+    private int winStreak  = 0;            // cosmetic streak counter shown on screen
 
     // --- VS INTRO POPUP ---
     private boolean showingIntro = true;
@@ -73,18 +71,18 @@ public class TemporaryArcadeScreen implements Screen {
     private static final float WORLD_WIDTH  = 1920;
     private static final float WORLD_HEIGHT = 1080;
 
+    // Full roster — all valid random opponents
     private static final String[] ALL_CHARACTERS = {
             "Jollibee", "Colonel Sanders", "McDonald",
             "Burger King", "Wendy", "Jack in the Box",
             "Little Caesar", "Chief Khai"
     };
 
-    private static final String[] FINAL_BOSSES = {
-            "Dev Kishanta", "Dev Rothesa", "Dev Wengie",
-            "Dev Kunihiko", "Dev Diane"
-    };
+    // ===============================
+    // CONSTRUCTOR
+    // ===============================
 
-    public TemporaryArcadeScreen(Game game, String playerName, String playerCharName) {
+    public EndlessBattleScreen(Game game, String playerName, String playerCharName) {
         this.game           = game;
         this.playerName     = playerName;
         this.playerCharName = playerCharName;
@@ -99,17 +97,10 @@ public class TemporaryArcadeScreen implements Screen {
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
         touch = new Vector3();
 
-        // Build shuffled enemy queue (all characters except player's choice)
-        enemyQueue = new ArrayList<>();
-        for (String c : ALL_CHARACTERS) {
-            if (!c.equalsIgnoreCase(playerCharName)) {
-                enemyQueue.add(c);
-            }
-        }
-        Collections.shuffle(enemyQueue);
+        buildEnemyQueue();
 
         player = createCharacterInstance(playerCharName);
-        enemy  = createCharacterInstance(enemyQueue.get(0));
+        enemy  = createCharacterInstance(enemyQueue.get(queueIndex));
 
         loadAssetsSafely(playerCharName, enemy.getName());
 
@@ -117,8 +108,44 @@ public class TemporaryArcadeScreen implements Screen {
         skill2Bounds = new Rectangle(555, 145, 250, 70);
         skill3Bounds = new Rectangle(555,  60, 250, 70);
 
-        System.out.println("ARCADE START | Stage 1: "
+        System.out.println("ENDLESS START | Streak 0 | "
                 + player.getName() + " VS " + enemy.getName());
+    }
+
+    // ===============================
+    // ENEMY QUEUE MANAGEMENT
+    // ===============================
+
+    /**
+     * Builds a shuffled list of all roster characters except the player's own choice.
+     * Called once at startup and again whenever the pool is exhausted.
+     */
+    private void buildEnemyQueue() {
+        enemyQueue = new ArrayList<>();
+        for (String c : ALL_CHARACTERS) {
+            if (!c.equalsIgnoreCase(playerCharName)) {
+                enemyQueue.add(c);
+            }
+        }
+        Collections.shuffle(enemyQueue);
+        queueIndex = 0;
+    }
+
+    /**
+     * Returns the name of the next opponent, reshuffling the pool if needed.
+     * Guarantees the same character never appears back-to-back after a reshuffle.
+     */
+    private String nextEnemyName() {
+        queueIndex++;
+        if (queueIndex >= enemyQueue.size()) {
+            String lastEnemy = enemyQueue.get(enemyQueue.size() - 1);
+            buildEnemyQueue();
+            // Avoid immediate repeat after wrap-around
+            if (enemyQueue.get(0).equals(lastEnemy) && enemyQueue.size() > 1) {
+                Collections.swap(enemyQueue, 0, 1);
+            }
+        }
+        return enemyQueue.get(queueIndex);
     }
 
     // ===============================
@@ -129,6 +156,7 @@ public class TemporaryArcadeScreen implements Screen {
         try { background  = new Texture("backgrounds/temp_bg.png");           } catch (Exception e) { logMissing(e); }
         try { redUi       = new Texture("backgrounds/red_background.png");    } catch (Exception e) { logMissing(e); }
         try { yellowUi    = new Texture("backgrounds/yellow_background.png"); } catch (Exception e) { logMissing(e); }
+        try { arcadeBoard = new Texture("backgrounds/arcade_board.png");      } catch (Exception e) { logMissing(e); }
         try { skill1Btn   = new Texture("buttons/skill1_button.png");          } catch (Exception e) { logMissing(e); }
         try { skill1BtnP  = new Texture("buttons/skill1_button_pressed.png");  } catch (Exception e) { logMissing(e); }
         try { skill2Btn   = new Texture("buttons/skill2_button.png");          } catch (Exception e) { logMissing(e); }
@@ -189,16 +217,15 @@ public class TemporaryArcadeScreen implements Screen {
 
         batch.setProjectionMatrix(camera.combined);
 
-        // Always draw background first
         batch.begin();
         if (background != null) batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         batch.end();
 
-        // VS INTRO POPUP — blocks gameplay until done
+        // VS INTRO POPUP — blocks gameplay until dismissed
         if (showingIntro) {
             introTimer += delta;
             drawIntroPopup();
-            if (introTimer >= INTRO_DURATION) {
+            if (introTimer >= INTRO_DURATION || Gdx.input.justTouched()) {
                 showingIntro = false;
                 introTimer   = 0f;
             }
@@ -226,14 +253,16 @@ public class TemporaryArcadeScreen implements Screen {
         }
 
         font.setColor(Color.WHITE);
-        font.draw(batch, "What will\n" + player.getName() + "\ndo?", 170, 240);
-        font.draw(batch, "HP  - " + player.getHealth()      + "/" + player.getMaxHealth(), 1510, 220);
-        font.draw(batch, "Mana- " + player.getCurrentMana() + "/" + player.getMaxMana(),   1510, 140);
+        font.draw(batch, "What will\n" + player.getName() + "\ndo?", 180, 240);
+        font.draw(batch, "HP  - " + player.getHealth()      + "/" + player.getMaxHealth(), 1540, 220);
+        font.draw(batch, "Mana- " + player.getCurrentMana() + "/" + player.getMaxMana(),   1540, 140);
+
+        // Header: streak counter replaces stage/score display
         font.draw(batch,
-                "STAGE: " + currentStage + "/" + TOTAL_STAGES
+                "WIN STREAK: " + winStreak
                         + "  |  ROUND: " + currentRound
-                        + "  |  Score: " + playerWins + "-" + enemyWins,
-                WORLD_WIDTH / 2 - 350, 1030);
+                        + "  |  " + playerWins + "-" + enemyWins,
+                WORLD_WIDTH / 2 - 300, 1030);
 
         if (isTransitioning) {
             font.getData().setScale(5.0f);
@@ -253,14 +282,13 @@ public class TemporaryArcadeScreen implements Screen {
         // Transition timer logic
         if (isTransitioning) {
             transitionTimer += delta;
-            if (transitionTimer >= 3.0f) {
+            if (transitionTimer >= 2.0f) {
                 if (matchIsOver) {
                     if (isDefeated) {
-                        game.setScreen(new GameOverScreen(game, playerName));
-                    } else if (currentStage < TOTAL_STAGES) {
-                        loadNextStage();
+                        // Pass final streak to Game Over screen
+                        game.setScreen(new GameOverScreen(game, playerName, winStreak));
                     } else {
-                        game.setScreen(new VictoryScreen(game, playerName));
+                        loadNextOpponent();
                     }
                 } else {
                     isTransitioning = false;
@@ -278,72 +306,69 @@ public class TemporaryArcadeScreen implements Screen {
     // ===============================
 
     private void drawIntroPopup() {
-        shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0, 0, 0, 0.82f);
-        shapeRenderer.rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-        shapeRenderer.end();
+        float boardW = 1400f;
+        float boardH = 750f;
+        float boardX = (WORLD_WIDTH  - boardW) / 2f;
+        float boardY = (WORLD_HEIGHT - boardH) / 2f - 30f;
+
+        float charW = 410f;
+        float charH = 480f;
+
+        float playerSpriteX = boardX + 160f;
+        float enemySpriteX  = boardX + boardW - 130f - charW;
+        float spriteY       = boardY + 160f;
+
+        float nameLabelY  = spriteY + -20f;
+        float stageLabelY = boardY + boardH - 55f;
 
         batch.begin();
 
-        // Stage label — centered
-        font.getData().setScale(3.5f);
-        font.setColor(Color.ORANGE);
-        String stageLabel = currentStage < TOTAL_STAGES ? "STAGE " + currentStage : "FINAL STAGE";
-        GlyphLayout stageLayout = new GlyphLayout(font, stageLabel);
+        if (arcadeBoard != null) batch.draw(arcadeBoard, boardX, boardY, boardW, boardH);
+
+        // Show current streak in the intro so players feel the tension
+        String streakLabel = winStreak == 0 ? "ENDLESS BATTLE" : "STREAK: " + winStreak;
+        font.getData().setScale(4.5f);
+        font.setColor(Color.RED);
+        GlyphLayout stageLayout = new GlyphLayout(font, streakLabel);
         font.draw(batch, stageLayout,
                 WORLD_WIDTH / 2f - stageLayout.width / 2f,
-                WORLD_HEIGHT / 2f + 280);
+                stageLabelY);
 
-        // Player sprite on left
         if (playerSprite != null)
-            batch.draw(playerSprite, 250, WORLD_HEIGHT / 2 - 180, 450, 500);
+            batch.draw(playerSprite, playerSpriteX, spriteY, charW, charH);
 
-        // Enemy sprite on right (flipped)
         if (enemyRegion != null)
-            batch.draw(enemyRegion, WORLD_WIDTH - 550, WORLD_HEIGHT / 2 - 180, 450, 500);
+            batch.draw(enemyRegion, enemySpriteX, spriteY, charW, charH);
 
-        // Player name
-        font.getData().setScale(4f);
+        font.getData().setScale(2.8f);
         font.setColor(Color.WHITE);
-        font.draw(batch, player.getName(), 200, WORLD_HEIGHT / 2 + 170);
 
-        // VS — centered
-        font.getData().setScale(6f);
-        font.setColor(Color.RED);
-        GlyphLayout vsLayout = new GlyphLayout(font, "VS");
-        font.draw(batch, vsLayout,
-                WORLD_WIDTH / 2f - vsLayout.width / 2f,
-                WORLD_HEIGHT / 2f + 170);
+        GlyphLayout playerNameLayout = new GlyphLayout(font, player.getName());
+        font.draw(batch, playerNameLayout,
+                playerSpriteX + (charW / 3f) - playerNameLayout.width / 2f,
+                nameLabelY);
 
-        // Enemy name — right side
-        font.getData().setScale(4f);
-        font.setColor(Color.WHITE);
         GlyphLayout enemyNameLayout = new GlyphLayout(font, enemy.getName());
         font.draw(batch, enemyNameLayout,
-                WORLD_WIDTH - 250 - enemyNameLayout.width,
-                WORLD_HEIGHT / 2f + 170);
-
-        // "Starting..." after 1.5s — centered
-        if (introTimer >= 1.5f) {
-            font.getData().setScale(3f);
-            font.setColor(Color.YELLOW);
-            GlyphLayout startLayout = new GlyphLayout(font, "Starting...");
-            font.draw(batch, startLayout,
-                    WORLD_WIDTH / 2f - startLayout.width / 2f,
-                    WORLD_HEIGHT / 2f - 230);
-        }
+                enemySpriteX + (charW / 1.5f) - enemyNameLayout.width / 2f,
+                nameLabelY);
 
         font.getData().setScale(2.5f);
         batch.end();
     }
 
     // ===============================
-    // LOAD NEXT STAGE
+    // LOAD NEXT OPPONENT (ENDLESS)
     // ===============================
 
-    private void loadNextStage() {
-        currentStage++;
+    /**
+     * Called after a match win. Increments the streak, picks the next random opponent,
+     * and reloads assets. The queue reshuffles automatically when exhausted so battles
+     * continue indefinitely.
+     */
+    private void loadNextOpponent() {
+        winStreak++;
+
         currentRound    = 1;
         playerWins      = 0;
         enemyWins       = 0;
@@ -359,18 +384,12 @@ public class TemporaryArcadeScreen implements Screen {
         playerTurn = true;
         turnTimer  = 0;
 
-        String nextEnemyName;
-        if (currentStage <= 7) {
-            nextEnemyName = enemyQueue.get(currentStage - 1);
-        } else {
-            nextEnemyName = FINAL_BOSSES[random.nextInt(FINAL_BOSSES.length)];
-        }
-
-        enemy = createCharacterInstance(nextEnemyName);
+        String nextName = nextEnemyName();
+        enemy = createCharacterInstance(nextName);
 
         if (enemySprite != null) { enemySprite.dispose(); enemySprite = null; }
         try {
-            enemySprite = new Texture("characters/" + nextEnemyName.replace(" ", "") + ".png");
+            enemySprite = new Texture("characters/" + nextName.replace(" ", "") + ".png");
             enemyRegion = new TextureRegion(enemySprite);
             enemyRegion.flip(true, false);
         } catch (Exception e) {
@@ -381,8 +400,8 @@ public class TemporaryArcadeScreen implements Screen {
         showingIntro = true;
         introTimer   = 0f;
 
-        System.out.println("STAGE " + currentStage + ": "
-                + player.getName() + " VS " + enemy.getName());
+        System.out.println("ENDLESS | Streak " + winStreak
+                + " | " + player.getName() + " VS " + enemy.getName());
     }
 
     // ===============================
@@ -418,9 +437,9 @@ public class TemporaryArcadeScreen implements Screen {
 
         if (normal == null) return;
 
-        int cost           = player.getSkills().get(i).getManaCost();
-        boolean canAfford  = player.getCurrentMana() >= cost;
-        boolean onCD       = cd > 0;
+        int cost          = player.getSkills().get(i).getManaCost();
+        boolean canAfford = player.getCurrentMana() >= cost;
+        boolean onCD      = cd > 0;
         boolean isTouching = Gdx.input.isTouched() && bounds.contains(touch.x, touch.y);
 
         boolean usePressed = !canAfford || onCD || (playerTurn && isTouching);
@@ -558,16 +577,12 @@ public class TemporaryArcadeScreen implements Screen {
             }
 
             if (playerWins == 2) {
-                matchIsOver = true;
-                if (currentStage >= TOTAL_STAGES) {
-                    transitionMessage = "ARCADE COMPLETE! VICTORY!";
-                } else {
-                    transitionMessage = "STAGE " + currentStage + " CLEARED!";
-                }
+                matchIsOver       = true;
+                transitionMessage = "OPPONENT DEFEATED! STREAK: " + (winStreak + 1);
             } else if (enemyWins == 2) {
                 matchIsOver       = true;
                 isDefeated        = true;
-                transitionMessage = "DEFEATED! GAME OVER!";
+                transitionMessage = "DEFEATED! STREAK: " + winStreak;
             } else {
                 currentRound++;
             }
@@ -577,7 +592,7 @@ public class TemporaryArcadeScreen implements Screen {
     }
 
     // ===============================
-    // RESET ROUND (within same stage)
+    // RESET ROUND (within same match)
     // ===============================
 
     private void resetRound() {
@@ -621,6 +636,7 @@ public class TemporaryArcadeScreen implements Screen {
         if (background   != null) background.dispose();
         if (redUi        != null) redUi.dispose();
         if (yellowUi     != null) yellowUi.dispose();
+        if (arcadeBoard  != null) arcadeBoard.dispose();
         if (playerSprite != null) playerSprite.dispose();
         if (enemySprite  != null) enemySprite.dispose();
 

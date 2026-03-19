@@ -54,7 +54,7 @@ public class GameLoreScreen implements Screen {
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
 
         // Background
-        background = new Texture("backgrounds/gamemode_background.jpg");
+        background = new Texture("backgrounds/gamelore_background.jpg");
 
         // Buttons
         backBtn = new Texture("buttons/back_button.png");

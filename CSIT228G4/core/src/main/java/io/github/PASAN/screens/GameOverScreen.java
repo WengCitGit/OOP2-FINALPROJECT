@@ -12,6 +12,8 @@ public class GameOverScreen implements Screen {
 
     private Game game;
     private String username;
+    private String mode;       // "ARCADE" or "ENDLESS"
+    private int winStreak;     // only meaningful in ENDLESS; 0 for ARCADE
 
     private SpriteBatch batch;
     private BitmapFont font;
@@ -26,9 +28,28 @@ public class GameOverScreen implements Screen {
     private static final float WORLD_WIDTH  = 1920;
     private static final float WORLD_HEIGHT = 1080;
 
+    // -------------------------------------------------------
+    // ARCADE constructor — no streak to show
+    // -------------------------------------------------------
     public GameOverScreen(Game game, String username) {
-        this.game     = game;
-        this.username = username;
+        this(game, username, "ARCADE", 0);
+    }
+
+    // -------------------------------------------------------
+    // ENDLESS constructor — streak displayed on screen
+    // -------------------------------------------------------
+    public GameOverScreen(Game game, String username, int winStreak) {
+        this(game, username, "ENDLESS", winStreak);
+    }
+
+    // -------------------------------------------------------
+    // Shared setup
+    // -------------------------------------------------------
+    private GameOverScreen(Game game, String username, String mode, int winStreak) {
+        this.game      = game;
+        this.username  = username;
+        this.mode      = mode;
+        this.winStreak = winStreak;
 
         batch = new SpriteBatch();
         font  = new BitmapFont();
@@ -42,10 +63,15 @@ public class GameOverScreen implements Screen {
         float centerX = WORLD_WIDTH  / 2f;
         float centerY = WORLD_HEIGHT / 2f;
 
-        yesBounds = new Rectangle(centerX - 350, centerY - 180, 280, 100);
-        noBounds  = new Rectangle(centerX +  70, centerY - 180, 280, 100);
+        // Buttons sit a little lower when the streak line is visible
+        float buttonY = mode.equals("ENDLESS") ? centerY - 230 : centerY - 180;
+        yesBounds = new Rectangle(centerX - 350, buttonY, 280, 100);
+        noBounds  = new Rectangle(centerX +  70, buttonY, 280, 100);
     }
 
+    // -------------------------------------------------------
+    // RENDER
+    // -------------------------------------------------------
     @Override
     public void render(float delta) {
         camera.update();
@@ -58,15 +84,28 @@ public class GameOverScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        // GAME OVER title
+        // --- GAME OVER title ---
         font.getData().setScale(9f);
         font.setColor(Color.RED);
         GlyphLayout titleLayout = new GlyphLayout(font, "GAME OVER");
         font.draw(batch, titleLayout,
                 WORLD_WIDTH / 2f - titleLayout.width / 2f,
-                WORLD_HEIGHT / 2f + 220);
+                WORLD_HEIGHT / 2f + 280);
 
-        // Question
+        // --- Endless-only: win streak line ---
+        if (mode.equals("ENDLESS")) {
+            font.getData().setScale(4.5f);
+            font.setColor(Color.GOLD);
+            String streakText = winStreak == 0
+                    ? "You didn't win a single round..."
+                    : "Win Streak: " + winStreak;
+            GlyphLayout streakLayout = new GlyphLayout(font, streakText);
+            font.draw(batch, streakLayout,
+                    WORLD_WIDTH / 2f - streakLayout.width / 2f,
+                    WORLD_HEIGHT / 2f + 170);
+        }
+
+        // --- "Play again?" question ---
         font.getData().setScale(4f);
         font.setColor(Color.WHITE);
         GlyphLayout questionLayout = new GlyphLayout(font, "Do you want to play again?");
@@ -74,7 +113,7 @@ public class GameOverScreen implements Screen {
                 WORLD_WIDTH / 2f - questionLayout.width / 2f,
                 WORLD_HEIGHT / 2f + 50);
 
-        // YES button
+        // --- YES button ---
         boolean hoverYes = yesBounds.contains(touch.x, touch.y);
         font.getData().setScale(5f);
         font.setColor(hoverYes ? Color.GOLD : Color.GREEN);
@@ -83,7 +122,7 @@ public class GameOverScreen implements Screen {
                 yesBounds.x + (yesBounds.width  - yesLayout.width)  / 2f,
                 yesBounds.y + (yesBounds.height + yesLayout.height) / 2f);
 
-        // NO button
+        // --- NO button ---
         boolean hoverNo = noBounds.contains(touch.x, touch.y);
         font.setColor(hoverNo ? Color.GOLD : Color.RED);
         GlyphLayout noLayout = new GlyphLayout(font, "NO");
@@ -97,6 +136,9 @@ public class GameOverScreen implements Screen {
         handleInput();
     }
 
+    // -------------------------------------------------------
+    // INPUT
+    // -------------------------------------------------------
     private void handleInput() {
         if (Gdx.input.justTouched()) {
             if (yesBounds.contains(touch.x, touch.y)) yesPressed = true;
@@ -105,11 +147,10 @@ public class GameOverScreen implements Screen {
 
         if (!Gdx.input.isTouched()) {
             if (yesPressed && yesBounds.contains(touch.x, touch.y)) {
-                // Back to character select for Arcade
-                game.setScreen(new CharacterSelectorScreen(username, "ARCADE", 1, "", ""));
+                // Route back to the correct character select mode
+                game.setScreen(new CharacterSelectorScreen(username, mode, 1, "", ""));
             }
             if (noPressed && noBounds.contains(touch.x, touch.y)) {
-                // Back to main menu
                 game.setScreen(new FirstScreen(game));
             }
             yesPressed = false;

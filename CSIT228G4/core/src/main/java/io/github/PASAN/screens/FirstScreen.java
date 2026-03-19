@@ -48,7 +48,7 @@ public class FirstScreen implements Screen {
         viewport.apply();
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
 
-        background = new Texture("backgrounds/menu_background.jpg");
+        background = new Texture("backgrounds/mainmenu_background.jpg");
 
         // Load Normal States
         modeBtn = new Texture("buttons/game_mode_button.png");
