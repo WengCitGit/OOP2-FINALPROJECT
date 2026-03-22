@@ -37,20 +37,6 @@ public class CharacterInfoScreen implements Screen {
 
     private Texture[] characterTextures;
 
-    /**
-     * Tab images per character, per tab.
-     * tabImages[characterIndex][tabIndex] — tabIndex: 0=STATS, 1=WHO, 2=WHY, 3=WHERE
-     *
-     * Each PNG is the FULL panel body (yellow parchment + character art + content).
-     * The red tab buttons and close button are drawn on top by the code.
-     *
-     * Expected asset paths:
-     *   info/Jollibee_stats.png
-     *   info/Jollibee_who.png
-     *   info/Jollibee_why.png
-     *   info/Jollibee_where.png
-     *   ... (same pattern for all 8 characters)
-     */
     private static final String[] characterKeys = {
             "Jollibee", "McDonald", "Colonel", "BurgerKing",
             "Wendy", "Jack", "LittleCaesar", "ChiefKhai"
@@ -58,8 +44,27 @@ public class CharacterInfoScreen implements Screen {
 
     private static final String[] tabKeys = { "stats", "who", "why", "where" };
 
-    private Texture[][] tabImages;      // [characterIndex][tabIndex] — null if file missing
-    private Texture     placeholderTex; // shown when a tab image is missing
+    private Texture[][] tabImages;        // [characterIndex][tabIndex] — null if file missing
+    private boolean[]   tabImagesLoaded; // true once a character's tab images have been loaded
+    private Texture     placeholderTex;  // shown when a tab image is missing
+
+    // Tab button PNG textures (normal + pressed), indexed 0=STATS, 1=WHO, 2=WHY, 3=WHERE
+    private Texture[] tabBtn  = new Texture[4];
+    private Texture[] tabBtnP = new Texture[4];
+
+    private static final String[] tabBtnFiles = {
+            "buttons/stats_button.png",
+            "buttons/who_button.png",
+            "buttons/why_button.png",
+            "buttons/where_button.png"
+    };
+
+    private static final String[] tabBtnPressedFiles = {
+            "buttons/stats_button_pressed.png",
+            "buttons/who_button_pressed.png",
+            "buttons/why_button_pressed.png",
+            "buttons/where_button_pressed.png"
+    };
 
     // Close button textures
     private Texture closeBtn;
@@ -84,6 +89,7 @@ public class CharacterInfoScreen implements Screen {
     private boolean showPanel = false;
     private int activeTab     = 0;   // 0=STATS, 1=WHO, 2=WHY, 3=WHERE
     private boolean closeHeld = false;
+    private int tabPressed    = -1;
 
     // Panel position constants (used to anchor tabs and close button)
     private static final float PANEL_X = 410;
@@ -92,7 +98,6 @@ public class CharacterInfoScreen implements Screen {
     private static final float PANEL_H = 780;
 
     private Rectangle[] tabBounds = new Rectangle[4];
-    private String[]    tabLabels = { "STATS", "WHO", "WHY", "WHERE" };
     private Rectangle   closeBounds;
 
     public CharacterInfoScreen(Game game) {
@@ -111,7 +116,23 @@ public class CharacterInfoScreen implements Screen {
         background = new Texture("backgrounds/characterselector_background.jpg");
         backBtn    = new Texture("buttons/back_button.png");
         backBtnP   = new Texture("buttons/back_button_pressed.png");
-        backBounds = new Rectangle(50, 50, 300, 100);
+        backBounds = new Rectangle(50, 50, 240, 100);
+
+        // Tab button PNGs
+        for (int i = 0; i < 4; i++) {
+            try {
+                tabBtn[i] = new Texture(tabBtnFiles[i]);
+            } catch (Exception e) {
+                Gdx.app.error("CharacterInfoScreen", "Missing tab button: " + tabBtnFiles[i], e);
+                tabBtn[i] = createPlaceholder(Color.DARK_GRAY);
+            }
+            try {
+                tabBtnP[i] = new Texture(tabBtnPressedFiles[i]);
+            } catch (Exception e) {
+                Gdx.app.error("CharacterInfoScreen", "Missing tab button pressed: " + tabBtnPressedFiles[i], e);
+                tabBtnP[i] = tabBtn[i]; // fall back to normal if pressed is missing
+            }
+        }
 
         // Close button PNG (with pressed variant)
         closeBtn  = new Texture("buttons/close_button.png");
@@ -123,8 +144,7 @@ public class CharacterInfoScreen implements Screen {
             try {
                 characterTextures[i] = new Texture(characterFiles[i]);
             } catch (Exception e) {
-                Gdx.app.error("CharacterInfoScreen",
-                        "Missing character icon: " + characterFiles[i], e);
+                Gdx.app.error("CharacterInfoScreen", "Missing character icon: " + characterFiles[i], e);
                 characterTextures[i] = createPlaceholder(Color.GRAY);
             }
         }
@@ -132,20 +152,10 @@ public class CharacterInfoScreen implements Screen {
         // Magenta placeholder for missing tab images
         placeholderTex = createPlaceholder(Color.MAGENTA);
 
-        // Tab photo textures
-        tabImages = new Texture[characterKeys.length][tabKeys.length];
-        for (int c = 0; c < characterKeys.length; c++) {
-            for (int t = 0; t < tabKeys.length; t++) {
-                String path = "info/" + characterKeys[c] + "_" + tabKeys[t] + ".png";
-                try {
-                    tabImages[c][t] = new Texture(path);
-                } catch (Exception e) {
-                    Gdx.app.error("CharacterInfoScreen",
-                            "Missing tab image: " + path, e);
-                    tabImages[c][t] = null;
-                }
-            }
-        }
+        // Tab photo textures — lazily loaded when a character is first selected
+        // to avoid blocking the audio thread on startup
+        tabImages       = new Texture[characterKeys.length][tabKeys.length];
+        tabImagesLoaded = new boolean[characterKeys.length];
 
         // Character selector grid
         characters = new Rectangle[8];
@@ -156,15 +166,35 @@ public class CharacterInfoScreen implements Screen {
         }
 
         // Tab button rects — four tabs spaced along top of panel
-        float tabW = 260, tabH = 72, tabSpacing = 20;
-        float tabStartX = PANEL_X + 50;
-        float tabTopY   = PANEL_Y + PANEL_H + 20;
+        float tabW = 290, tabH = 85, tabSpacing = 30;
+        float tabStartX = PANEL_X + -30;
+        float tabTopY   = PANEL_Y + PANEL_H + 10;
         for (int i = 0; i < 4; i++) {
             tabBounds[i] = new Rectangle(tabStartX + i * (tabW + tabSpacing), tabTopY, tabW, tabH);
         }
 
         // Close button bounds
-        closeBounds = new Rectangle(PANEL_X + PANEL_W - 150, PANEL_Y + PANEL_H - 10, 100, 92);
+        closeBounds = new Rectangle(PANEL_X + PANEL_W - 150, PANEL_Y + PANEL_H - 10, 90, 85);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    /**
+     * Loads all 4 tab images for the given character index on demand.
+     * Called the first time that character is selected so the cost is
+     * spread out and never causes an audio stutter on the select screen.
+     */
+    private void loadTabImagesFor(int characterIndex) {
+        if (tabImagesLoaded[characterIndex]) return;
+        for (int t = 0; t < tabKeys.length; t++) {
+            String path = "info/" + characterKeys[characterIndex] + "_" + tabKeys[t] + ".png";
+            try {
+                tabImages[characterIndex][t] = new Texture(path);
+            } catch (Exception e) {
+                Gdx.app.error("CharacterInfoScreen", "Missing tab image: " + path, e);
+                tabImages[characterIndex][t] = null;
+            }
+        }
+        tabImagesLoaded[characterIndex] = true;
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -256,43 +286,23 @@ public class CharacterInfoScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         batch.draw(photo, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-        batch.end();
 
-        // 3. Draw red tab buttons on top of the PNG
-        shape.setProjectionMatrix(camera.combined);
+        // 3. Draw tab button PNGs on top
+        // Active tab always shows pressed texture; inactive tabs show normal texture
         for (int i = 0; i < 4; i++) {
             Rectangle tb = tabBounds[i];
-            shape.begin(ShapeRenderer.ShapeType.Filled);
-            shape.setColor(i == activeTab ? 0.80f : 0.50f, 0.10f, 0.10f, 1f);
-            shape.rect(tb.x, tb.y, tb.width, tb.height);
-            shape.end();
-            shape.begin(ShapeRenderer.ShapeType.Line);
-            shape.setColor(0.20f, 0.04f, 0.04f, 1f);
-            shape.rect(tb.x, tb.y, tb.width, tb.height);
-            shape.end();
+            Texture tex = (i == activeTab) ? tabBtnP[i] : tabBtn[i];
+            batch.draw(tex, tb.x, tb.y, tb.width, tb.height);
         }
 
-        // 4. Draw tab labels + close button PNG on top
-        batch.begin();
-
-        font.getData().setScale(2.2f);
-        font.setColor(Color.WHITE);
-        for (int i = 0; i < 4; i++) {
-            Rectangle tb = tabBounds[i];
-            GlyphLayout gl = new GlyphLayout(font, tabLabels[i]);
-            font.draw(batch, gl,
-                    tb.x + (tb.width  - gl.width)  / 2,
-                    tb.y + (tb.height + gl.height)  / 2);
-        }
-
-        // Close button — show pressed texture while finger/mouse is held down over it
+        // 4. Draw close button PNG on top
         boolean isClosePressed = Gdx.input.isTouched() && closeBounds.contains(touch.x, touch.y);
         Texture closeTex = isClosePressed ? closeBtnP : closeBtn;
         batch.draw(closeTex,
                 closeBounds.x, closeBounds.y,
                 closeBounds.width, closeBounds.height);
 
-        // "Image Missing" label if the texture was not loaded
+        // 5. "Image Missing" label if the texture was not loaded
         if (tabImages[idx][activeTab] == null) {
             font.getData().setScale(3f);
             font.setColor(Color.WHITE);
@@ -323,7 +333,7 @@ public class CharacterInfoScreen implements Screen {
             } else {
                 for (int i = 0; i < 4; i++) {
                     if (tabBounds[i].contains(touch.x, touch.y))
-                        activeTab = i;
+                        tabPressed = i;
                 }
                 if (closeBounds.contains(touch.x, touch.y))
                     closeHeld = true;
@@ -338,15 +348,22 @@ public class CharacterInfoScreen implements Screen {
 
                 if (characterPressed != -1 && characters[characterPressed].contains(touch.x, touch.y)) {
                     selectedCharacter = characterPressed;
+                    loadTabImagesFor(selectedCharacter); // load only this character's 4 images
                     showPanel = true;
                     activeTab = 0;
                 }
 
             } else {
-                if (closeHeld && closeBounds.contains(touch.x, touch.y)) {
+                // Confirm tab switch on release
+                if (tabPressed != -1 && tabBounds[tabPressed].contains(touch.x, touch.y))
+                    activeTab = tabPressed;
+
+                // Confirm close on release
+                if (closeHeld && closeBounds.contains(touch.x, touch.y))
                     showPanel = false;
-                }
-                closeHeld = false;
+
+                tabPressed = -1;
+                closeHeld  = false;
             }
 
             backPressed      = false;
@@ -382,6 +399,10 @@ public class CharacterInfoScreen implements Screen {
         closeBtn.dispose();
         closeBtnP.dispose();
         placeholderTex.dispose();
+        for (int i = 0; i < 4; i++) {
+            if (tabBtn[i]  != null) tabBtn[i].dispose();
+            if (tabBtnP[i] != null && tabBtnP[i] != tabBtn[i]) tabBtnP[i].dispose();
+        }
         for (Texture t : characterTextures) if (t != null) t.dispose();
         for (Texture[] row : tabImages)
             for (Texture t : row) if (t != null) t.dispose();

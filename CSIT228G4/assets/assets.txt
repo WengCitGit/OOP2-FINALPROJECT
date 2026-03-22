@@ -50,6 +50,14 @@ buttons/skill3_button.png
 buttons/skill3_button_pressed.png
 buttons/start_button.png
 buttons/start_button_pressed.png
+buttons/stats_button.png
+buttons/stats_button_pressed.png
+buttons/where_button.png
+buttons/where_button_pressed.png
+buttons/who_button.png
+buttons/who_button_pressed.png
+buttons/why_button.png
+buttons/why_button_pressed.png
 characters/BurgerKing.png
 characters/ChiefKhai.png
 characters/ColonelSanders.png
