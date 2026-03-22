@@ -42,7 +42,7 @@ public class CharacterInfoScreen implements Screen {
             "Wendy", "Jack", "LittleCaesar", "ChiefKhai"
     };
 
-    private static final String[] tabKeys = { "stats", "who", "why", "where" };
+    private static final String[] tabKeys = { "stats", "who", "where", "why" };
 
     private Texture[][] tabImages;        // [characterIndex][tabIndex] — null if file missing
     private boolean[]   tabImagesLoaded; // true once a character's tab images have been loaded
@@ -55,15 +55,15 @@ public class CharacterInfoScreen implements Screen {
     private static final String[] tabBtnFiles = {
             "buttons/stats_button.png",
             "buttons/who_button.png",
-            "buttons/why_button.png",
-            "buttons/where_button.png"
+            "buttons/where_button.png",
+            "buttons/why_button.png"
     };
 
     private static final String[] tabBtnPressedFiles = {
             "buttons/stats_button_pressed.png",
             "buttons/who_button_pressed.png",
-            "buttons/why_button_pressed.png",
-            "buttons/where_button_pressed.png"
+            "buttons/where_button_pressed.png",
+            "buttons/why_button_pressed.png"
     };
 
     // Close button textures
@@ -167,8 +167,8 @@ public class CharacterInfoScreen implements Screen {
 
         // Tab button rects — four tabs spaced along top of panel
         float tabW = 290, tabH = 85, tabSpacing = 30;
-        float tabStartX = PANEL_X + -30;
-        float tabTopY   = PANEL_Y + PANEL_H + 10;
+        float tabStartX = PANEL_X + -10;
+        float tabTopY   = PANEL_Y + PANEL_H + 20;
         for (int i = 0; i < 4; i++) {
             tabBounds[i] = new Rectangle(tabStartX + i * (tabW + tabSpacing), tabTopY, tabW, tabH);
         }
