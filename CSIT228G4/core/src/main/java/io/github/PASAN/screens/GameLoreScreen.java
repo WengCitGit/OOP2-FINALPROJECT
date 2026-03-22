@@ -141,6 +141,7 @@ public class GameLoreScreen implements Screen {
 
             else if (mainStoryPressed && mainStoryBounds.contains(touchPoint.x, touchPoint.y)) {
                 System.out.println("Main Story Clicked");
+                game.setScreen(new MainBackstoryScreen(game));
             }
 
             else if (characterPressed && characterInfoBounds.contains(touchPoint.x, touchPoint.y)) {
