@@ -1,0 +1,4 @@
+Ayella,3000
+layla,1000
+Marimar,0
+bukopie,0

@@ -10,6 +10,8 @@ import io.github.PASAN.characters.*;
 import io.github.PASAN.characters.Character;
 import io.github.PASAN.screens.GameOverScreen;
 import io.github.PASAN.screens.VictoryScreen;
+import io.github.PASAN.leaderboard.Leaderboard;
+import io.github.PASAN.leaderboard.CalculateScore;
 
 import java.util.*;
 
@@ -256,10 +258,12 @@ public class ArcadeBattleScreen implements Screen {
             if (transitionTimer >= 2.0f) {
                 if (matchIsOver) {
                     if (isDefeated) {
+                        saveArcadeScore(false);
                         game.setScreen(new GameOverScreen(game, playerName));
                     } else if (currentStage < TOTAL_STAGES) {
                         loadNextStage();
                     } else {
+                        saveArcadeScore(true);
                         game.setScreen(new VictoryScreen(game, playerName));
                     }
                 } else {
@@ -613,6 +617,18 @@ public class ArcadeBattleScreen implements Screen {
     @Override public void hide()   {}
     @Override public void pause()  {}
     @Override public void resume() {}
+
+    private void saveArcadeScore(boolean isVictory) {
+        // if they won, they cleared all TOTAL_STAGES. If they lost, they cleared (currentStage - 1)
+        int stagesCleared = isVictory ? TOTAL_STAGES : (currentStage - 1);
+
+        // If they died, they have 0 HP left for the bonus. If they won, they get a bonus for surviving HP!
+        int remainingHP = isVictory ? Math.max(0, player.getHealth()) : 0;
+
+        int finalScore = CalculateScore.calculateArcadeScore(stagesCleared, remainingHP);
+        Leaderboard manager = new Leaderboard("arcade_scores.txt");
+        manager.addScore(playerName, finalScore);
+    }
 
     @Override
     public void dispose() {

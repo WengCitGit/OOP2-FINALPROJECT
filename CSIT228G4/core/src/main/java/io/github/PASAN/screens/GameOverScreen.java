@@ -21,9 +21,10 @@ public class GameOverScreen implements Screen {
     private Viewport viewport;
     private Vector3 touch;
 
-    private Rectangle yesBounds, noBounds;
+    private Rectangle yesBounds, noBounds, leaderboardBounds;
     private boolean yesPressed = false;
     private boolean noPressed  = false;
+    private boolean leaderboardPressed = false;
 
     private static final float WORLD_WIDTH  = 1920;
     private static final float WORLD_HEIGHT = 1080;
@@ -67,6 +68,7 @@ public class GameOverScreen implements Screen {
         float buttonY = mode.equals("ENDLESS") ? centerY - 230 : centerY - 180;
         yesBounds = new Rectangle(centerX - 350, buttonY, 280, 100);
         noBounds  = new Rectangle(centerX +  70, buttonY, 280, 100);
+        leaderboardBounds = new Rectangle(centerX - 300, buttonY - 140, 600, 100);
     }
 
     // -------------------------------------------------------
@@ -129,6 +131,13 @@ public class GameOverScreen implements Screen {
         font.draw(batch, noLayout,
                 noBounds.x + (noBounds.width  - noLayout.width)  / 2f,
                 noBounds.y + (noBounds.height + noLayout.height) / 2f);
+        boolean hoverLeaderboard = leaderboardBounds.contains(touch.x, touch.y);
+        font.getData().setScale(3.5f); // Slightly smaller than YES/NO so it fits nicely
+        font.setColor(hoverLeaderboard ? Color.GOLD : Color.CYAN); // Cyan default, turns Gold when hovered
+        GlyphLayout leaderboardLayout = new GlyphLayout(font, "VIEW LEADERBOARD");
+        font.draw(batch, leaderboardLayout,
+                leaderboardBounds.x + (leaderboardBounds.width  - leaderboardLayout.width)  / 2f,
+                leaderboardBounds.y + (leaderboardBounds.height + leaderboardLayout.height) / 2f);
 
         font.getData().setScale(2.5f);
         batch.end();
@@ -143,6 +152,7 @@ public class GameOverScreen implements Screen {
         if (Gdx.input.justTouched()) {
             if (yesBounds.contains(touch.x, touch.y)) yesPressed = true;
             if (noBounds.contains(touch.x, touch.y))  noPressed  = true;
+            if (leaderboardBounds.contains(touch.x, touch.y)) leaderboardPressed = true;
         }
 
         if (!Gdx.input.isTouched()) {
@@ -153,8 +163,12 @@ public class GameOverScreen implements Screen {
             if (noPressed && noBounds.contains(touch.x, touch.y)) {
                 game.setScreen(new FirstScreen(game));
             }
+            if (leaderboardPressed && leaderboardBounds.contains(touch.x, touch.y)) {
+                game.setScreen(new LeaderboardScreen(mode));
+            }
             yesPressed = false;
             noPressed  = false;
+            leaderboardPressed = false;
         }
     }
 

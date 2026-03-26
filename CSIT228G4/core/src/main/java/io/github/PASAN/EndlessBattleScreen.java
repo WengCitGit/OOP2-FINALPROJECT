@@ -9,6 +9,8 @@ import com.badlogic.gdx.utils.viewport.*;
 import io.github.PASAN.characters.*;
 import io.github.PASAN.characters.Character;
 import io.github.PASAN.screens.GameOverScreen;
+import io.github.PASAN.leaderboard.Leaderboard;
+import io.github.PASAN.leaderboard.CalculateScore;
 
 import java.util.*;
 
@@ -286,6 +288,7 @@ public class EndlessBattleScreen implements Screen {
                 if (matchIsOver) {
                     if (isDefeated) {
                         // Pass final streak to Game Over screen
+                        saveEndlessScore(winStreak);
                         game.setScreen(new GameOverScreen(game, playerName, winStreak));
                     } else {
                         loadNextOpponent();
@@ -626,6 +629,12 @@ public class EndlessBattleScreen implements Screen {
     @Override public void hide()   {}
     @Override public void pause()  {}
     @Override public void resume() {}
+
+    private void saveEndlessScore(int enemiesDefeated) {
+        int finalScore = CalculateScore.calculateEndlessScore(enemiesDefeated);
+        Leaderboard manager = new Leaderboard("endless_scores.txt");
+        manager.addScore(playerName, finalScore);
+    }
 
     @Override
     public void dispose() {
