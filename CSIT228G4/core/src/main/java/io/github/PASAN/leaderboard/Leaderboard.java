@@ -17,10 +17,26 @@ public class Leaderboard {
         readFile();
     }
 
-    public void addScore(String playerName, int finalScore) {
-        scores.add(new PlayerScore(playerName, finalScore));
-        sortScoresDescending();
+    public void addScore(String playerName, int newScore) {
+        boolean playerExists = false;
+        for (int i = 0; i < scores.size(); i++) {
+            PlayerScore ps = scores.get(i);
 
+            if (ps.getPlayer().equalsIgnoreCase(playerName)) {
+                playerExists = true;
+
+                if (newScore > ps.getScore()) {
+                    scores.set(i, new PlayerScore(playerName, newScore));
+                }
+                break;
+            }
+        }
+
+        if (!playerExists) {
+            scores.add(new PlayerScore(playerName, newScore));
+        }
+
+        sortScoresDescending();
         if (scores.size() > MAX_ENTRIES) {
             scores.remove(scores.size() - 1);
         }

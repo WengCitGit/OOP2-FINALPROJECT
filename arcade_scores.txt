@@ -1,4 +1,10 @@
+Marimar,4000
+Milio,3500
 Ayella,3000
-layla,1000
-Marimar,0
-bukopie,0
+Shanticobs,1500
+Michael,1200
+Layla,1050
+Maria,1000
+Archi,722
+Richmar,465
+Wonie,450
