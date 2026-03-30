@@ -6,10 +6,13 @@ backgrounds/characterselector_background.jpg
 backgrounds/dialogue-box.png
 backgrounds/gamelore_background.jpg
 backgrounds/gamemode_background.jpg
+backgrounds/gameover_background.jpg
 backgrounds/leaderboard_bg.png
 backgrounds/mainmenu_background.jpg
+backgrounds/rankings_background.jpg
 backgrounds/red_background.png
 backgrounds/temp_bg.png
+backgrounds/thankyou_background.jpg
 backgrounds/usernameScreenPlayer1_background.jpg
 backgrounds/usernameScreenPlayer2_background.jpg
 backgrounds/usernameScreen_background.jpg
@@ -41,6 +44,8 @@ buttons/main_story_button.png
 buttons/main_story_button_pressed.png
 buttons/next_button.PNG
 buttons/next_button_pressed.PNG
+buttons/no_button.png
+buttons/no_button_pressed.png
 buttons/play_button.png
 buttons/play_button_pressed.png
 buttons/prev_button.PNG
@@ -67,6 +72,8 @@ buttons/who_button.png
 buttons/who_button_pressed.png
 buttons/why_button.png
 buttons/why_button_pressed.png
+buttons/yes_button.png
+buttons/yes_button_pressed.png
 characters/BurgerKing.png
 characters/ChiefKhai.png
 characters/ColonelSanders.png

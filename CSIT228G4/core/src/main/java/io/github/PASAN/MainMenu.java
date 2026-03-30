@@ -1,133 +1,179 @@
 package io.github.PASAN;
 
-import com.badlogic.gdx.*;
-import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.graphics.g2d.*;
+import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.PASAN.screens.FirstScreen;
+import io.github.PASAN.screens.RankingsScreen;
 
 public class MainMenu implements Screen {
-
-    private Game game; // <- add this
-
+    private Game game;
     private SpriteBatch batch;
     private Texture background;
-    private Texture playBtn, playBtnPressed;
-    private Texture creditsBtn, creditsBtnPressed;
-    private Texture exitBtn, exitBtnPressed;
-
+    private Texture thankYouBg;
+    private Texture playBtn;
+    private Texture playBtnPressed;
+    private Texture rankingsBtn;
+    private Texture rankingsBtnPressed;
+    private Texture creditsBtn;
+    private Texture creditsBtnPressed;
+    private Texture exitBtn;
+    private Texture exitBtnPressed;
     private OrthographicCamera camera;
     private Viewport viewport;
-
-    private static final float WORLD_WIDTH = 1920;
-    private static final float WORLD_HEIGHT = 1080;
-
-    private Rectangle playBounds, creditsBounds, exitBounds;
+    private static final float WORLD_WIDTH  = 1920.0F;
+    private static final float WORLD_HEIGHT = 1080.0F;
+    private Rectangle playBounds;
+    private Rectangle rankingsBounds;
+    private Rectangle creditsBounds;
+    private Rectangle exitBounds;
     private Vector3 touchPoint;
+    private boolean playPressed     = false;
+    private boolean rankingsPressed = false;
+    private boolean creditsPressed  = false;
+    private boolean exitPressed     = false;
 
-    private boolean playPressed = false;
-    private boolean creditsPressed = false;
-    private boolean exitPressed = false;
+    // Thank you fade fields
+    private boolean showingThankYou  = false;
+    private float   thankYouTimer    = 0f;
+    private static final float DISPLAY_TIME = 3f;
+    private static final float FADE_START   = 2f;
 
-    // Update constructor to take Game instance
     public MainMenu(Game game) {
         this.game = game;
+        this.batch = new SpriteBatch();
+        this.touchPoint = new Vector3();
+        this.camera = new OrthographicCamera();
+        this.viewport = new FitViewport(1920.0F, 1080.0F, this.camera);
+        this.viewport.apply();
+        this.camera.position.set(960.0F, 540.0F, 0.0F);
 
-        batch = new SpriteBatch();
-        touchPoint = new Vector3();
+        this.background         = new Texture("backgrounds/mainmenu_background.jpg");
+        this.thankYouBg         = new Texture("backgrounds/thankyou_background.jpg");
+        this.playBtn            = new Texture("buttons/play_button.png");
+        this.playBtnPressed     = new Texture("buttons/play_button_pressed.png");
+        this.rankingsBtn        = new Texture("buttons/rankings_button.png");
+        this.rankingsBtnPressed = new Texture("buttons/rankings_button_pressed.png");
+        this.creditsBtn         = new Texture("buttons/credits_button.png");
+        this.creditsBtnPressed  = new Texture("buttons/credits_button_pressed.png");
+        this.exitBtn            = new Texture("buttons/exit_button.png");
+        this.exitBtnPressed     = new Texture("buttons/exit_button_pressed.png");
 
-        camera = new OrthographicCamera();
-        viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
-        viewport.apply();
-        camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
-
-        background = new Texture("backgrounds/mainmenu_background.jpg");
-
-        playBtn = new Texture("buttons/play_button.png");
-        playBtnPressed = new Texture("buttons/play_button_pressed.png");
-
-        creditsBtn = new Texture("buttons/credits_button.png");
-        creditsBtnPressed = new Texture("buttons/credits_button_pressed.png");
-
-        exitBtn = new Texture("buttons/exit_button.png");
-        exitBtnPressed = new Texture("buttons/exit_button_pressed.png");
-
-        float centerX = WORLD_WIDTH / 2f;
-        float centerY = WORLD_HEIGHT / 2f;
-
-        playBounds = new Rectangle(centerX - 235, centerY + 30, 470, 130);
-        creditsBounds = new Rectangle(centerX - 235, centerY - 120, 470, 130);
-        exitBounds = new Rectangle(centerX - 235, centerY - 270, 470, 130);
+        float centerX = 960.0F;
+        float centerY = 540.0F;
+        this.playBounds     = new Rectangle(centerX - 235.0F, centerY +  50.0F, 470.0F, 130.0F);
+        this.rankingsBounds = new Rectangle(centerX - 235.0F, centerY -  65.0F, 470.0F, 130.0F);
+        this.creditsBounds  = new Rectangle(centerX - 235.0F, centerY - 180.0F, 470.0F, 130.0F);
+        this.exitBounds     = new Rectangle(centerX - 235.0F, centerY - 295.0F, 470.0F, 130.0F);
     }
 
-
-    @Override
     public void render(float delta) {
-        camera.update();
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        this.camera.update();
+        Gdx.gl.glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
+        Gdx.gl.glClear(16384);
 
-        touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0);
-        viewport.unproject(touchPoint);
+        // --- Thank You screen takes over render ---
+        if (this.showingThankYou) {
+            this.thankYouTimer += delta;
 
-        batch.setProjectionMatrix(camera.combined);
-        batch.begin();
+            float alpha = 1f;
+            if (this.thankYouTimer >= FADE_START) {
+                alpha = 1f - ((this.thankYouTimer - FADE_START) / (DISPLAY_TIME - FADE_START));
+                alpha = Math.max(0f, alpha);
+            }
 
-        batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-        drawButton(playBtn, playBtnPressed, playBounds);
-        drawButton(creditsBtn, creditsBtnPressed, creditsBounds);
-        drawButton(exitBtn, exitBtnPressed, exitBounds);
+            if (this.thankYouTimer >= DISPLAY_TIME) {
+                Gdx.app.exit();
+            }
 
-        batch.end();
+            this.batch.setProjectionMatrix(this.camera.combined);
+            this.batch.begin();
+            this.batch.setColor(1f, 1f, 1f, alpha);
+            this.batch.draw(this.thankYouBg, 0f, 0f, WORLD_WIDTH, WORLD_HEIGHT);
+            this.batch.setColor(1f, 1f, 1f, 1f); // reset color
+            this.batch.end();
+            return; // skip normal menu render
+        }
 
-        handleInput();
+        // --- Normal menu render ---
+        this.touchPoint.set((float) Gdx.input.getX(), (float) Gdx.input.getY(), 0.0F);
+        this.viewport.unproject(this.touchPoint);
+        this.batch.setProjectionMatrix(this.camera.combined);
+        this.batch.begin();
+        this.batch.draw(this.background, 0.0F, 0.0F, 1920.0F, 1080.0F);
+        this.drawButton(this.playBtn,     this.playBtnPressed,     this.playBounds);
+        this.drawButton(this.rankingsBtn, this.rankingsBtnPressed, this.rankingsBounds);
+        this.drawButton(this.creditsBtn,  this.creditsBtnPressed,  this.creditsBounds);
+        this.drawButton(this.exitBtn,     this.exitBtnPressed,     this.exitBounds);
+        this.batch.end();
+        this.handleInput();
     }
 
     private void drawButton(Texture normal, Texture pressed, Rectangle bounds) {
-        if (Gdx.input.isTouched() && bounds.contains(touchPoint.x, touchPoint.y)) {
-            batch.draw(pressed, bounds.x, bounds.y, bounds.width, bounds.height);
+        if (Gdx.input.isTouched() && bounds.contains(this.touchPoint.x, this.touchPoint.y)) {
+            this.batch.draw(pressed, bounds.x, bounds.y, bounds.width, bounds.height);
         } else {
-            batch.draw(normal, bounds.x, bounds.y, bounds.width, bounds.height);
+            this.batch.draw(normal, bounds.x, bounds.y, bounds.width, bounds.height);
         }
     }
 
     private void handleInput() {
         if (Gdx.input.justTouched()) {
-            if (playBounds.contains(touchPoint.x, touchPoint.y)) playPressed = true;
-            else if (creditsBounds.contains(touchPoint.x, touchPoint.y)) creditsPressed = true;
-            else if (exitBounds.contains(touchPoint.x, touchPoint.y)) exitPressed = true;
+            if (this.playBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
+                this.playPressed = true;
+            } else if (this.rankingsBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
+                this.rankingsPressed = true;
+            } else if (this.creditsBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
+                this.creditsPressed = true;
+            } else if (this.exitBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
+                this.exitPressed = true;
+            }
         }
 
         if (!Gdx.input.isTouched()) {
-            if (playPressed && playBounds.contains(touchPoint.x, touchPoint.y)) {
-                // Example: start game on FirstScreen
-                game.setScreen(new FirstScreen(game));
-            } else if (creditsPressed && creditsBounds.contains(touchPoint.x, touchPoint.y)) {
-                // Go to credits screen
-            } else if (exitPressed && exitBounds.contains(touchPoint.x, touchPoint.y)) {
-                Gdx.app.exit();
+            if (this.playPressed && this.playBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
+                this.game.setScreen(new FirstScreen(this.game));
+            } else if (this.rankingsPressed && this.rankingsBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
+                this.game.setScreen(new RankingsScreen(this.game));
+            } else if ((!this.creditsPressed || !this.creditsBounds.contains(this.touchPoint.x, this.touchPoint.y))
+                    && this.exitPressed && this.exitBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
+                this.showingThankYou = true; // trigger the fade
             }
 
-            playPressed = false;
-            creditsPressed = false;
-            exitPressed = false;
+            this.playPressed     = false;
+            this.rankingsPressed = false;
+            this.creditsPressed  = false;
+            this.exitPressed     = false;
         }
     }
 
-    @Override public void resize(int width, int height) { viewport.update(width, height); }
-    @Override public void show() {}
-    @Override public void pause() {}
-    @Override public void resume() {}
-    @Override public void hide() {}
-    @Override
+    public void resize(int width, int height) {
+        this.viewport.update(width, height);
+    }
+
+    public void show()   {}
+    public void pause()  {}
+    public void resume() {}
+    public void hide()   {}
+
     public void dispose() {
-        batch.dispose();
-        background.dispose();
-        playBtn.dispose(); playBtnPressed.dispose();
-        creditsBtn.dispose(); creditsBtnPressed.dispose();
-        exitBtn.dispose(); exitBtnPressed.dispose();
+        this.batch.dispose();
+        this.background.dispose();
+        this.thankYouBg.dispose();
+        this.playBtn.dispose();
+        this.playBtnPressed.dispose();
+        this.rankingsBtn.dispose();
+        this.rankingsBtnPressed.dispose();
+        this.creditsBtn.dispose();
+        this.creditsBtnPressed.dispose();
+        this.exitBtn.dispose();
+        this.exitBtnPressed.dispose();
     }
 }

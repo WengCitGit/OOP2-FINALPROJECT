@@ -63,9 +63,9 @@ public class FirstScreen implements Screen {
         float centerX = WORLD_WIDTH / 2f;
         float centerY = WORLD_HEIGHT / 2f;
 
-        modeBounds = new Rectangle(centerX - 235, centerY + 30, 470, 130);
-        loreBounds = new Rectangle(centerX - 235, centerY - 120, 470, 130);
-        backBounds = new Rectangle(centerX - 235, centerY - 270, 470, 130);
+        modeBounds = new Rectangle(centerX - 235, centerY + 30, 470, 140);
+        loreBounds = new Rectangle(centerX - 235, centerY - 120, 470, 140);
+        backBounds = new Rectangle(centerX - 235, centerY - 270, 470, 140);
     }
 
     @Override

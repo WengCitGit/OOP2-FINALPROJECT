@@ -116,7 +116,7 @@ public class CharacterInfoScreen implements Screen {
         background = new Texture("backgrounds/characterselector_background.jpg");
         backBtn    = new Texture("buttons/back_button.png");
         backBtnP   = new Texture("buttons/back_button_pressed.png");
-        backBounds = new Rectangle(50, 50, 240, 100);
+        backBounds = new Rectangle(50, 50, 300, 100);
 
         // Tab button PNGs
         for (int i = 0; i < 4; i++) {

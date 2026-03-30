@@ -65,7 +65,7 @@ public class GameModeScreen implements Screen {
 
         // Coordinates for 5 buttons stacked vertically (Height reduced to 110 for fit)
         float btnW = 470;
-        float btnH = 110;
+        float btnH = 130;
         float startY = centerY + 250; // Top button position
         float spacing = 130;        // Distance between buttons
 

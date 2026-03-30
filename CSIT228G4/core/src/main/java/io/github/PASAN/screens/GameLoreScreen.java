@@ -77,7 +77,7 @@ public class GameLoreScreen implements Screen {
         characterInfoBounds = new Rectangle(centerX + 50, centerY - 250, boxW, boxH);
 
         // Back button
-        float btnW = 470;
+        float btnW = 410;
         float btnH = 110;
         float startY = 100;
 

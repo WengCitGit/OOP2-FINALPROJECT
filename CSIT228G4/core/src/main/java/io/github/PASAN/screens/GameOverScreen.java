@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.*;
+import io.github.PASAN.MainMenu;
 import io.github.PASAN.screens.CharacterSelectorScreen;
 import io.github.PASAN.screens.FirstScreen;
 
@@ -12,8 +13,8 @@ public class GameOverScreen implements Screen {
 
     private Game game;
     private String username;
-    private String mode;       // "ARCADE" or "ENDLESS"
-    private int winStreak;     // only meaningful in ENDLESS; 0 for ARCADE
+    private String mode;
+    private int winStreak;
 
     private SpriteBatch batch;
     private BitmapFont font;
@@ -21,31 +22,41 @@ public class GameOverScreen implements Screen {
     private Viewport viewport;
     private Vector3 touch;
 
+    private Texture background;
+    private Texture yesBtn,  yesBtnPressed;
+    private Texture noBtn,   noBtnPressed;
+
     private Rectangle yesBounds, noBounds, leaderboardBounds;
-    private boolean yesPressed = false;
-    private boolean noPressed  = false;
+    private boolean yesPressed         = false;
+    private boolean noPressed          = false;
     private boolean leaderboardPressed = false;
 
-    private static final float WORLD_WIDTH  = 1920;
-    private static final float WORLD_HEIGHT = 1080;
+    private static final float WORLD_WIDTH  = 1920f;
+    private static final float WORLD_HEIGHT = 1080f;
 
-    // -------------------------------------------------------
-    // ARCADE constructor — no streak to show
+    // Button layout
+    private static final float BTN_W  = 400f;
+    private static final float BTN_H  = 130f;
+    private static final float BTN_Y  = WORLD_HEIGHT / 2f - 130f; // was -230f
+    private static final float YES_X  = WORLD_WIDTH  / 2f - 480f;
+    private static final float NO_X   = WORLD_WIDTH  / 2f +  90f;
+
+
+    // VIEW LEADERBOARD text hit-box
+    private static final float LB_W = 560f;
+    private static final float LB_H =  70f;
+    private static final float LB_X = (WORLD_WIDTH - LB_W) / 2f;
+    private static final float LB_Y = BTN_Y - 140f;
+
     // -------------------------------------------------------
     public GameOverScreen(Game game, String username) {
         this(game, username, "ARCADE", 0);
     }
 
-    // -------------------------------------------------------
-    // ENDLESS constructor — streak displayed on screen
-    // -------------------------------------------------------
     public GameOverScreen(Game game, String username, int winStreak) {
         this(game, username, "ENDLESS", winStreak);
     }
 
-    // -------------------------------------------------------
-    // Shared setup
-    // -------------------------------------------------------
     private GameOverScreen(Game game, String username, String mode, int winStreak) {
         this.game      = game;
         this.username  = username;
@@ -59,116 +70,90 @@ public class GameOverScreen implements Screen {
         camera   = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         viewport.apply();
-        camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
+        camera.position.set(WORLD_WIDTH / 2f, WORLD_HEIGHT / 2f, 0f);
 
-        float centerX = WORLD_WIDTH  / 2f;
-        float centerY = WORLD_HEIGHT / 2f;
+        background    = new Texture("backgrounds/gameover_background.jpg");
+        yesBtn        = new Texture("buttons/yes_button.png");
+        yesBtnPressed = new Texture("buttons/yes_button_pressed.png");
+        noBtn         = new Texture("buttons/no_button.png");
+        noBtnPressed  = new Texture("buttons/no_button_pressed.png");
 
-        // Buttons sit a little lower when the streak line is visible
-        float buttonY = mode.equals("ENDLESS") ? centerY - 230 : centerY - 180;
-        yesBounds = new Rectangle(centerX - 350, buttonY, 280, 100);
-        noBounds  = new Rectangle(centerX +  70, buttonY, 280, 100);
-        leaderboardBounds = new Rectangle(centerX - 300, buttonY - 140, 600, 100);
+        yesBounds         = new Rectangle(YES_X, BTN_Y, BTN_W, BTN_H);
+        noBounds          = new Rectangle(NO_X,  BTN_Y, BTN_W, BTN_H);
+        leaderboardBounds = new Rectangle(LB_X,  LB_Y,  LB_W,  LB_H);
     }
 
-    // -------------------------------------------------------
-    // RENDER
     // -------------------------------------------------------
     @Override
     public void render(float delta) {
         camera.update();
-        Gdx.gl.glClearColor(0.08f, 0.08f, 0.08f, 1);
+        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        touch.set(Gdx.input.getX(), Gdx.input.getY(), 0);
+        touch.set(Gdx.input.getX(), Gdx.input.getY(), 0f);
         viewport.unproject(touch);
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        // --- GAME OVER title ---
-        font.getData().setScale(9f);
-        font.setColor(Color.RED);
-        GlyphLayout titleLayout = new GlyphLayout(font, "GAME OVER");
-        font.draw(batch, titleLayout,
-                WORLD_WIDTH / 2f - titleLayout.width / 2f,
-                WORLD_HEIGHT / 2f + 280);
 
-        // --- Endless-only: win streak line ---
+        batch.draw(background, 0f, 0f, WORLD_WIDTH, WORLD_HEIGHT);
+
+        // YES button
+        boolean touchingYes = Gdx.input.isTouched() && yesBounds.contains(touch.x, touch.y);
+        batch.draw(touchingYes ? yesBtnPressed : yesBtn,
+                yesBounds.x, yesBounds.y, yesBounds.width, yesBounds.height);
+
+        // NO button
+        boolean touchingNo = Gdx.input.isTouched() && noBounds.contains(touch.x, touch.y);
+        batch.draw(touchingNo ? noBtnPressed : noBtn,
+                noBounds.x, noBounds.y, noBounds.width, noBounds.height);
+
+        // VIEW LEADERBOARD — plain text, same style as original
+        boolean hoverLb = leaderboardBounds.contains(touch.x, touch.y);
+        font.getData().setScale(3.5f);
+        font.setColor(hoverLb ? Color.RED : Color.CYAN);
+        GlyphLayout ll = new GlyphLayout(font, "VIEW LEADERBOARD");
+        font.draw(batch, ll,
+                WORLD_WIDTH / 2f - ll.width / 2f,
+                leaderboardBounds.y + leaderboardBounds.height);
+
+        // Endless-only streak line
         if (mode.equals("ENDLESS")) {
             font.getData().setScale(4.5f);
             font.setColor(Color.GOLD);
             String streakText = winStreak == 0
                     ? "You didn't win a single round..."
                     : "Win Streak: " + winStreak;
-            GlyphLayout streakLayout = new GlyphLayout(font, streakText);
-            font.draw(batch, streakLayout,
-                    WORLD_WIDTH / 2f - streakLayout.width / 2f,
-                    WORLD_HEIGHT / 2f + 170);
+            GlyphLayout sl = new GlyphLayout(font, streakText);
+            font.draw(batch, sl,
+                    WORLD_WIDTH / 2f - sl.width / 2f,
+                    WORLD_HEIGHT / 2f + 170f);
         }
 
-        // --- "Play again?" question ---
-        font.getData().setScale(4f);
-        font.setColor(Color.WHITE);
-        GlyphLayout questionLayout = new GlyphLayout(font, "Do you want to play again?");
-        font.draw(batch, questionLayout,
-                WORLD_WIDTH / 2f - questionLayout.width / 2f,
-                WORLD_HEIGHT / 2f + 50);
-
-        // --- YES button ---
-        boolean hoverYes = yesBounds.contains(touch.x, touch.y);
-        font.getData().setScale(5f);
-        font.setColor(hoverYes ? Color.GOLD : Color.GREEN);
-        GlyphLayout yesLayout = new GlyphLayout(font, "YES");
-        font.draw(batch, yesLayout,
-                yesBounds.x + (yesBounds.width  - yesLayout.width)  / 2f,
-                yesBounds.y + (yesBounds.height + yesLayout.height) / 2f);
-
-        // --- NO button ---
-        boolean hoverNo = noBounds.contains(touch.x, touch.y);
-        font.setColor(hoverNo ? Color.GOLD : Color.RED);
-        GlyphLayout noLayout = new GlyphLayout(font, "NO");
-        font.draw(batch, noLayout,
-                noBounds.x + (noBounds.width  - noLayout.width)  / 2f,
-                noBounds.y + (noBounds.height + noLayout.height) / 2f);
-        boolean hoverLeaderboard = leaderboardBounds.contains(touch.x, touch.y);
-        font.getData().setScale(3.5f); // Slightly smaller than YES/NO so it fits nicely
-        font.setColor(hoverLeaderboard ? Color.GOLD : Color.CYAN); // Cyan default, turns Gold when hovered
-        GlyphLayout leaderboardLayout = new GlyphLayout(font, "VIEW LEADERBOARD");
-        font.draw(batch, leaderboardLayout,
-                leaderboardBounds.x + (leaderboardBounds.width  - leaderboardLayout.width)  / 2f,
-                leaderboardBounds.y + (leaderboardBounds.height + leaderboardLayout.height) / 2f);
-
-        font.getData().setScale(2.5f);
         batch.end();
-
         handleInput();
     }
 
     // -------------------------------------------------------
-    // INPUT
-    // -------------------------------------------------------
     private void handleInput() {
         if (Gdx.input.justTouched()) {
-            if (yesBounds.contains(touch.x, touch.y)) yesPressed = true;
-            if (noBounds.contains(touch.x, touch.y))  noPressed  = true;
+            if (yesBounds        .contains(touch.x, touch.y)) yesPressed         = true;
+            if (noBounds         .contains(touch.x, touch.y)) noPressed          = true;
             if (leaderboardBounds.contains(touch.x, touch.y)) leaderboardPressed = true;
         }
 
         if (!Gdx.input.isTouched()) {
             if (yesPressed && yesBounds.contains(touch.x, touch.y)) {
-                // Route back to the correct character select mode
                 game.setScreen(new CharacterSelectorScreen(username, mode, 1, "", ""));
             }
             if (noPressed && noBounds.contains(touch.x, touch.y)) {
-                game.setScreen(new FirstScreen(game));
+                game.setScreen(new MainMenu(game));
             }
             if (leaderboardPressed && leaderboardBounds.contains(touch.x, touch.y)) {
-                game.setScreen(new LeaderboardScreen(mode));
+                game.setScreen(new LeaderboardScreen(mode, this));
             }
-            yesPressed = false;
-            noPressed  = false;
-            leaderboardPressed = false;
+            yesPressed = noPressed = leaderboardPressed = false;
         }
     }
 
@@ -182,5 +167,8 @@ public class GameOverScreen implements Screen {
     public void dispose() {
         batch.dispose();
         font.dispose();
+        background.dispose();
+        yesBtn.dispose();       yesBtnPressed.dispose();
+        noBtn.dispose();        noBtnPressed.dispose();
     }
 }
