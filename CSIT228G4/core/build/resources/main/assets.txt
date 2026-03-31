@@ -2,8 +2,11 @@ backgrounds/arcade_board.png
 backgrounds/arcade_intro_bg.jpg
 backgrounds/arcade_intro_bg.png
 backgrounds/battle_bg1.png
+backgrounds/bg2.png
 backgrounds/characterselector_background.jpg
 backgrounds/dialogue-box.png
+backgrounds/fighttext.png
+backgrounds/finalround.png
 backgrounds/gamelore_background.jpg
 backgrounds/gamemode_background.jpg
 backgrounds/gameover_background.jpg
@@ -11,7 +14,10 @@ backgrounds/leaderboard_bg.png
 backgrounds/mainmenu_background.jpg
 backgrounds/rankings_background.jpg
 backgrounds/red_background.png
+backgrounds/round1.png
+backgrounds/round2.png
 backgrounds/temp_bg.png
+backgrounds/temp_bg2.png
 backgrounds/thankyou_background.jpg
 backgrounds/usernameScreenPlayer1_background.jpg
 backgrounds/usernameScreenPlayer2_background.jpg
@@ -84,7 +90,7 @@ characters/Mcdonald.png
 characters/Wendy.png
 icons/BurgerKing_icon.png
 icons/ChiefKhai_icon.png
-icons/Colonel_icon.png
+icons/ColonelSanders_icon.png
 icons/Jack_icon.png
 icons/Jollibee_icon.png
 icons/LittleCaesar_icon.png
