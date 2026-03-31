@@ -26,7 +26,7 @@ public class CharacterSelectorScreen implements Screen {
     private static final String[] characterFiles = {
             "icons/Jollibee_icon.png",
             "icons/McDonald_icon.png",
-            "icons/Colonel_icon.png",
+            "icons/ColonelSanders_icon.png",
             "icons/BurgerKing_icon.png",
             "icons/Wendy_icon.png",
             "icons/Jack_icon.png",

@@ -5,19 +5,19 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.*;
-import io.github.PASAN.Main;
 import io.github.PASAN.ArcadeBattleScreen;
+import io.github.PASAN.Main;
+import io.github.PASAN.PVCBattleScreen;
+import io.github.PASAN.PVPBattleScreen;
+// Make sure your battle screens are imported if they are in different packages!
 
 public class VSScreen implements Screen {
     private SpriteBatch batch;
     private OrthographicCamera camera;
     private Viewport viewport;
+    private BitmapFont font;
 
-    //private String username;
     private String mode;
-    //private String playerCharacterName;
-    //private String enemyCharacterName;
-
     private Game game;
 
     private String player1Name;
@@ -25,56 +25,45 @@ public class VSScreen implements Screen {
     private String player1Char;
     private String player2Char;
 
-    private String[] allCharacters = {
-            "Jollibee", "McDonald", "Colonel Sanders", "Burger King",
-            "Wendy", "Jack in the Box", "Little Caesar", "Chief Khai"
-    };
-
-
     private Texture background;
     private Texture popupBoard;
-    private Texture vsLogo;
     private Texture playerSprite;
     private Texture enemySprite;
+    private TextureRegion enemyRegion; // Used to flip the enemy sprite
 
-    private Texture startBtn, startBtnP;
-    private Rectangle startBounds;
-    private Vector3 touch;
-    private boolean startPressed = false;
+    // --- Timer Variables ---
+    private float transitionTimer = 0f;
+    private static final float TRANSITION_DURATION = 3.0f; // 3 seconds before auto-start
+    private boolean isStarting = false;
 
     private static final float WORLD_WIDTH = 1920;
     private static final float WORLD_HEIGHT = 1080;
 
-    public VSScreen(String p1Name, String p2Name, String mode, String p1Char, String p2Char)
-    {
+    public VSScreen(String p1Name, String p2Name, String mode, String p1Char, String p2Char) {
+        this.game = (Game) Gdx.app.getApplicationListener();
+
         this.player1Name = p1Name;
         this.player2Name = p2Name;
         this.mode = mode;
         this.player1Char = p1Char;
         this.player2Char = p2Char;
 
-        // random enemy character
-        //this.enemyCharacterName = allCharacters[MathUtils.random(0, allCharacters.length - 1)];
-        //kfc for now
-        //this.enemyCharacterName = "Colonel Sanders";
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
-        touch = new Vector3();
 
+        font = new BitmapFont();
 
+        // Load Textures
         background = new Texture("backgrounds/temp_bg.png");
-        popupBoard = new Texture("backgrounds/vsbg.png");
-
-        startBtn = new Texture("buttons/start_button.png");
-        startBtnP = new Texture("buttons/start_button_pressed.png");
+        popupBoard = new Texture("backgrounds/vsbg.png"); // Assuming this acts like arcade_board.png
 
         playerSprite = new Texture("characters/" + player1Char.replace(" ", "") + ".png");
+
         enemySprite = new Texture("characters/" + player2Char.replace(" ", "") + ".png");
-
-
-        startBounds = new Rectangle((WORLD_WIDTH / 2) - 150, 150, 300, 100);
+        enemyRegion = new TextureRegion(enemySprite);
+        enemyRegion.flip(true, false); // Make enemy face left
     }
 
     @Override
@@ -83,63 +72,79 @@ public class VSScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         camera.update();
-        touch.set(Gdx.input.getX(), Gdx.input.getY(), 0);
-        viewport.unproject(touch);
-
         batch.setProjectionMatrix(camera.combined);
+
+        // Update the timer
+        if (!isStarting) {
+            transitionTimer += delta;
+            if (transitionTimer >= TRANSITION_DURATION) {
+                isStarting = true;
+                startGame();
+                return;
+            }
+        }
+
+        // --- Layout Math (Matching ArcadeBattleScreen) ---
+        float boardW = 1400f;
+        float boardH = 750f;
+        float boardX = (WORLD_WIDTH  - boardW) / 2f;
+        float boardY = (WORLD_HEIGHT - boardH) / 2f - 30f;
+
+        float charW = 410f;
+        float charH = 480f;
+
+        float playerSpriteX = boardX + 160f;
+        float enemySpriteX  = boardX + boardW - 130f - charW;
+        float spriteY       = boardY + 160f;
+
+        float nameLabelY  = spriteY - 20f;
+        float titleLabelY = boardY + boardH - 55f;
+
         batch.begin();
 
+        // 1. Draw Background
         batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
+        // 2. Draw Board
+        batch.draw(popupBoard, boardX, boardY, boardW, boardH);
 
-        float boardWidth = 1200;
-        float boardHeight = 800;
-        float boardX = (WORLD_WIDTH - boardWidth) / 2;
-        float boardY = (WORLD_HEIGHT - boardHeight) / 2 + 50;
-        batch.draw(popupBoard, boardX, boardY, boardWidth, boardHeight);
+        // 3. Draw Mode Title at the top
+        font.getData().setScale(4.5f);
+        font.setColor(Color.RED);
+        String titleText = mode.toUpperCase() + " BATTLE";
+        GlyphLayout titleLayout = new GlyphLayout(font, titleText);
+        font.draw(batch, titleLayout, WORLD_WIDTH / 2f - titleLayout.width / 2f, titleLabelY);
 
-        //left character
-        batch.draw(playerSprite, boardX + 150, boardY + 200, 300, 400);
+        // 4. Draw Characters
+        batch.draw(playerSprite, playerSpriteX, spriteY, charW, charH);
+        batch.draw(enemyRegion, enemySpriteX, spriteY, charW, charH);
 
-        //right character
-        batch.draw(enemySprite, boardX + 750, boardY + 200, 300, 400);
+        // 5. Draw Character Names
+        font.getData().setScale(2.8f);
+        font.setColor(Color.WHITE);
 
-        //start button
-        boolean isTouchingStart = Gdx.input.isTouched() && startBounds.contains(touch.x, touch.y);
-        if (isTouchingStart) {
-            batch.draw(startBtnP, startBounds.x, startBounds.y, startBounds.width, startBounds.height);
-        } else {
-            batch.draw(startBtn, startBounds.x, startBounds.y, startBounds.width, startBounds.height);
-        }
+        GlyphLayout p1NameLayout = new GlyphLayout(font, player1Char);
+        font.draw(batch, p1NameLayout, playerSpriteX + (charW / 3f) - p1NameLayout.width / 2f, nameLabelY);
+
+        GlyphLayout p2NameLayout = new GlyphLayout(font, player2Char);
+        font.draw(batch, p2NameLayout, enemySpriteX + (charW / 1.5f) - p2NameLayout.width / 2f, nameLabelY);
 
         batch.end();
-        handleInput();
     }
 
-    private void handleInput() {
-        if (Gdx.input.justTouched()) {
-            if (startBounds.contains(touch.x, touch.y)) {
-                startPressed = true;
-            }
+    private void startGame() {
+        System.out.println("BATTLE starting: " + player1Char + " VS " + player2Char + " in Mode: " + mode);
+
+        if (mode.toUpperCase().contains("ARCADE")) {
+            game.setScreen(new ArcadeBattleScreen(game, player1Name, player1Char));
+        } else if (mode.toUpperCase().contains("PVC")) {
+            game.setScreen(new PVCBattleScreen(game, player1Name, player1Char, player2Char));
+        } else if (mode.toUpperCase().contains("PVP")) {
+            game.setScreen(new PVPBattleScreen(game, player1Name,player2Name, player1Char, player2Char));
         }
 
-        if (!Gdx.input.isTouched()) {
-            if (startPressed && startBounds.contains(touch.x, touch.y)) {
-                System.out.println("BATTLE STARTING: " + player1Char + " VS " + player2Char);
-
-                if(mode.equalsIgnoreCase("ARCADE")) {
-                    // go to temporary arcade screen instead of normal battle
-                    ((Main) Gdx.app.getApplicationListener())
-                            .setScreen(new ArcadeBattleScreen(game, player1Name, player1Char));
-                } else {
-                    // normal vs
-                    ((Main) Gdx.app.getApplicationListener())
-                            .setScreen(new BattleScreen(player1Name, player1Char, player2Char));
-                }
-
-            }
-            startPressed = false;
-        }
+        // Clean up this screen's memory before leaving
+        this.dispose();
     }
 
     @Override public void resize(int width, int height) { viewport.update(width, height); }
@@ -151,12 +156,11 @@ public class VSScreen implements Screen {
     @Override
     public void dispose() {
         batch.dispose();
+        font.dispose();
         background.dispose();
         popupBoard.dispose();
-        vsLogo.dispose();
         playerSprite.dispose();
         enemySprite.dispose();
-        startBtn.dispose();
-        startBtnP.dispose();
+        // TextureRegions don't need to be disposed directly, the Texture it relies on (enemySprite) is enough.
     }
 }
