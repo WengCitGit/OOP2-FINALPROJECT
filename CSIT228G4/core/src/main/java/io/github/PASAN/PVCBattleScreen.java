@@ -49,8 +49,9 @@ public class PVCBattleScreen extends BaseBattleScreen {
     @Override
     protected void onMatchOver(boolean playerWon) {
         if (playerWon) {
-            game.setScreen(new VictoryScreen(game, username));
+            game.setScreen(new GameOverScreen(game, username));
         } else {
+//            game.setScreen(new VictoryScreen(game, username, 0, "You defeated the Computer. Good for you!"));
             game.setScreen(new GameOverScreen(game, username));
         }
         dispose();

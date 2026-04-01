@@ -4,13 +4,15 @@ import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.*;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.*;
-import io.github.PASAN.screens.FirstScreen;
 
 public class VictoryScreen implements Screen {
 
     private Game game;
     private String username;
+    private int score;
+    private String subMessage;
 
     private SpriteBatch batch;
     private BitmapFont font;
@@ -18,18 +20,25 @@ public class VictoryScreen implements Screen {
     private Viewport viewport;
     private Vector3 touch;
 
+    private Texture dialogueBox;
+    private Texture backBtn;
+    private Texture backBtnP;
+
+    private Rectangle dialogueBounds;
     private Rectangle menuBounds;
     private boolean menuPressed = false;
-
-    // Animated gold shimmer timer
-    private float timer = 0f;
 
     private static final float WORLD_WIDTH  = 1920;
     private static final float WORLD_HEIGHT = 1080;
 
     public VictoryScreen(Game game, String username) {
+        this(game, username, 0, "You are the superior fighter!");
+    }
+    public VictoryScreen(Game game, String username, int score, String subMessage) {
         this.game     = game;
         this.username = username;
+        this.score    = score;
+        this.subMessage = subMessage;
 
         batch = new SpriteBatch();
         font  = new BitmapFont();
@@ -40,16 +49,27 @@ public class VictoryScreen implements Screen {
         viewport.apply();
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
 
-        float centerX = WORLD_WIDTH / 2f;
-        menuBounds = new Rectangle(centerX - 250, 180, 500, 110);
+        dialogueBox = new Texture("backgrounds/dialogue-box.png");
+        backBtn = new Texture("buttons/back_button.png");
+        backBtnP = new Texture("buttons/back_button_pressed.png");
+
+        float cx = WORLD_WIDTH / 2f;
+        float cy = WORLD_HEIGHT / 2f;
+
+        float boxW = 1300f;
+        float boxH = 750f;
+        dialogueBounds = new Rectangle(cx - boxW / 2f, cy - boxH / 2f + 50f, boxW, boxH);
+
+        float btnW = 470f;
+        float btnH = 130f;
+        menuBounds = new Rectangle(cx - btnW / 2f, dialogueBounds.y - btnH - 30f, btnW, btnH);
     }
 
     @Override
     public void render(float delta) {
-        timer += delta;
-
         camera.update();
-        Gdx.gl.glClearColor(0.05f, 0.05f, 0.05f, 1);
+
+        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         touch.set(Gdx.input.getX(), Gdx.input.getY(), 0);
@@ -58,46 +78,54 @@ public class VictoryScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        // --- VICTORY! title (pulsing gold) ---
-        float pulse = 0.5f + 0.5f * (float) Math.sin(timer * 3f);
-        font.getData().setScale(11f);
-        font.setColor(1f, 0.84f * pulse + 0.16f, 0f, 1f);
-        GlyphLayout victoryLayout = new GlyphLayout(font, "VICTORY!");
-        font.draw(batch, victoryLayout,
-                WORLD_WIDTH / 2f - victoryLayout.width / 2f,
-                WORLD_HEIGHT / 2f + 280);
+        if (dialogueBox != null) {
+            batch.draw(dialogueBox, dialogueBounds.x, dialogueBounds.y, dialogueBounds.width, dialogueBounds.height);
+        }
 
-        // --- Congratulations line ---
-        font.getData().setScale(4f);
+        boolean isTouchingBtn = menuBounds.contains(touch.x, touch.y);
+        if (Gdx.input.isTouched() && isTouchingBtn) {
+            if (backBtnP != null) batch.draw(backBtnP, menuBounds.x, menuBounds.y, menuBounds.width, menuBounds.height);
+        } else {
+            if (backBtn != null) batch.draw(backBtn, menuBounds.x, menuBounds.y, menuBounds.width, menuBounds.height);
+        }
+
+        // --- TEXT RENDERING ---
+
+        font.getData().setScale(3.2f);
+        font.setColor(Color.RED);
+        GlyphLayout hailLayout = new GlyphLayout(font, "HAIL " + username.toUpperCase());
+        font.draw(batch, hailLayout,
+                WORLD_WIDTH / 2f - hailLayout.width / 2f,
+                dialogueBounds.y + dialogueBounds.height - 100f);
+
+        font.getData().setScale(2.2f);
+        font.setColor(Color.BLACK);
+        String subText = subMessage;
+        GlyphLayout subLayout = new GlyphLayout(font, subText, Color.BLACK, dialogueBounds.width - 200f, Align.center, false);
+        font.draw(batch, subLayout,
+                dialogueBounds.x + 100f,
+                dialogueBounds.y + dialogueBounds.height - 230f);
+
+        font.getData().setScale(2.5f);
+        GlyphLayout scoreLabel = new GlyphLayout(font, "Your Score:");
+        font.draw(batch, scoreLabel,
+                WORLD_WIDTH / 2f - scoreLabel.width / 2f,
+                dialogueBounds.y + 220f);
+
+        font.getData().setScale(4.5f);
+        String scoreString = String.format("%,d", score);
+        GlyphLayout scoreNum = new GlyphLayout(font, scoreString);
+        font.draw(batch, scoreNum,
+                WORLD_WIDTH / 2f - scoreNum.width / 2f,
+                dialogueBounds.y + 160f);
+
+        font.getData().setScale(2.5f);
         font.setColor(Color.WHITE);
-        GlyphLayout congrats = new GlyphLayout(font, "Congratulations, " + username + "!");
-        font.draw(batch, congrats,
-                WORLD_WIDTH / 2f - congrats.width / 2f,
-                WORLD_HEIGHT / 2f + 100);
+        GlyphLayout btnText = new GlyphLayout();
+        font.draw(batch, btnText,
+                menuBounds.x + (menuBounds.width - btnText.width) / 2f,
+                menuBounds.y + (menuBounds.height + btnText.height) / 2f);
 
-        // --- Subtitle ---
-        font.getData().setScale(3f);
-        font.setColor(Color.LIGHT_GRAY);
-        GlyphLayout sub = new GlyphLayout(font, "You defeated all 8 stages!");
-        font.draw(batch, sub,
-                WORLD_WIDTH / 2f - sub.width / 2f,
-                WORLD_HEIGHT / 2f + 10);
-
-        // --- Return to Menu button ---
-        boolean hover = menuBounds.contains(touch.x, touch.y);
-        font.getData().setScale(4f);
-        font.setColor(hover ? Color.GOLD : Color.WHITE);
-        GlyphLayout menuLabel = new GlyphLayout(font, "Return to Menu");
-        font.draw(batch, menuLabel,
-                menuBounds.x + (menuBounds.width  - menuLabel.width)  / 2f,
-                menuBounds.y + (menuBounds.height + menuLabel.height) / 2f);
-
-        // Underline
-        font.getData().setScale(2.5f);
-        font.setColor(Color.GRAY);
-        font.draw(batch, "_______________", menuBounds.x, menuBounds.y + 10);
-
-        font.getData().setScale(2.5f);
         batch.end();
 
         handleInput();
@@ -111,6 +139,7 @@ public class VictoryScreen implements Screen {
         if (!Gdx.input.isTouched()) {
             if (menuPressed && menuBounds.contains(touch.x, touch.y)) {
                 game.setScreen(new FirstScreen(game));
+                dispose();
             }
             menuPressed = false;
         }
@@ -126,5 +155,8 @@ public class VictoryScreen implements Screen {
     public void dispose() {
         batch.dispose();
         font.dispose();
+        if (dialogueBox != null) dialogueBox.dispose();
+        if (backBtn != null) backBtn.dispose();
+        if (backBtnP != null) backBtnP.dispose();
     }
 }

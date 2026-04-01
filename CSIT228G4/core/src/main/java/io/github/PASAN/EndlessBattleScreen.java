@@ -90,12 +90,12 @@ public class EndlessBattleScreen extends BaseBattleScreen {
     protected void onMatchOver(boolean playerWon) {
         if (playerWon) {
             endlessMode.onMatchWon();
-            System.out.println("[ENDLESS] Streak increased to: " + endlessMode.getWinStreak());
+            System.out.println("[ENDLESS] Streak: " + endlessMode.getWinStreak());
             loadNextOpponent();
         } else {
             endlessMode.onMatchLost();
-            int score = CalculateScore.calculateEndlessScore(endlessMode.getWinStreak());
-            new Leaderboard("endless_scores.txt").addScore(username, score);
+            int finalScore = CalculateScore.calculateEndlessScore(endlessMode.getWinStreak());
+            new Leaderboard("endless_scores.txt").addScore(username, finalScore);
             game.setScreen(new GameOverScreen(game, username, endlessMode.getWinStreak()));
             dispose();
         }

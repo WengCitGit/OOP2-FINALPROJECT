@@ -1,6 +1,7 @@
 package io.github.PASAN;
 
 import com.badlogic.gdx.Game;
+import io.github.PASAN.screens.GameOverScreen;
 import io.github.PASAN.screens.VictoryScreen;
 
 /**
@@ -31,9 +32,9 @@ public class PVPBattleScreen extends BaseBattleScreen {
 
     @Override
     protected void onMatchOver(boolean playerWon) {
-        String winner = playerWon ? username : player2Name;
-        System.out.println("PVP Match Over! Winner: " + winner);
-        game.setScreen(new VictoryScreen(game, winner));
+        String winnerName = playerWon ? username : player2Name;
+        System.out.println("PVP Match Over! Winner: " + winnerName);
+        game.setScreen(new GameOverScreen(game, winnerName, true));
         dispose();
     }
 }

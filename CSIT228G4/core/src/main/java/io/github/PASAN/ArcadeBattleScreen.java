@@ -116,7 +116,7 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
             if (arcadeMode.isPlayerDefeated()) {
                 game.setScreen(new GameOverScreen(game, username));
             } else {
-                game.setScreen(new VictoryScreen(game, username));
+                game.setScreen(new VictoryScreen(game, username,score, "Through perseverance and determination, you are\nvictorious!"));
             }
             dispose();
         } else {

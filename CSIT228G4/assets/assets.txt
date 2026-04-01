@@ -98,6 +98,7 @@ characters/Jollibee.png
 characters/LittleCaesar.png
 characters/Mcdonald.png
 characters/Wendy.png
+endless_scores.txt
 icons/BurgerKing_icon.png
 icons/ChiefKhai_icon.png
 icons/ColonelSanders_icon.png
