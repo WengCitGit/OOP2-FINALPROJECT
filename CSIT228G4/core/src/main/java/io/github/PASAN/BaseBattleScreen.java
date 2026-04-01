@@ -109,11 +109,9 @@ public abstract class BaseBattleScreen implements Screen {
         round1Sound = loadSound("audio/round1_audio.wav");
         round2Sound = loadSound("audio/round2_audio.wav");
         finalRoundSound = loadSound("audio/finalround_audio.wav");
-        playRoundSound();
     }
 
-    // Changed from private to protected so subclasses can override it
-    protected void playRoundSound() {
+    private void playRoundSound() {
         if (playerWins == 1 && enemyWins == 1) { if (finalRoundSound != null) finalRoundSound.play(); }
         else if (currentRound == 1) { if (round1Sound != null) round1Sound.play(); }
         else if (currentRound == 2) { if (round2Sound != null) round2Sound.play(); }
@@ -164,6 +162,7 @@ public abstract class BaseBattleScreen implements Screen {
         batch.end();
 
         if (showingRoundIntro) {
+            if (roundIntroTimer == 0f) playRoundSound();
             roundIntroTimer += delta;
             batch.begin();
             if (roundIntroTimer < 1.5f) {
@@ -242,8 +241,14 @@ public abstract class BaseBattleScreen implements Screen {
             font.getData().setScale(5.0f);
             font.setColor(Color.GOLD);
             GlyphLayout tl = new GlyphLayout(font, transitionMessage);
-            font.draw(batch, tl, (WORLD_WIDTH - tl.width)/2, WORLD_HEIGHT/2 + 100);
+            font.draw(batch, tl, (WORLD_WIDTH - tl.width) / 2, WORLD_HEIGHT / 2 + 100);
             font.getData().setScale(2.5f);
+        } else {
+            // Turn indicator
+            String turnMsg = isPlayerTurn ? player.getName() + "'s Turn!" : enemy.getName() + "'s Turn...";
+            font.setColor(isPlayerTurn ? Color.YELLOW : Color.RED);
+            GlyphLayout turnLayout = new GlyphLayout(font, turnMsg);
+            font.draw(batch, turnLayout, (WORLD_WIDTH - turnLayout.width) / 2f, 800);
         }
 
         batch.end();
@@ -253,17 +258,19 @@ public abstract class BaseBattleScreen implements Screen {
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        // Player HP Bar
+        // Player HP Bar — turns red when low
         shapeRenderer.setColor(Color.DARK_GRAY);
         shapeRenderer.rect(160, 950, 450, 50);
-        shapeRenderer.setColor(Color.GREEN);
-        shapeRenderer.rect(165, 955, 440 * ((float) player.getHealth() / player.getMaxHealth()), 40);
+        float pPercent = (float) player.getHealth() / player.getMaxHealth();
+        shapeRenderer.setColor(pPercent > 0.3f ? Color.GREEN : Color.RED);
+        shapeRenderer.rect(165, 955, 440 * pPercent, 40);
 
         // Enemy HP Bar
         shapeRenderer.setColor(Color.DARK_GRAY);
         shapeRenderer.rect(WORLD_WIDTH - 610, 950, 450, 50);
+        float ePercent = (float) enemy.getHealth() / enemy.getMaxHealth();
         shapeRenderer.setColor(Color.RED);
-        shapeRenderer.rect(WORLD_WIDTH - 605, 955, 440 * ((float) enemy.getHealth() / enemy.getMaxHealth()), 40);
+        shapeRenderer.rect(WORLD_WIDTH - 605, 955, 440 * ePercent, 40);
 
         // Win Orbs
         for (int i = 0; i < 2; i++) {
@@ -292,9 +299,15 @@ public abstract class BaseBattleScreen implements Screen {
     protected void handleGameLogic(float delta) {
         if (isPlayerTurn || isPVPMode()) {
             if (Gdx.input.justTouched()) {
-                if (skill1Bounds.contains(touch.x, touch.y)) executeSkill(0);
-                else if (skill2Bounds.contains(touch.x, touch.y)) executeSkill(1);
-                else if (skill3Bounds.contains(touch.x, touch.y)) executeSkill(2);
+                if      (skill1Bounds.contains(touch.x, touch.y)) pressedSkillIndex = 0;
+                else if (skill2Bounds.contains(touch.x, touch.y)) pressedSkillIndex = 1;
+                else if (skill3Bounds.contains(touch.x, touch.y)) pressedSkillIndex = 2;
+            }
+            if (!Gdx.input.isTouched() && pressedSkillIndex != -1) {
+                if (getBounds(pressedSkillIndex).contains(touch.x, touch.y)) {
+                    executeSkill(pressedSkillIndex);
+                }
+                pressedSkillIndex = -1;
             }
         } else {
             turnTimer += delta;
@@ -303,36 +316,63 @@ public abstract class BaseBattleScreen implements Screen {
     }
 
     protected void executeSkill(int index) {
+        if (index < 0 || index > 2) return;
         Character attacker = isPlayerTurn ? player : enemy;
         Character defender = isPlayerTurn ? enemy : player;
         int[] activeCD = isPlayerTurn ? playerCD : enemyCD;
 
-        if (attacker.getCurrentMana() < attacker.getSkills().get(index).getManaCost() || activeCD[index] > 0) return;
+        int cost = attacker.getSkills().get(index).getManaCost();
+        if (attacker.getCurrentMana() < cost || activeCD[index] > 0) return;
 
         switch (index) {
-            case 0: attacker.basicAttack(defender); break;
+            case 0: attacker.basicAttack(defender);    break;
             case 1: attacker.secondarySkill(defender); activeCD[1] = 3; break;
-            case 2: attacker.ultimateSkill(defender); activeCD[2] = 5; break;
+            case 2: attacker.ultimateSkill(defender);  activeCD[2] = 5; break;
         }
 
         if (!isPlayerTurn || isPVPMode()) {
-            for (int i = 0; i < 3; i++) {
-                if (playerCD[i] > 0) playerCD[i]--;
-                if (enemyCD[i] > 0) enemyCD[i]--;
-            }
-            player.addMana(10); enemy.addMana(10);
+            endOfRound();
         }
         isPlayerTurn = !isPlayerTurn;
+        turnTimer = 0;
         checkMatchState();
     }
 
-    private void checkMatchState() {
+    protected void endOfRound() {
+        for (int i = 0; i < 3; i++) {
+            if (playerCD[i] > 0) playerCD[i]--;
+            if (enemyCD[i]  > 0) enemyCD[i]--;
+        }
+        player.addMana(random.nextInt(6) + 5);
+        enemy.addMana(random.nextInt(6) + 5);
+    }
+
+    protected void checkMatchState() {
         if (!player.isAlive() || !enemy.isAlive()) {
             isTransitioning = true;
-            if (player.isAlive()) playerWins++; else enemyWins++;
-            if (playerWins == 2 || enemyWins == 2) matchIsOver = true;
-            else currentRound++;
+            transitionTimer = 0;
+
+            if (player.isAlive()) {
+                playerWins++;
+                transitionMessage = "YOU WIN ROUND " + currentRound + "!";
+            } else {
+                enemyWins++;
+                transitionMessage = enemy.getName() + " WINS ROUND " + currentRound + "!";
+            }
+
+            if (playerWins == 2 || enemyWins == 2) {
+                matchIsOver = true;
+                transitionMessage = (playerWins == 2) ? "VICTORY!" : "DEFEATED!";
+            } else {
+                currentRound++;
+            }
         }
+    }
+
+    private Rectangle getBounds(int i) {
+        if (i == 0) return skill1Bounds;
+        if (i == 1) return skill2Bounds;
+        return skill3Bounds;
     }
 
     protected void resetRound() {
@@ -342,25 +382,49 @@ public abstract class BaseBattleScreen implements Screen {
         isPlayerTurn = true;
         showingRoundIntro = true;
         roundIntroTimer = 0f;
-        playRoundSound();
     }
 
     protected abstract boolean isPVPMode();
     protected abstract void executeEnemyTurn();
     protected abstract void onMatchOver(boolean playerWon);
+
+    // Subclasses override getHUDText() to customise the centre HUD label.
+    // getTopHUDText() is kept as an alias so both naming conventions work.
     protected String getHUDText() { return "ROUND: " + currentRound; }
+    protected String getTopHUDText() { return getHUDText(); }
 
     @Override public void resize(int w, int h) { viewport.update(w, h); }
-    @Override public void show() {}
-    @Override public void hide() {}
-    @Override public void pause() {}
+    @Override public void show()   {}
+    @Override public void hide()   {}
+    @Override public void pause()  {}
     @Override public void resume() {}
 
     @Override
     public void dispose() {
         batch.dispose(); font.dispose(); shapeRenderer.dispose();
-        if (round1Sound != null) round1Sound.dispose();
-        if (round2Sound != null) round2Sound.dispose();
+
+        if (background   != null) background.dispose();
+        if (redUi        != null) redUi.dispose();
+        if (yellowUi     != null) yellowUi.dispose();
+        if (playerSprite != null) playerSprite.dispose();
+        if (enemySprite  != null) enemySprite.dispose();
+        if (playerIcon   != null) playerIcon.dispose();
+        if (enemyIcon    != null) enemyIcon.dispose();
+
+        if (round1Img != null) round1Img.dispose();
+        if (round2Img != null) round2Img.dispose();
+        if (round3Img != null) round3Img.dispose();
+        if (fightImg  != null) fightImg.dispose();
+
+        if (skill1Btn  != null) skill1Btn.dispose();
+        if (skill1BtnP != null) skill1BtnP.dispose();
+        if (skill2Btn  != null) skill2Btn.dispose();
+        if (skill2BtnP != null) skill2BtnP.dispose();
+        if (skill3Btn  != null) skill3Btn.dispose();
+        if (skill3BtnP != null) skill3BtnP.dispose();
+
+        if (round1Sound    != null) round1Sound.dispose();
+        if (round2Sound    != null) round2Sound.dispose();
         if (finalRoundSound != null) finalRoundSound.dispose();
     }
 }

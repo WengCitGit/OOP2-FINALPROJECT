@@ -29,15 +29,6 @@ public class EndlessBattleScreen extends BaseBattleScreen {
     private float introTimer = 0f;
     private static final float INTRO_DURATION = 3.0f;
 
-    // FIX: playRoundSound() is called from BaseBattleScreen.init() during construction,
-    // before the arcade intro has shown. We suppress it there by checking showingIntro —
-    // if we're still in the intro, the sound will be fired manually when the intro ends.
-    @Override
-    protected void playRoundSound() {
-        if (showingIntro) return;
-        super.playRoundSound();
-    }
-
     public EndlessBattleScreen(Game game, String playerName, String playerCharName) {
         this(game, playerName, playerCharName, new EndlessMode(playerCharName));
     }
@@ -50,7 +41,6 @@ public class EndlessBattleScreen extends BaseBattleScreen {
         System.out.println("[ENDLESS] Started Session for: " + playerName);
         System.out.println("[ENDLESS] Initial Opponent: " + mode.getCurrentOpponent());
     }
-
 
     @Override
     protected void executeSkill(int index) {
@@ -140,13 +130,11 @@ public class EndlessBattleScreen extends BaseBattleScreen {
         player.restoreHP();
         player.restoreMana();
 
-        // FIX: Reset base class round intro state so Round 1 banner shows
-        // correctly at the start of every new opponent, not just the first one.
+        showingIntro = true;
         showingRoundIntro = true;
         roundIntroTimer = 0f;
-
-        showingIntro = true;
         introTimer = 0f;
+
     }
 
     @Override
@@ -173,9 +161,6 @@ public class EndlessBattleScreen extends BaseBattleScreen {
         if (introTimer >= INTRO_DURATION || Gdx.input.justTouched()) {
             showingIntro = false;
             introTimer = 0f;
-            // FIX: Play Round 1 audio here, after the arcade board intro finishes,
-            // so it lines up with the Round 1 banner shown by BaseBattleScreen.
-            playRoundSound();
         }
     }
 

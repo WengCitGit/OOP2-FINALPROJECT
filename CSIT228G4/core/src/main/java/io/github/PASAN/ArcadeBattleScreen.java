@@ -43,15 +43,6 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
         System.out.println("[ARCADE] Initial Stage: " + arcadeMode.getCurrentStage() + " | Enemy: " + mode.getCurrentStageName());
     }
 
-    // FIX: playRoundSound() is called from BaseBattleScreen.init() during construction,
-    // before the arcade intro has shown. We suppress it there by checking showingIntro —
-    // if we're still in the intro, the sound will be fired manually when the intro ends.
-    @Override
-    protected void playRoundSound() {
-        if (showingIntro) return;
-        super.playRoundSound();
-    }
-
     @Override
     protected void executeSkill(int index) {
         // Capture stats before the move
@@ -155,12 +146,9 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
         player.restoreHP();
         player.restoreMana();
 
-        // FIX: Reset base class round intro state so Round 1 banner shows
-        // correctly at the start of every new stage, not just the first one.
+        showingIntro = true;
         showingRoundIntro = true;
         roundIntroTimer = 0f;
-
-        showingIntro = true;
         introTimer = 0f;
     }
 
@@ -171,6 +159,7 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
             return;
         }
         super.render(delta);
+
     }
 
     private void drawIntroSequence(float delta) {
@@ -188,9 +177,6 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
         if (introTimer >= INTRO_DURATION || Gdx.input.justTouched()) {
             showingIntro = false;
             introTimer = 0f;
-            // FIX: Play Round 1 audio here, after the arcade board intro finishes,
-            // so it lines up with the Round 1 banner shown by BaseBattleScreen.
-            playRoundSound();
         }
     }
 

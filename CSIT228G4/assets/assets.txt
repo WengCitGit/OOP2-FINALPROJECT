@@ -87,6 +87,11 @@ buttons/yes_button_pressed.png
 characters/BurgerKing.png
 characters/ChiefKhai.png
 characters/ColonelSanders.png
+characters/DevAyella.png
+characters/DevKishanta.png
+characters/DevKunihiko.png
+characters/DevRothesa.png
+characters/DevWengie.png
 characters/JackInTheBox.png
 characters/Jollibee.png
 characters/LittleCaesar.png
