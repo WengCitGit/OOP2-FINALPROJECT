@@ -18,6 +18,7 @@ public class PVPBattleScreen extends BaseBattleScreen {
         this.player2Name = player2Name;
     }
 
+
     @Override
     protected boolean isPVPMode() {
         return true;

@@ -32,6 +32,10 @@ public abstract class BaseBattleScreen implements Screen {
     protected Texture round1Img, round2Img, round3Img, fightImg;
     protected Rectangle skill1Bounds, skill2Bounds, skill3Bounds;
 
+    protected boolean isPaused = false, playPressed = false, exitPressed = false;
+    protected Texture dialogueBox, playBtn, playBtnP, exitBtn, exitBtnP;
+    protected Rectangle dialogueBounds, playBounds, exitBounds;
+
     // --- CHARACTERS ---
     protected Character player, enemy;
 
@@ -109,6 +113,25 @@ public abstract class BaseBattleScreen implements Screen {
         round1Sound = loadSound("audio/round1_audio.wav");
         round2Sound = loadSound("audio/round2_audio.wav");
         finalRoundSound = loadSound("audio/finalround_audio.wav");
+
+        // --- PAUSE MENU INIT ---
+        dialogueBox = loadTexture("backgrounds/dialogue-box.png");
+        playBtn = loadTexture("buttons/play_button.png");
+        playBtnP = loadTexture("buttons/play_button_pressed.png");
+        exitBtn = loadTexture("buttons/exit_button.png");
+        exitBtnP = loadTexture("buttons/exit_button_pressed.png");
+
+        float cx = WORLD_WIDTH / 2f;
+        float cy = WORLD_HEIGHT / 2f;
+
+        float boxW = 800f;
+        float boxH = 600f;
+        dialogueBounds = new Rectangle(cx - boxW / 2f, cy - boxH / 2f, boxW, boxH);
+
+        float btnW = 350f;
+        float btnH = 100f;
+        playBounds = new Rectangle(cx - btnW / 2f, cy + 20f, btnW, btnH);
+        exitBounds = new Rectangle(cx - btnW / 2f, cy - 120f, btnW, btnH);
     }
 
     private void playRoundSound() {
@@ -148,6 +171,10 @@ public abstract class BaseBattleScreen implements Screen {
         touch.set(Gdx.input.getX(), Gdx.input.getY(), 0);
         viewport.unproject(touch);
 
+        if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)){
+            isPaused = !isPaused;
+        }
+
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         if (background != null) batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
@@ -162,8 +189,11 @@ public abstract class BaseBattleScreen implements Screen {
         batch.end();
 
         if (showingRoundIntro) {
-            if (roundIntroTimer == 0f) playRoundSound();
-            roundIntroTimer += delta;
+            if(!isPaused)
+            {
+                if (roundIntroTimer == 0f) playRoundSound();
+                roundIntroTimer += delta;
+            }
             batch.begin();
             if (roundIntroTimer < 1.5f) {
                 Texture popUp = getRoundIntroTexture();
@@ -181,18 +211,23 @@ public abstract class BaseBattleScreen implements Screen {
         drawHealthBars();
         drawBattleUI();
 
-        if (isTransitioning) {
-            transitionTimer += delta;
-            if (transitionTimer >= 2.0f) {
-                if (matchIsOver) onMatchOver(playerWins >= 2);
-                else {
-                    isTransitioning = false;
-                    transitionTimer = 0;
-                    resetRound();
+        if (isPaused) {
+            drawPauseMenu();
+            handlePauseInput();
+        } else if (!showingRoundIntro) {
+            if (isTransitioning) {
+                transitionTimer += delta;
+                if (transitionTimer >= 2.0f) {
+                    if (matchIsOver) onMatchOver(playerWins >= 2);
+                    else {
+                        isTransitioning = false;
+                        transitionTimer = 0;
+                        resetRound();
+                    }
                 }
+            } else {
+                handleGameLogic(delta);
             }
-        } else {
-            handleGameLogic(delta);
         }
     }
 
@@ -287,7 +322,7 @@ public abstract class BaseBattleScreen implements Screen {
         Texture pressed = (i == 0) ? skill1BtnP : (i == 1) ? skill2BtnP : skill3BtnP;
 
         boolean canAfford = activeChar.getCurrentMana() >= activeChar.getSkills().get(i).getManaCost();
-        boolean isTouching = !disabled && Gdx.input.isTouched() && bounds.contains(touch.x, touch.y);
+            boolean isTouching = !isPaused && !disabled && Gdx.input.isTouched() && bounds.contains(touch.x, touch.y);
 
         Texture toUse = (isTouching || cd > 0 || !canAfford) ? pressed : normal;
         batch.draw(toUse, bounds.x, bounds.y, 250, 70);
@@ -399,6 +434,60 @@ public abstract class BaseBattleScreen implements Screen {
     @Override public void pause()  {}
     @Override public void resume() {}
 
+
+    private void drawPauseMenu() {
+        // 1. Draw a dark transparent overlay
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0, 0, 0, 0.7f);
+        shapeRenderer.rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        shapeRenderer.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+
+        batch.begin();
+
+        // 2. Draw the Dialogue Box background first
+        if (dialogueBox != null) {
+            batch.draw(dialogueBox, dialogueBounds.x, dialogueBounds.y, dialogueBounds.width, dialogueBounds.height);
+        }
+
+        // 3. Draw Play Button on top
+        if (Gdx.input.isTouched() && playBounds.contains(touch.x, touch.y)) {
+            if (playBtnP != null) batch.draw(playBtnP, playBounds.x, playBounds.y, playBounds.width, playBounds.height);
+        } else {
+            if (playBtn != null) batch.draw(playBtn, playBounds.x, playBounds.y, playBounds.width, playBounds.height);
+        }
+
+        // 4. Draw Exit Button on top
+        if (Gdx.input.isTouched() && exitBounds.contains(touch.x, touch.y)) {
+            if (exitBtnP != null) batch.draw(exitBtnP, exitBounds.x, exitBounds.y, exitBounds.width, exitBounds.height);
+        } else {
+            if (exitBtn != null) batch.draw(exitBtn, exitBounds.x, exitBounds.y, exitBounds.width, exitBounds.height);
+        }
+
+        batch.end();
+    }
+
+    private void handlePauseInput() {
+        if (Gdx.input.justTouched()) {
+            if (playBounds.contains(touch.x, touch.y)) playPressed = true;
+            if (exitBounds.contains(touch.x, touch.y)) exitPressed = true;
+        }
+
+        if (!Gdx.input.isTouched()) {
+            if (playPressed && playBounds.contains(touch.x, touch.y)) {
+                isPaused = false;
+            } else if (exitPressed && exitBounds.contains(touch.x, touch.y)) {
+                game.setScreen(new MainMenu(game));
+                dispose();
+            }
+            playPressed = false;
+            exitPressed = false;
+        }
+    }
+
     @Override
     public void dispose() {
         batch.dispose(); font.dispose(); shapeRenderer.dispose();
@@ -426,5 +515,11 @@ public abstract class BaseBattleScreen implements Screen {
         if (round1Sound    != null) round1Sound.dispose();
         if (round2Sound    != null) round2Sound.dispose();
         if (finalRoundSound != null) finalRoundSound.dispose();
+
+        if (dialogueBox != null) dialogueBox.dispose();
+        if (playBtn != null) playBtn.dispose();
+        if (playBtnP != null) playBtnP.dispose();
+        if (exitBtn != null) exitBtn.dispose();
+        if (exitBtnP != null) exitBtnP.dispose();
     }
 }

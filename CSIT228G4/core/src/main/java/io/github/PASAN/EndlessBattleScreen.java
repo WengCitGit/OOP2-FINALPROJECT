@@ -21,6 +21,7 @@ import com.badlogic.gdx.graphics.*;
  *                manually tracks streaks or enemy queues.
  */
 
+//1 Thread @ executeEnemyTurn()
 public class EndlessBattleScreen extends BaseBattleScreen {
 
     private final EndlessMode endlessMode;
@@ -69,7 +70,20 @@ public class EndlessBattleScreen extends BaseBattleScreen {
     @Override
     protected void executeEnemyTurn() {
         if (!enemy.isAlive()) return;
-        executeSkill(PVCMode.chooseSkill(enemy, enemyCD));
+
+        new Thread(new Runnable(){
+            @Override
+            public void run(){
+                int skillIndex = PVCMode.chooseSkill(enemy, enemyCD);
+
+                Gdx.app.postRunnable(new Runnable(){
+                    @Override
+                    public void run(){
+                        executeSkill(skillIndex);
+                    }
+                });
+            }
+        }).start();
     }
 
     @Override

@@ -1,3 +1,4 @@
+arcade_scores.txt
 audio/bgm.wav
 audio/finalround_audio.wav
 audio/round1_audio.wav

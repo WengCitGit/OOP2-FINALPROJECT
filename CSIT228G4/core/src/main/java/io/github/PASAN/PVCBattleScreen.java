@@ -1,10 +1,12 @@
 package io.github.PASAN;
 
 import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
 import io.github.PASAN.modes.PVCMode;
 import io.github.PASAN.screens.GameOverScreen;
 import io.github.PASAN.screens.VictoryScreen;
 
+//1 Thread at executeEnemyTurn()
 public class PVCBattleScreen extends BaseBattleScreen {
 
     /**
@@ -23,9 +25,25 @@ public class PVCBattleScreen extends BaseBattleScreen {
 
     @Override
     protected void executeEnemyTurn() {
-        if (!enemy.isAlive()) return;
-        int skillIndex = PVCMode.chooseSkill(enemy, enemyCD);
-        executeSkill(skillIndex);
+//        if (!enemy.isAlive()) return;
+//        int skillIndex = PVCMode.chooseSkill(enemy, enemyCD);
+//        executeSkill(skillIndex);
+
+        if(!enemy.isAlive()) return;
+
+        new Thread(new Runnable(){
+            @Override
+            public void run(){
+                int skillIndex = PVCMode.chooseSkill(enemy, enemyCD);
+
+                Gdx.app.postRunnable(new Runnable(){
+                    @Override
+                    public void run(){
+                        executeSkill(skillIndex);
+                    }
+                });
+            }
+        }).start();
     }
 
     @Override

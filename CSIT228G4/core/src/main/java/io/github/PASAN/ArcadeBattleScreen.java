@@ -22,6 +22,7 @@ import com.badlogic.gdx.graphics.*;
  * never manually tracks stage numbers or enemy queues.
  */
 
+//2 Threads @ onMatchOver(), executeEnemyTurn()
 public class ArcadeBattleScreen extends BaseBattleScreen {
 
     private final ArcadeMode arcadeMode;
@@ -73,7 +74,20 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
     @Override
     protected void executeEnemyTurn() {
         if (!enemy.isAlive()) return;
-        executeSkill(PVCMode.chooseSkill(enemy, enemyCD));
+
+        new Thread(new Runnable(){
+            @Override
+            public void run(){
+                int skillIndex = PVCMode.chooseSkill(enemy, enemyCD);
+
+                Gdx.app.postRunnable(new Runnable(){
+                    @Override
+                    public void run(){
+                        executeSkill(skillIndex);
+                    }
+                });
+            }
+        }).start();
     }
 
     @Override
@@ -89,7 +103,15 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
         if (arcadeMode.isRunOver()) {
             int remainingHP = playerWon ? player.getHealth() : 0;
             int score = CalculateScore.calculateArcadeScore(arcadeMode.getStagesCleared(), remainingHP);
-            new Leaderboard("arcade_scores.txt").addScore(username, score);
+
+            new Thread(new Runnable(){
+                @Override
+                public void run(){
+                    new Leaderboard("arcade_scores.txt").addScore(username, score);
+                    System.out.println("[Thread] Score saved successfully in background.");
+                }
+            }).start();
+//            new Leaderboard("arcade_scores.txt").addScore(username, score);
 
             if (arcadeMode.isPlayerDefeated()) {
                 game.setScreen(new GameOverScreen(game, username));
