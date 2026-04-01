@@ -39,6 +39,22 @@ public abstract class BaseBattleScreen implements Screen {
     // --- CHARACTERS ---
     protected Character player, enemy;
 
+    // --- FLOATING TEXTS ---
+    protected class FloatingText
+    {
+        String text;
+        float x, y, timer;
+        Color color;
+        public FloatingText(String text, float x, float y, Color color)
+        {
+            this.text = text;
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            this.timer = 1.5f;
+        }
+    }
+    protected java.util.ArrayList<FloatingText> floatingTexts = new java.util.ArrayList<>();
     // --- STATE ---
     protected boolean isPlayerTurn = true;
     protected int pressedSkillIndex = -1;
@@ -211,6 +227,26 @@ public abstract class BaseBattleScreen implements Screen {
         drawHealthBars();
         drawBattleUI();
 
+        // --- RENDER FLOATING TEXT ---
+        batch.begin();
+        for (int i = floatingTexts.size() - 1; i >= 0; i--)
+        {
+            FloatingText ft = floatingTexts.get(i);
+            ft.y += 100 * delta;
+            ft.timer -= delta;
+
+            font.setColor(ft.color.r, ft.color.g, ft.color.b, Math.max(0, ft.timer / 1.5f));
+            GlyphLayout layout = new GlyphLayout(font, ft.text);
+            font.draw(batch, ft.text, ft.x - layout.width / 2f, ft.y);
+
+            if (ft.timer <= 0) {
+
+                floatingTexts.remove(i);
+            }
+        }
+        font.setColor(Color.WHITE);
+        batch.end();
+
         if (isPaused) {
             drawPauseMenu();
             handlePauseInput();
@@ -286,6 +322,17 @@ public abstract class BaseBattleScreen implements Screen {
             font.draw(batch, turnLayout, (WORLD_WIDTH - turnLayout.width) / 2f, 800);
         }
 
+        //--- HP INDICATORS ---
+        font.setColor(Color.WHITE);
+        String pHealth = player.getHealth()+" / "+player.getMaxHealth();
+        String eHealth = enemy.getHealth()+" / "+enemy.getMaxHealth();
+
+        GlyphLayout pHealthLayout = new GlyphLayout(font, pHealth);
+        GlyphLayout eHealthLayout = new GlyphLayout(font, eHealth);
+
+        font.draw(batch, pHealth, 160 + (450 - pHealthLayout.width) / 2f, 950 + 38);
+        font.draw(batch, eHealth, (WORLD_WIDTH - 610) + (450 - eHealthLayout.width) / 2f, 950 + 38);
+
         batch.end();
     }
 
@@ -359,10 +406,31 @@ public abstract class BaseBattleScreen implements Screen {
         int cost = attacker.getSkills().get(index).getManaCost();
         if (attacker.getCurrentMana() < cost || activeCD[index] > 0) return;
 
+        // --- CAPTURE OLD HP ---
+        int oldHp = defender.getHealth();
+
         switch (index) {
             case 0: attacker.basicAttack(defender);    break;
             case 1: attacker.secondarySkill(defender); activeCD[1] = 3; break;
             case 2: attacker.ultimateSkill(defender);  activeCD[2] = 5; break;
+        }
+
+        // --- CALCULATE DAMAGE & SPAWN TEXT ---
+        int damage = oldHp - defender.getHealth();
+
+        // Calculate center top of character sprites
+        float pSpriteX = 200 + (450 / 2f);
+        float eSpriteX = (WORLD_WIDTH - 700) + (450 / 2f);
+        float yPos = 850f; // Above their heads
+
+        if (isPlayerTurn)
+        {
+            if (damage > 0) floatingTexts.add(new FloatingText("-" + damage, eSpriteX, yPos, Color.RED));
+            if (cost > 0) floatingTexts.add(new FloatingText("-" + cost + " MP", pSpriteX, yPos - 50, Color.CYAN));
+        } else
+        {
+            if (damage > 0) floatingTexts.add(new FloatingText("-" + damage, pSpriteX, yPos, Color.RED));
+            if (cost > 0) floatingTexts.add(new FloatingText("-" + cost + " MP", eSpriteX, yPos - 50, Color.CYAN));
         }
 
         if (!isPlayerTurn || isPVPMode()) {
