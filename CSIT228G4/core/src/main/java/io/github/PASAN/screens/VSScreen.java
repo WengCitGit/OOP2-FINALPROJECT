@@ -9,7 +9,7 @@ import io.github.PASAN.ArcadeBattleScreen;
 import io.github.PASAN.Main;
 import io.github.PASAN.PVCBattleScreen;
 import io.github.PASAN.PVPBattleScreen;
-// Make sure your battle screens are imported if they are in different packages!
+import java.util.Random;
 
 public class VSScreen implements Screen {
     private SpriteBatch batch;
@@ -29,15 +29,20 @@ public class VSScreen implements Screen {
     private Texture popupBoard;
     private Texture playerSprite;
     private Texture enemySprite;
-    private TextureRegion enemyRegion; // Used to flip the enemy sprite
+    private TextureRegion enemyRegion;
 
-    // --- Timer Variables ---
     private float transitionTimer = 0f;
-    private static final float TRANSITION_DURATION = 3.0f; // 3 seconds before auto-start
+    private static final float TRANSITION_DURATION = 3.0f;
     private boolean isStarting = false;
 
     private static final float WORLD_WIDTH = 1920;
     private static final float WORLD_HEIGHT = 1080;
+
+    // List of available characters for randomization
+    private static final String[] CHARACTER_POOL = {
+            "Jollibee", "Colonel Sanders", "McDonald", "Burger King",
+            "Wendy", "Jack in the Box", "Little Caesar", "Chief Khai"
+    };
 
     public VSScreen(String p1Name, String p2Name, String mode, String p1Char, String p2Char) {
         this.game = (Game) Gdx.app.getApplicationListener();
@@ -46,7 +51,14 @@ public class VSScreen implements Screen {
         this.player2Name = p2Name;
         this.mode = mode;
         this.player1Char = p1Char;
-        this.player2Char = p2Char;
+
+        // --- RANDOMIZATION LOGIC ---
+        // If mode is PVC, we ignore the passed p2Char and pick a random one
+        if (mode.equalsIgnoreCase("PVC")) {
+            this.player2Char = CHARACTER_POOL[new Random().nextInt(CHARACTER_POOL.length)];
+        } else {
+            this.player2Char = p2Char;
+        }
 
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
@@ -55,15 +67,15 @@ public class VSScreen implements Screen {
 
         font = new BitmapFont();
 
-        // Load Textures
         background = new Texture("backgrounds/temp_bg.png");
-        popupBoard = new Texture("backgrounds/vsbg.png"); // Assuming this acts like arcade_board.png
+        popupBoard = new Texture("backgrounds/vsbg.png");
 
         playerSprite = new Texture("characters/" + player1Char.replace(" ", "") + ".png");
 
+        // Now uses the (potentially randomized) player2Char
         enemySprite = new Texture("characters/" + player2Char.replace(" ", "") + ".png");
         enemyRegion = new TextureRegion(enemySprite);
-        enemyRegion.flip(true, false); // Make enemy face left
+        enemyRegion.flip(true, false);
     }
 
     @Override
@@ -74,7 +86,6 @@ public class VSScreen implements Screen {
         camera.update();
         batch.setProjectionMatrix(camera.combined);
 
-        // Update the timer
         if (!isStarting) {
             transitionTimer += delta;
             if (transitionTimer >= TRANSITION_DURATION) {
@@ -84,7 +95,6 @@ public class VSScreen implements Screen {
             }
         }
 
-        // --- Layout Math (Matching ArcadeBattleScreen) ---
         float boardW = 1400f;
         float boardH = 750f;
         float boardX = (WORLD_WIDTH  - boardW) / 2f;
@@ -101,25 +111,18 @@ public class VSScreen implements Screen {
         float titleLabelY = boardY + boardH - 55f;
 
         batch.begin();
-
-        // 1. Draw Background
         batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-
-        // 2. Draw Board
         batch.draw(popupBoard, boardX, boardY, boardW, boardH);
 
-        // 3. Draw Mode Title at the top
         font.getData().setScale(4.5f);
         font.setColor(Color.RED);
         String titleText = mode.toUpperCase() + " BATTLE";
         GlyphLayout titleLayout = new GlyphLayout(font, titleText);
         font.draw(batch, titleLayout, WORLD_WIDTH / 2f - titleLayout.width / 2f, titleLabelY);
 
-        // 4. Draw Characters
         batch.draw(playerSprite, playerSpriteX, spriteY, charW, charH);
         batch.draw(enemyRegion, enemySpriteX, spriteY, charW, charH);
 
-        // 5. Draw Character Names
         font.getData().setScale(2.8f);
         font.setColor(Color.WHITE);
 
@@ -138,12 +141,13 @@ public class VSScreen implements Screen {
         if (mode.toUpperCase().contains("ARCADE")) {
             game.setScreen(new ArcadeBattleScreen(game, player1Name, player1Char));
         } else if (mode.toUpperCase().contains("PVC")) {
+            // PASSING THE RANDOMIZED CHARACTER:
+            // Note: Your PVCBattleScreen constructor must be updated to accept this 4th argument
             game.setScreen(new PVCBattleScreen(game, player1Name, player1Char, player2Char));
         } else if (mode.toUpperCase().contains("PVP")) {
-            game.setScreen(new PVPBattleScreen(game, player1Name,player2Name, player1Char, player2Char));
+            game.setScreen(new PVPBattleScreen(game, player1Name, player2Name, player1Char, player2Char));
         }
 
-        // Clean up this screen's memory before leaving
         this.dispose();
     }
 
@@ -161,6 +165,5 @@ public class VSScreen implements Screen {
         popupBoard.dispose();
         playerSprite.dispose();
         enemySprite.dispose();
-        // TextureRegions don't need to be disposed directly, the Texture it relies on (enemySprite) is enough.
     }
 }

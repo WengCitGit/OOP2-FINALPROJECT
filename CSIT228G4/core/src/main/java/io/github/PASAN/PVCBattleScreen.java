@@ -5,18 +5,15 @@ import io.github.PASAN.modes.PVCMode;
 import io.github.PASAN.screens.GameOverScreen;
 import io.github.PASAN.screens.VictoryScreen;
 
-/**
- * INHERITANCE  : Extends BaseBattleScreen — gets all rendering and turn logic for free.
- * POLYMORPHISM : executeEnemyTurn() overrides the base, calls PVCMode.chooseSkill()
- *                so the AI decision is always resolved the same way regardless of which
- *                enemy character is fighting.
- * ENCAPSULATION: This class only knows about match outcomes — score/screen logic
- *                stays here, AI logic stays in PVCMode.
- */
 public class PVCBattleScreen extends BaseBattleScreen {
 
+    /**
+     * Constructor now accepts 4 parameters.
+     * The 'enemyCharName' is provided by the VSScreen.
+     */
     public PVCBattleScreen(Game game, String username, String playerCharName, String enemyCharName) {
         super(game, username, playerCharName, enemyCharName);
+        System.out.println("[PVC] Battle Loaded: " + playerCharName + " vs " + enemyCharName);
     }
 
     @Override
@@ -27,7 +24,6 @@ public class PVCBattleScreen extends BaseBattleScreen {
     @Override
     protected void executeEnemyTurn() {
         if (!enemy.isAlive()) return;
-        // POLYMORPHISM: PVCMode.chooseSkill decides which skill index to use
         int skillIndex = PVCMode.chooseSkill(enemy, enemyCD);
         executeSkill(skillIndex);
     }
