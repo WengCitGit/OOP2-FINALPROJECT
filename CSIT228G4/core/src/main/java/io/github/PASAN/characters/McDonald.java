@@ -1,5 +1,10 @@
 package io.github.PASAN.characters;
 
+/**
+ * INHERITANCE  : Extends Character — gets all shared behavior for free.
+ * POLYMORPHISM : Overrides the three skill methods with BurgerKing-specific behavior.
+ */
+
 public class McDonald extends Character {
 
     public McDonald() {

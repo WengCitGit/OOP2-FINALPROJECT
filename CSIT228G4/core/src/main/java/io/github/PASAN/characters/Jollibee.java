@@ -1,5 +1,15 @@
 package io.github.PASAN.characters;
 
+/**
+ * INHERITANCE  : Jollibee gets all shared battle logic (takeDamage, addMana,
+ *                restoreHP, isAlive, etc.) for free from Character.
+ * POLYMORPHISM : basicAttack/secondarySkill/ultimateSkill are overridden here.
+ *                A caller holding a Character reference gets Jollibee's version
+ *                automatically — no casting needed.
+ * ENCAPSULATION: No public fields. Skills are defined once in the constructor
+ *                and accessed only through getSkills().
+ */
+
 public class Jollibee extends Character {
 
     public Jollibee() {

@@ -1,9 +1,18 @@
 package io.github.PASAN;
 
 import com.badlogic.gdx.Game;
+import io.github.PASAN.modes.PVCMode;
 import io.github.PASAN.screens.GameOverScreen;
 import io.github.PASAN.screens.VictoryScreen;
 
+/**
+ * INHERITANCE  : Extends BaseBattleScreen — gets all rendering and turn logic for free.
+ * POLYMORPHISM : executeEnemyTurn() overrides the base, calls PVCMode.chooseSkill()
+ *                so the AI decision is always resolved the same way regardless of which
+ *                enemy character is fighting.
+ * ENCAPSULATION: This class only knows about match outcomes — score/screen logic
+ *                stays here, AI logic stays in PVCMode.
+ */
 public class PVCBattleScreen extends BaseBattleScreen {
 
     public PVCBattleScreen(Game game, String username, String playerCharName, String enemyCharName) {
@@ -12,34 +21,24 @@ public class PVCBattleScreen extends BaseBattleScreen {
 
     @Override
     protected boolean isPVPMode() {
-        return false; // This is a CPU battle, not PVP
+        return false;
     }
 
     @Override
     protected void executeEnemyTurn() {
         if (!enemy.isAlive()) return;
-
-        // Smart CPU AI: Prioritize Ultimate, then Secondary, then Basic Attack
-        if (enemyCD[2] == 0 && enemy.getCurrentMana() >= enemy.getSkills().get(2).getManaCost()) {
-            executeSkill(2); // Ultimate
-        }
-        else if (enemyCD[1] == 0 && enemy.getCurrentMana() >= enemy.getSkills().get(1).getManaCost()) {
-            executeSkill(1); // Secondary
-        }
-        else {
-            executeSkill(0); // Basic Attack
-        }
+        // POLYMORPHISM: PVCMode.chooseSkill decides which skill index to use
+        int skillIndex = PVCMode.chooseSkill(enemy, enemyCD);
+        executeSkill(skillIndex);
     }
 
     @Override
     protected void onMatchOver(boolean playerWon) {
         if (playerWon) {
-            System.out.println("Victory!");
             game.setScreen(new VictoryScreen(game, username));
         } else {
-            System.out.println("Defeat!");
-            game.setScreen(new GameOverScreen(game, username)); // or pass game depending on your constructor
+            game.setScreen(new GameOverScreen(game, username));
         }
-        this.dispose(); // Free up memory
+        dispose();
     }
 }

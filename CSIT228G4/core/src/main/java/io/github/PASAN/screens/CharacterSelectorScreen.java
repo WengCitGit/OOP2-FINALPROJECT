@@ -29,7 +29,7 @@ public class CharacterSelectorScreen implements Screen {
             "icons/ColonelSanders_icon.png",
             "icons/BurgerKing_icon.png",
             "icons/Wendy_icon.png",
-            "icons/Jack_icon.png",
+            "icons/JackInTheBox_icon.png",
             "icons/LittleCaesar_icon.png",
             "icons/ChiefKhai_icon.png"
     };

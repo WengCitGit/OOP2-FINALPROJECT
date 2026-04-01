@@ -11,7 +11,7 @@ public class Main extends Game
 
     @Override
     public void create() {
-        bgm = Gdx.audio.newMusic(Gdx.files.internal("musics/bgm.wav"));
+        bgm = Gdx.audio.newMusic(Gdx.files.internal("audio/bgm.wav"));
         bgm.setLooping(true);
         bgm.play();
         setScreen(new MainMenu(this));

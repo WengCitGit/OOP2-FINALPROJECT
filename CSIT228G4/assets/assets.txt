@@ -1,3 +1,7 @@
+audio/bgm.wav
+audio/finalround_audio.wav
+audio/round1_audio.wav
+audio/round2_audio.wav
 backgrounds/arcade_board.png
 backgrounds/arcade_intro_bg.jpg
 backgrounds/arcade_intro_bg.png
@@ -91,7 +95,7 @@ characters/Wendy.png
 icons/BurgerKing_icon.png
 icons/ChiefKhai_icon.png
 icons/ColonelSanders_icon.png
-icons/Jack_icon.png
+icons/JackInTheBox_icon.png
 icons/Jollibee_icon.png
 icons/LittleCaesar_icon.png
 icons/Mcdonald_icon.png
@@ -128,4 +132,3 @@ info/Wendy_stats.png
 info/Wendy_where.png
 info/Wendy_who.png
 info/Wendy_why.png
-musics/bgm.wav

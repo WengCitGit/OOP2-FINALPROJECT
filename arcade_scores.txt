@@ -1,3 +1,4 @@
+c,8825
 Marimar,4000
 Milio,3500
 Ayella,3000
@@ -7,4 +8,3 @@ Layla,1050
 Maria,1000
 Archi,722
 Richmar,465
-Wonie,450

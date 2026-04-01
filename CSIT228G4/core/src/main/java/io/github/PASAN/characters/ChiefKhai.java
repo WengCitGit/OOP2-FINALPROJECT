@@ -1,5 +1,12 @@
 package io.github.PASAN.characters;
 
+/**
+ * INHERITANCE  : Extends Character.
+ * POLYMORPHISM : Two constructors — default and arcadeOP boosted version.
+ *                Both produce a ChiefKhai but with different stats/skills.
+ *                The caller doesn't need to know which variant it's getting.
+ */
+
 public class ChiefKhai extends Character {
 
     public ChiefKhai() {
