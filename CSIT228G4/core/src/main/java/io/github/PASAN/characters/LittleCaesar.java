@@ -6,8 +6,8 @@ public class LittleCaesar extends Character {
         //stats: Name, Max HP, Max Mana, Mana Regen
         super("Little Caesar", 165, 55, 6);
 
-//        skills.add(new Skill("Hot-N-Ready Slam", 0, 12, 17)); //orig skill
-        skills.add(new Skill("Hot-N-Ready Slam", 0, 500, 500)); //debug
+        skills.add(new Skill("Hot-N-Ready Slam", 0, 12, 17)); //orig skill
+//        skills.add(new Skill("Hot-N-Ready Slam", 0, 500, 500)); //debug
         skills.add(new Skill("Crazy Bread Barrage", 15, 20, 30));
         skills.add(new Skill("Deep! Dish Catastrophe", 30, 34, 52));
     }
