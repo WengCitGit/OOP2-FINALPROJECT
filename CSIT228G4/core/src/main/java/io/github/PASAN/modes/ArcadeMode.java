@@ -22,7 +22,7 @@ public class ArcadeMode extends Mode {
 
     public static final int TOTAL_STAGES = 8;
     private static final String[] FINAL_BOSSES = {
-            "Dev Kishanta", "Dev Rothesa", "Dev Wengie", "Dev Kunihiko", "Dev Diane"
+            "Dev Kishanta", "Dev Rothesa", "Dev Wengie", "Dev Kunihiko", "Dev Ayella"
     };
 
     private int currentStage = 1;

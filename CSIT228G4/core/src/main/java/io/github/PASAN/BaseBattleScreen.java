@@ -166,6 +166,11 @@ public abstract class BaseBattleScreen implements Screen {
             case "Jack in the Box": return new JackInTheBox();
             case "Little Caesar": return new LittleCaesar();
             case "Chief Khai": return new ChiefKhai();
+            case "Dev Kishanta": return new GameDevs("Dev Kishanta");
+            case "Dev Rothesa":  return new GameDevs("Dev Rothesa");
+            case "Dev Wengie":   return new GameDevs("Dev Wengie");
+            case "Dev Kunihiko": return new GameDevs("Dev Kunihiko");
+            case "Dev Ayella":   return new GameDevs("Dev Ayella");
             default: return new Jollibee();
         }
     }

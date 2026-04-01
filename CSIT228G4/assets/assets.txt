@@ -101,6 +101,11 @@ characters/Wendy.png
 icons/BurgerKing_icon.png
 icons/ChiefKhai_icon.png
 icons/ColonelSanders_icon.png
+icons/DevAyella_icon.png
+icons/DevKishanta_icon.png
+icons/DevKunihiko_icon.png
+icons/DevRothesa_icon.png
+icons/DevWengie_icon.png
 icons/JackInTheBox_icon.png
 icons/Jollibee_icon.png
 icons/LittleCaesar_icon.png
