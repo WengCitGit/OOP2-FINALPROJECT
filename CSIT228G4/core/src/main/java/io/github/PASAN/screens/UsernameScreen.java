@@ -42,6 +42,7 @@ public class UsernameScreen implements Screen {
     private int playerNum = 1;
     private String p1Name = "";
     private String p1Char = "";
+    private boolean showNameError = false;
 
     public UsernameScreen(String mode) {
         this.gameMode = mode;
@@ -90,6 +91,7 @@ public class UsernameScreen implements Screen {
         Gdx.input.setInputProcessor(new InputAdapter() {
             @Override
             public boolean keyTyped(char character) {
+                showNameError = false;
                 if (character == '\b' && username.length() > 0) {
                     username = username.substring(0, username.length() - 1);
                 } else if (Character.isLetterOrDigit(character) && username.length() < 12) {
@@ -140,16 +142,24 @@ public class UsernameScreen implements Screen {
         } else {
             batch.draw(enterBtn, enterBounds.x, enterBounds.y, enterBounds.width, enterBounds.height);
         }
+
         font.getData().setScale(3);
-        //if(playerNum == 1) font.draw(batch, "ENTER PLAYER 1 USERNAME", 750, 700);
-        //else font.draw(batch, "ENTER PLAYER 2 USERNAME", 750, 700);
-        //font.draw(batch, "ENTER USERNAME", 820, 750);
 
         String displayName = username;
         if (showCursor) displayName += "|";
         font.draw(batch, displayName, textFieldBounds.x + 20, textFieldBounds.y + 60);
 
+        // --- DRAW THE RED ERROR MESSAGE IF NAME IS TAKEN ---
+        if (showNameError) {
+            font.getData().setScale(2f);
+            font.setColor(Color.RED);
+            GlyphLayout errorLayout = new GlyphLayout(font, "NAME ALREADY TAKEN BY PLAYER 1!");
+            // Center the error message under the text box
+            font.draw(batch, errorLayout, textFieldBounds.x + (textFieldBounds.width - errorLayout.width) / 2f, textFieldBounds.y - 20);
 
+            // Reset font back to white for the next frame
+            font.setColor(Color.WHITE);
+        }
 
         batch.end();
 
@@ -177,6 +187,14 @@ public class UsernameScreen implements Screen {
 
     private void confirm() {
         if (username.length() == 0) return;
+
+        // --- PREVENT PLAYER 2 FROM USING PLAYER 1'S NAME ---
+        // equalsIgnoreCase makes sure "Bob" and "bob" are treated as the same name!
+        if (playerNum == 2 && username.equalsIgnoreCase(p1Name)) {
+            showNameError = true;
+            return; // Stop the code here so they can't advance!
+        }
+
         if (gameMode == null || gameMode.isEmpty()) gameMode = "DEFAULT";
 
         try {
@@ -187,7 +205,9 @@ public class UsernameScreen implements Screen {
     }
 
     private void cancel() {
-        ((Main) Gdx.app.getApplicationListener()).setScreen(new GameModeScreen(game));
+        // You might need to cast your game reference if you have an issue here
+        // ((Main) Gdx.app.getApplicationListener()).setScreen(new GameModeScreen(game));
+        ((Main) Gdx.app.getApplicationListener()).setScreen(new GameModeScreen((Game)Gdx.app.getApplicationListener()));
     }
 
     @Override

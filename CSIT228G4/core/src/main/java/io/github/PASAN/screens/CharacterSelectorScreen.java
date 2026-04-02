@@ -127,36 +127,52 @@ public class CharacterSelectorScreen implements Screen {
         font.draw(batch, "MODE: " + mode, 50, 970);
 
         font.getData().setScale(2);
+
+        // --- DRAW CHARACTERS (NO DIMMING, ONLY PVP LOCK) ---
         for (int i = 0; i < characters.length; i++) {
             Rectangle r = characters[i];
-            batch.draw(characterTextures[i], r.x, r.y, r.width, r.height);
-            GlyphLayout layout = new GlyphLayout(font, characterNames[i]);
-            font.draw(batch, layout, r.x + (r.width - layout.width) / 2, r.y + r.height + 40);
-        }
 
+            boolean isLocked = (playerNum == 2 && characterNames[i].equals(p1Char));
+
+            if (isLocked) {
+                batch.setColor(0.2f, 0.2f, 0.2f, 1f);
+            } else {
+                batch.setColor(1f, 1f, 1f, 1f);
+            }
+
+            batch.draw(characterTextures[i], r.x, r.y, r.width, r.height);
+            batch.setColor(Color.WHITE);
+
+            GlyphLayout layout = new GlyphLayout(font, characterNames[i]);
+            if (isLocked) {
+                font.setColor(Color.GRAY);
+                font.draw(batch, layout, r.x + (r.width - layout.width) / 2, r.y + r.height + 40);
+                font.setColor(Color.WHITE);
+            } else {
+                font.draw(batch, layout, r.x + (r.width - layout.width) / 2, r.y + r.height + 40);
+            }
+        }
         batch.end();
 
+        // --- DRAW BORDERS (WHITE LINE FOR CHOSEN, NOTHING FOR DEFAULT) ---
+        Gdx.gl.glLineWidth(4f); // Made it slightly thicker so it pops as a selection!
         shape.setProjectionMatrix(camera.combined);
-        Gdx.gl.glLineWidth(1f);
         shape.begin(ShapeRenderer.ShapeType.Line);
-        shape.setColor(Color.WHITE);
+
         for (int i = 0; i < characters.length; i++) {
-            if (i != selectedCharacter)
+            boolean isLocked = (playerNum == 2 && characterNames[i].equals(p1Char));
+
+            if (isLocked) {
+                // Keep a subtle dark gray border for the locked PVP character
+                shape.setColor(Color.DARK_GRAY);
                 shape.rect(characters[i].x, characters[i].y, characters[i].width, characters[i].height);
+            } else if (i == selectedCharacter) {
+                // Draw the clean white outline ONLY for the selected character
+                shape.setColor(Color.WHITE);
+                shape.rect(characters[i].x, characters[i].y, characters[i].width, characters[i].height);
+            }
         }
         shape.end();
-
-        if (selectedCharacter != -1) {
-            Rectangle r = characters[selectedCharacter];
-            float border = 12f;
-            shape.begin(ShapeRenderer.ShapeType.Filled);
-            shape.setColor(Color.YELLOW);
-            shape.rect(r.x - border, r.y + r.height,         r.width + border * 2, border);
-            shape.rect(r.x - border, r.y - border,           r.width + border * 2, border);
-            shape.rect(r.x - border, r.y - border,           border, r.height + border * 2);
-            shape.rect(r.x + r.width, r.y - border,          border, r.height + border * 2);
-            shape.end();
-        }
 
         handleInput();
     }
@@ -166,7 +182,11 @@ public class CharacterSelectorScreen implements Screen {
             if (backBounds.contains(touch.x, touch.y)) backPressed = true;
             if (selectedCharacter != -1 && confirmBounds.contains(touch.x, touch.y)) confirmPressed = true;
             for (int i = 0; i < characters.length; i++) {
-                if (characters[i].contains(touch.x, touch.y)) characterPressed = i;
+                if (characters[i].contains(touch.x, touch.y)) {
+                    if (!(playerNum == 2 && characterNames[i].equals(p1Char))) {
+                        characterPressed = i;
+                    }
+                }
             }
         }
 

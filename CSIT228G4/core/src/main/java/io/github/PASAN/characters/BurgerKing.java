@@ -9,7 +9,7 @@ public class BurgerKing extends Character {
         // skills: Name, Mana Cost, Min Damage, Max Damage
 
         // basic attack
-        skills.add(new Skill("Whopper Flame", 0, 11, 16));
+        skills.add(new Skill("Whopper Flame", 0, 165, 165));
 
         // secondary
         skills.add(new Skill("Onion Ring Shockwave", 15, 21, 31));

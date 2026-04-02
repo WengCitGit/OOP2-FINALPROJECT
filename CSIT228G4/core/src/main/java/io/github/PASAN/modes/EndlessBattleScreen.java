@@ -35,6 +35,7 @@ public class EndlessBattleScreen extends BaseBattleScreen {
         super(game, playerName, playerCharName, mode.getCurrentOpponent());
         this.endlessMode = mode;
         this.arcadeBoard = loadTextureSafe("backgrounds/arcade_board.png");
+        randomizeBackground();
 
         System.out.println("[ENDLESS] Started Session for: " + playerName);
         System.out.println("[ENDLESS] Initial Opponent: " + mode.getCurrentOpponent());
@@ -120,6 +121,7 @@ public class EndlessBattleScreen extends BaseBattleScreen {
             enemyIcon = new Texture("icons/" + formattedName + "_icon.png");
             enemyIconRegion = new TextureRegion(enemyIcon);
             enemyIconRegion.flip(true, false);
+            randomizeBackground();
         } catch (Exception e) {
             Gdx.app.error("ASSETS", "Missing assets for: " + nextName);
         }

@@ -36,7 +36,7 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
         super(game, playerName, playerCharName, mode.getCurrentStageName());
         this.arcadeMode = mode;
         this.arcadeBoard = loadTextureSafe("backgrounds/arcade_board.png");
-
+        randomizeBackground();
         System.out.println("[ARCADE] Started Session for: " + playerName);
         System.out.println("[ARCADE] Initial Stage: " + arcadeMode.getCurrentStage() + " | Enemy: " + mode.getCurrentStageName());
     }
@@ -144,6 +144,7 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
             enemyIcon = new Texture("icons/" + formattedName + "_icon.png");
             enemyIconRegion = new TextureRegion(enemyIcon);
             enemyIconRegion.flip(true, false);
+            randomizeBackground();
         } catch (Exception e) {
             Gdx.app.error("ASSETS", "Missing assets for: " + nextEnemyName);
         }

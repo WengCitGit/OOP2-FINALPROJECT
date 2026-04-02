@@ -13,7 +13,7 @@ import com.badlogic.gdx.utils.viewport.*;
 import java.util.Random;
 
 public abstract class BaseBattleScreen implements Screen {
-
+    public static String currentBackgroundPath = "backgrounds/bg1.png";
     // --- CORE GDX ---
     protected Game game;
     protected SpriteBatch batch;
@@ -90,9 +90,9 @@ public abstract class BaseBattleScreen implements Screen {
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
         touch = new Vector3();
+        background = loadTexture(currentBackgroundPath);
 
         // Load Textures
-        background = loadTexture("backgrounds/bg2.png");
         redUi = loadTexture("backgrounds/red_background.png");
         yellowUi = loadTexture("backgrounds/yellow_background.png");
         skill1Btn = loadTexture("buttons/skill1_button.png");
@@ -157,6 +157,14 @@ public abstract class BaseBattleScreen implements Screen {
         exitBounds = new Rectangle(cx - btnW / 2f, cy - 140f, btnW, btnH);
     }
 
+    protected void randomizeBackground() {
+        if (background != null) {
+            background.dispose();
+        }
+        int randomBgNum = random.nextInt(8) + 1;
+        currentBackgroundPath = "backgrounds/bg" + randomBgNum + ".png";
+        background = loadTexture(currentBackgroundPath);
+    }
     private void playRoundSound() {
         if (playerWins == 1 && enemyWins == 1) { if (finalRoundSound != null) finalRoundSound.play(); }
         else if (currentRound == 1) { if (round1Sound != null) round1Sound.play(); }
@@ -467,17 +475,33 @@ public abstract class BaseBattleScreen implements Screen {
             isTransitioning = true;
             transitionTimer = 0;
 
-            if (player.isAlive()) {
+            boolean p1WonRound = player.isAlive();
+            if (p1WonRound) {
                 playerWins++;
-                transitionMessage = "YOU WIN ROUND " + currentRound + "!";
+                if (isPVPMode()) {
+                    transitionMessage = username.toUpperCase() + " WINS ROUND " + currentRound + "!";
+                } else {
+                    transitionMessage = "YOU WIN ROUND " + currentRound + "!";
+                }
             } else {
                 enemyWins++;
-                transitionMessage = enemy.getName() + " WINS ROUND " + currentRound + "!";
+                if (isPVPMode()) {
+                    transitionMessage = player2Name.toUpperCase() + " WINS ROUND " + currentRound + "!";
+                } else {
+                    transitionMessage = enemy.getName().toUpperCase() + " WINS ROUND " + currentRound + "!";
+                }
             }
 
             if (playerWins == 2 || enemyWins == 2) {
                 matchIsOver = true;
-                transitionMessage = (playerWins == 2) ? "VICTORY!" : "DEFEATED!";
+
+                if (isPVPMode()) {
+                    transitionMessage = (playerWins == 2) ?
+                            username.toUpperCase() + " WINS THE MATCH!" :
+                            player2Name.toUpperCase() + " WINS THE MATCH!";
+                } else {
+                    transitionMessage = (playerWins == 2) ? "VICTORY!" : "DEFEATED!";
+                }
             } else {
                 currentRound++;
             }

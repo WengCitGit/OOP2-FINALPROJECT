@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.utils.viewport.*;
 import io.github.PASAN.modes.ArcadeBattleScreen;
+import io.github.PASAN.modes.BaseBattleScreen;
 import io.github.PASAN.modes.PVCBattleScreen;
 import io.github.PASAN.modes.PVPBattleScreen;
 import java.util.Random;
@@ -24,9 +25,12 @@ public class VSScreen implements Screen {
     private String player2Char;
 
     private Texture background;
-    private Texture popupBoard;
+    private Texture vsImage;
+
     private Texture playerSprite;
     private Texture enemySprite;
+
+    private TextureRegion player1Region;
     private TextureRegion enemyRegion;
 
     private float transitionTimer = 0f;
@@ -36,7 +40,6 @@ public class VSScreen implements Screen {
     private static final float WORLD_WIDTH = 1920;
     private static final float WORLD_HEIGHT = 1080;
 
-    // List of available characters for randomization
     private static final String[] CHARACTER_POOL = {
             "Jollibee", "Colonel Sanders", "McDonald", "Burger King",
             "Wendy", "Jack in the Box", "Little Caesar", "Chief Khai"
@@ -50,10 +53,10 @@ public class VSScreen implements Screen {
         this.mode = mode;
         this.player1Char = p1Char;
 
-        // --- RANDOMIZATION LOGIC ---
-        // If mode is PVC, we ignore the passed p2Char and pick a random one
         if (mode.equalsIgnoreCase("PVC")) {
-            this.player2Char = CHARACTER_POOL[new Random().nextInt(CHARACTER_POOL.length)];
+            do {
+                this.player2Char = CHARACTER_POOL[new Random().nextInt(CHARACTER_POOL.length)];
+            } while (this.player2Char.equals(player1Char));
         } else {
             this.player2Char = p2Char;
         }
@@ -65,14 +68,19 @@ public class VSScreen implements Screen {
 
         font = new BitmapFont();
 
-        background = new Texture("backgrounds/temp_bg.png");
-        popupBoard = new Texture("backgrounds/vsbg.png");
+        int randomBgNum = new Random().nextInt(8) + 1;
+        BaseBattleScreen.currentBackgroundPath = "backgrounds/bg" + randomBgNum + ".png";
+        background = new Texture(BaseBattleScreen.currentBackgroundPath);
 
+        vsImage = new Texture("backgrounds/vs.png");
+
+        // --- FIXED CROP (HALF BODY) ---
+        // 0.55f crops exactly the top 55% of the image (waist up)
         playerSprite = new Texture("characters/" + player1Char.replace(" ", "") + ".png");
+        player1Region = new TextureRegion(playerSprite, 0, 0, playerSprite.getWidth(), (int)(playerSprite.getHeight() * 0.55f));
 
-        // Now uses the (potentially randomized) player2Char
         enemySprite = new Texture("characters/" + player2Char.replace(" ", "") + ".png");
-        enemyRegion = new TextureRegion(enemySprite);
+        enemyRegion = new TextureRegion(enemySprite, 0, 0, enemySprite.getWidth(), (int)(enemySprite.getHeight() * 0.55f));
         enemyRegion.flip(true, false);
     }
 
@@ -93,42 +101,45 @@ public class VSScreen implements Screen {
             }
         }
 
-        float boardW = 1400f;
-        float boardH = 750f;
-        float boardX = (WORLD_WIDTH  - boardW) / 2f;
-        float boardY = (WORLD_HEIGHT - boardH) / 2f - 30f;
+        // --- FIXED ASPECT RATIO MATH ---
+        // Width is 1200, Height is 660. This matches the 55% crop so they don't look skinny!
+        float charW = 1200f;
+        float charH = 660f;
 
-        float charW = 410f;
-        float charH = 480f;
+        // Pushed them closer to the center (they will overlap with the VS logo)
+        float p1X = 50f;
+        float p2X = WORLD_WIDTH - 50f - charW;
 
-        float playerSpriteX = boardX + 160f;
-        float enemySpriteX  = boardX + boardW - 130f - charW;
-        float spriteY       = boardY + 160f;
-
-        float nameLabelY  = spriteY - 20f;
-        float titleLabelY = boardY + boardH - 55f;
+        // Lifted them up from the bottom so Player 1's text has room to breathe
+        float spriteY = 180f;
 
         batch.begin();
+
+        // Darken background
+        batch.setColor(0.35f, 0.35f, 0.35f, 1f);
         batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-        batch.draw(popupBoard, boardX, boardY, boardW, boardH);
+        batch.setColor(Color.WHITE);
+
+        // Draw characters
+        batch.draw(player1Region, p1X, spriteY, charW, charH);
+        batch.draw(enemyRegion, p2X, spriteY, charW, charH);
+
+        // Draw VS logo overlay
+        batch.draw(vsImage, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
         font.getData().setScale(4.5f);
+
+        // PLAYER 1 NAME: Placed BELOW the character
         font.setColor(Color.RED);
-        String titleText = mode.toUpperCase() + " BATTLE";
-        GlyphLayout titleLayout = new GlyphLayout(font, titleText);
-        font.draw(batch, titleLayout, WORLD_WIDTH / 2f - titleLayout.width / 2f, titleLabelY);
+        GlyphLayout p1NameLayout = new GlyphLayout(font, player1Char.toUpperCase());
+        // spriteY - 40f pushes the text just below the bottom edge of the crop
+        font.draw(batch, p1NameLayout, p1X + (charW / 2f) - (p1NameLayout.width / 2f) - 150f, spriteY - 40f);
 
-        batch.draw(playerSprite, playerSpriteX, spriteY, charW, charH);
-        batch.draw(enemyRegion, enemySpriteX, spriteY, charW, charH);
-
-        font.getData().setScale(2.8f);
-        font.setColor(Color.WHITE);
-
-        GlyphLayout p1NameLayout = new GlyphLayout(font, player1Char);
-        font.draw(batch, p1NameLayout, playerSpriteX + (charW / 3f) - p1NameLayout.width / 2f, nameLabelY);
-
-        GlyphLayout p2NameLayout = new GlyphLayout(font, player2Char);
-        font.draw(batch, p2NameLayout, enemySpriteX + (charW / 1.5f) - p2NameLayout.width / 2f, nameLabelY);
+        // PLAYER 2 NAME: Placed ABOVE the character
+        font.setColor(Color.BLUE);
+        GlyphLayout p2NameLayout = new GlyphLayout(font, player2Char.toUpperCase());
+        // spriteY + charH + 60f pushes the text just above the top edge of the crop
+        font.draw(batch, p2NameLayout, p2X + (charW / 2f) - (p2NameLayout.width / 2f) + 150f, spriteY + charH + 60f);
 
         batch.end();
     }
@@ -139,11 +150,11 @@ public class VSScreen implements Screen {
         if (mode.toUpperCase().contains("ARCADE")) {
             game.setScreen(new ArcadeBattleScreen(game, player1Name, player1Char));
         } else if (mode.toUpperCase().contains("PVC")) {
-            // PASSING THE RANDOMIZED CHARACTER:
-            // Note: Your PVCBattleScreen constructor must be updated to accept this 4th argument
             game.setScreen(new PVCBattleScreen(game, player1Name, player1Char, player2Char));
         } else if (mode.toUpperCase().contains("PVP")) {
             game.setScreen(new PVPBattleScreen(game, player1Name, player2Name, player1Char, player2Char));
+        } else if (mode.toUpperCase().contains("ENDLESS")) {
+            game.setScreen(new io.github.PASAN.modes.EndlessBattleScreen(game, player1Name, player1Char));
         }
 
         this.dispose();
@@ -160,7 +171,7 @@ public class VSScreen implements Screen {
         batch.dispose();
         font.dispose();
         background.dispose();
-        popupBoard.dispose();
+        if (vsImage != null) vsImage.dispose();
         playerSprite.dispose();
         enemySprite.dispose();
     }
