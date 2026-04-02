@@ -104,8 +104,6 @@ public class FirstScreen implements Screen {
 
     private void handleInput()
     {
-        //Main game = (Main) Gdx.app.getApplicationListener();
-
         // Detect initial press
         if (Gdx.input.justTouched())
         {
@@ -117,11 +115,10 @@ public class FirstScreen implements Screen {
         // Detect release
         if (!Gdx.input.isTouched())
         {
-
             if (modePressed && modeBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new GameModeScreen(game));
             else if (lorePressed && loreBounds.contains(touchPoint.x, touchPoint.y)){
                 game.setScreen(new GameLoreScreen(game));
-            }// TODO: Lore screen
+            }
             else if (backPressed && backBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new MainMenu(game));
 
             modePressed = false;

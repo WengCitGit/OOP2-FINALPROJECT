@@ -11,7 +11,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.PASAN.Main;
-import io.github.PASAN.ArcadeBattleScreen;
+import io.github.PASAN.modes.ArcadeBattleScreen;
 
 public class ArcadeIntroScreen implements Screen {
     private SpriteBatch batch;

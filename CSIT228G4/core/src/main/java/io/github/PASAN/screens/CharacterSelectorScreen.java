@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.*;
-import io.github.PASAN.EndlessBattleScreen;
+import io.github.PASAN.modes.EndlessBattleScreen;
 import io.github.PASAN.Main;
 
 public class CharacterSelectorScreen implements Screen {

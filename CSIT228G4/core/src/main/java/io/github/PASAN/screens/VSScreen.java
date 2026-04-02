@@ -3,12 +3,10 @@ package io.github.PASAN.screens;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
-import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.*;
-import io.github.PASAN.ArcadeBattleScreen;
-import io.github.PASAN.Main;
-import io.github.PASAN.PVCBattleScreen;
-import io.github.PASAN.PVPBattleScreen;
+import io.github.PASAN.modes.ArcadeBattleScreen;
+import io.github.PASAN.modes.PVCBattleScreen;
+import io.github.PASAN.modes.PVPBattleScreen;
 import java.util.Random;
 
 public class VSScreen implements Screen {
