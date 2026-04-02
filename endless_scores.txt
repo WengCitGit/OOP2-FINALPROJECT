@@ -2,3 +2,4 @@ chay,600
 shanticobs,0
 Marimar,0
 c,0
+Ella,0

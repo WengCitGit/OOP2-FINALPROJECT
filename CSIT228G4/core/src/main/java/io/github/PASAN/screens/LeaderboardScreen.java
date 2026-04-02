@@ -57,12 +57,20 @@ public class LeaderboardScreen implements Screen {
         backBtnP   = new Texture("buttons/back_button_pressed.png");
 
         backBounds = new Rectangle(50, 50, 250, 100);
-
         if (mode.equalsIgnoreCase("ARCADE")) {
-            modeTitle        = "ARCADE MODE TOP 10";
+            modeTitle          = "ARCADE MODE TOP 10";
             leaderboardManager = new Leaderboard("arcade_scores.txt");
+
+        } else if (mode.equalsIgnoreCase("PVC")) {
+            modeTitle          = "PVC MODE TOP 10";
+            leaderboardManager = new Leaderboard("pvc_scores.txt");
+
+        } else if (mode.equalsIgnoreCase("PVP")) {
+            modeTitle          = "PVP MODE TOP 10";
+            leaderboardManager = new Leaderboard("pvp_scores.txt");
+
         } else {
-            modeTitle        = "ENDLESS MODE TOP 10";
+            modeTitle          = "ENDLESS MODE TOP 10";
             leaderboardManager = new Leaderboard("endless_scores.txt");
         }
 
@@ -72,7 +80,6 @@ public class LeaderboardScreen implements Screen {
 
     private void setupScrollableLeaderboard() {
         stage = new Stage(viewport, batch);
-
 
         font.getData().setScale(2.5f);
         Label.LabelStyle labelStyle = new Label.LabelStyle(font, Color.WHITE);
@@ -108,7 +115,6 @@ public class LeaderboardScreen implements Screen {
 
         stage.addActor(scrollPane);
     }
-
 
     @Override
     public void show() {

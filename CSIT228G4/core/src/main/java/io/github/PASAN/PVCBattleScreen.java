@@ -5,6 +5,8 @@ import com.badlogic.gdx.Gdx;
 import io.github.PASAN.modes.PVCMode;
 import io.github.PASAN.screens.GameOverScreen;
 import io.github.PASAN.screens.VictoryScreen;
+import io.github.PASAN.leaderboard.CalculateScore;
+import io.github.PASAN.leaderboard.Leaderboard;
 
 //1 Thread at executeEnemyTurn()
 public class PVCBattleScreen extends BaseBattleScreen {
@@ -49,11 +51,15 @@ public class PVCBattleScreen extends BaseBattleScreen {
     @Override
     protected void onMatchOver(boolean playerWon) {
         if (playerWon) {
-            game.setScreen(new GameOverScreen(game, username));
+            CalculateScore scoreCalculator = new CalculateScore();
+            int finalScore = scoreCalculator.calculatePVCScore(true, player.getHealth(), enemyWins);
+
+            Leaderboard manager = new Leaderboard("pvc_scores.txt");
+            manager.addScore(username, finalScore);
+            game.setScreen(new GameOverScreen(game, username, playerWon, true));
         } else {
-//            game.setScreen(new VictoryScreen(game, username, 0, "You defeated the Computer. Good for you!"));
-            game.setScreen(new GameOverScreen(game, username));
+            game.setScreen(new GameOverScreen(game, username, playerWon, true));
         }
-        dispose();
+        this.dispose();
     }
 }

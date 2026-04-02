@@ -3,6 +3,8 @@ package io.github.PASAN;
 import com.badlogic.gdx.Game;
 import io.github.PASAN.screens.GameOverScreen;
 import io.github.PASAN.screens.VictoryScreen;
+import io.github.PASAN.leaderboard.CalculateScore;
+import io.github.PASAN.leaderboard.Leaderboard;
 
 /**
  * INHERITANCE  : Extends BaseBattleScreen — gets all rendering and turn logic for free.
@@ -31,10 +33,19 @@ public class PVPBattleScreen extends BaseBattleScreen {
     }
 
     @Override
-    protected void onMatchOver(boolean playerWon) {
-        String winnerName = playerWon ? username : player2Name;
-        System.out.println("PVP Match Over! Winner: " + winnerName);
+    protected void onMatchOver(boolean player1Won) {
+        String winnerName = player1Won ? username : player2Name;
+
+        CalculateScore scoreCalculator = new CalculateScore();
+        int p1Score = scoreCalculator.calculatePVPScore(player1Won, player.getHealth());
+        int p2Score = scoreCalculator.calculatePVPScore(!player1Won, enemy.getHealth());
+        Leaderboard manager = new Leaderboard("pvp_scores.txt");
+        manager.addScore(username, p1Score);
+        manager.addScore(player2Name, p2Score);
+
         game.setScreen(new GameOverScreen(game, winnerName, true));
-        dispose();
+//
+//        game.setScreen(new VictoryScreen(game, winnerName));
+        this.dispose();
     }
 }

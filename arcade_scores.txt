@@ -1,5 +1,5 @@
 c,8825
-Marimar,4000
+marimar,8685
 Milio,3500
 Ayella,3000
 Shanticobs,1500
