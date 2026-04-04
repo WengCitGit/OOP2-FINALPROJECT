@@ -7,7 +7,7 @@ import com.badlogic.gdx.audio.Music;
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends Game
 {
-    private Music bgm;
+    public static Music bgm;
 
     @Override
     public void create() {

@@ -1,4 +1,5 @@
 arcade_scores.txt
+audio/arcade_bgm.wav
 audio/bgm.wav
 audio/finalround_audio.wav
 audio/round1_audio.wav
@@ -6,8 +7,14 @@ audio/round2_audio.wav
 backgrounds/arcade_board.png
 backgrounds/arcade_intro_bg.jpg
 backgrounds/arcade_intro_bg.png
-backgrounds/battle_bg1.png
+backgrounds/bg1.png
 backgrounds/bg2.png
+backgrounds/bg3.png
+backgrounds/bg4.png
+backgrounds/bg5.png
+backgrounds/bg6.png
+backgrounds/bg7.png
+backgrounds/bg8.png
 backgrounds/characterselector_background.jpg
 backgrounds/dialogue-box.png
 backgrounds/fighttext.png
@@ -27,6 +34,7 @@ backgrounds/thankyou_background.jpg
 backgrounds/usernameScreenPlayer1_background.jpg
 backgrounds/usernameScreenPlayer2_background.jpg
 backgrounds/usernameScreen_background.jpg
+backgrounds/vs.png
 backgrounds/vsbg.png
 backgrounds/yellow_background.png
 backstory/page_1.jpg
@@ -39,6 +47,8 @@ buttons/character_info_button.png
 buttons/character_info_button_pressed.png
 buttons/close_button.png
 buttons/close_button_pressed.png
+buttons/continue_button.png
+buttons/continue_button_pressed.png
 buttons/credits_button.png
 buttons/credits_button_pressed.png
 buttons/endless_button.png
@@ -53,6 +63,8 @@ buttons/game_mode_button.png
 buttons/game_mode_button_pressed.png
 buttons/main_story_button.png
 buttons/main_story_button_pressed.png
+buttons/mute_button.png
+buttons/mute_button_pressed.png
 buttons/next_button.PNG
 buttons/next_button_pressed.PNG
 buttons/no_button.png
@@ -67,6 +79,8 @@ buttons/pvp_button.png
 buttons/pvp_button_pressed.png
 buttons/rankings_button.png
 buttons/rankings_button_pressed.png
+buttons/resume_button.png
+buttons/resume_button_pressed.png
 buttons/skill1_button.png
 buttons/skill1_button_pressed.png
 buttons/skill2_button.png
@@ -77,6 +91,8 @@ buttons/start_button.png
 buttons/start_button_pressed.png
 buttons/stats_button.png
 buttons/stats_button_pressed.png
+buttons/unmute_button.PNG
+buttons/unmute_button_pressed.PNG
 buttons/where_button.png
 buttons/where_button_pressed.png
 buttons/who_button.png

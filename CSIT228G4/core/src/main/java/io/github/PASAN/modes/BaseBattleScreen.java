@@ -1,5 +1,6 @@
 package io.github.PASAN.modes;
 
+import io.github.PASAN.Main;
 import io.github.PASAN.MainMenu;
 import io.github.PASAN.characters.*;
 import io.github.PASAN.characters.Character;
@@ -353,6 +354,12 @@ public abstract class BaseBattleScreen implements Screen {
         font.draw(batch, pHealth, 160 + (450 - pHealthLayout.width) / 2f, 950 + 38);
         font.draw(batch, eHealth, (WORLD_WIDTH - 610) + (450 - eHealthLayout.width) / 2f, 950 + 38);
 
+        // --- DRAW TOOLTIPS ---
+        // Only show tooltips if the game is active and it's someone's turn to choose
+        if (!isPaused && !isTransitioning && !showingRoundIntro && (isPlayerTurn || isPVPMode())) {
+            drawHoverTooltip(uiChar);
+        }
+
         batch.end();
     }
 
@@ -596,8 +603,14 @@ public abstract class BaseBattleScreen implements Screen {
                 isPaused = false;
             } else if (mutePressed && muteBounds.contains(touch.x, touch.y)) {
                 isMuted = !isMuted;
-                // TODO: Implement actual mute/unmute logic for audio
-                // Gdx.audio.setVolume(isMuted ? 0.0f : 1.0f);
+
+                if (Main.bgm != null) {
+                    if (isMuted) {
+                        Main.bgm.pause();
+                    } else {
+                        Main.bgm.play();
+                    }
+                }
             } else if (exitPressed && exitBounds.contains(touch.x, touch.y)) {
                 game.setScreen(new MainMenu(game));
                 dispose();
@@ -608,6 +621,67 @@ public abstract class BaseBattleScreen implements Screen {
         }
     }
 
+    private void drawHoverTooltip(Character uiChar) {
+        int hoveredIndex = -1;
+
+        // Find out which skill the mouse is currently hovering over
+        if (skill1Bounds.contains(touch.x, touch.y)) hoveredIndex = 0;
+        else if (skill2Bounds.contains(touch.x, touch.y)) hoveredIndex = 1;
+        else if (skill3Bounds.contains(touch.x, touch.y)) hoveredIndex = 2;
+
+        // If hovering over a valid skill, draw the tooltip
+        if (hoveredIndex != -1 && uiChar.getSkills() != null && uiChar.getSkills().size() > hoveredIndex) {
+
+            Skill skill = uiChar.getSkills().get(hoveredIndex);
+
+            //Font Colors
+            font.getData().markupEnabled = true;
+            // Format the text using the data from Skill.java
+            String tooltipText = "[RED]"+skill.getName() +
+                    "\n[BLACK]Damage: [RED]" + skill.getMinDmg() + " - " + skill.getMaxDmg() +
+                    "\n[BLACK]Cost: [BLUE]" + skill.getManaCost() + " MP";
+
+            font.getData().setScale(2.0f); // Make tooltip font slightly smaller
+            GlyphLayout layout = new GlyphLayout(font, tooltipText);
+
+
+            // --- INCREASED PADDING FOR THICK BORDERS ---
+            float hPad = 50f;
+            float vPad = 40f;
+
+            // Calculate padding and total box size
+            float boxW = layout.width + (hPad * 2);
+            float boxH = layout.height + (vPad * 2);
+
+            // Offset the box slightly so the mouse cursor doesn't cover it
+            float tipX = touch.x + 20f;
+            float tipY = touch.y - 20f;
+
+            // Prevent the tooltip from going off the right edge of the screen
+            if (tipX + boxW > WORLD_WIDTH) {
+                tipX = WORLD_WIDTH - boxW - 10f;
+            }
+
+            // Prevent the tooltip from clipping off the bottom of the screen
+            if (tipY - boxH < 10f) {
+                // If it's too low, flip the tooltip to render ABOVE the cursor!
+                tipY = touch.y + boxH + 20f;
+            }
+
+            // Draw the dialogue box texture as the background
+            if (dialogueBox != null) {
+                batch.draw(dialogueBox, tipX, tipY - boxH, boxW, boxH);
+            }
+
+            // Draw the text over the dialogue box
+            font.setColor(Color.WHITE);
+            font.draw(batch, tooltipText, tipX + hPad, tipY - vPad);
+
+            // Reset font scale for the rest of the game UI
+            font.getData().setScale(2.5f);
+            font.getData().markupEnabled = false;
+        }
+    }
     @Override
     public void dispose() {
         batch.dispose(); font.dispose(); shapeRenderer.dispose();

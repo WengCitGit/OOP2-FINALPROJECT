@@ -7,8 +7,14 @@ audio/round2_audio.wav
 backgrounds/arcade_board.png
 backgrounds/arcade_intro_bg.jpg
 backgrounds/arcade_intro_bg.png
-backgrounds/battle_bg1.png
+backgrounds/bg1.png
 backgrounds/bg2.png
+backgrounds/bg3.png
+backgrounds/bg4.png
+backgrounds/bg5.png
+backgrounds/bg6.png
+backgrounds/bg7.png
+backgrounds/bg8.png
 backgrounds/characterselector_background.jpg
 backgrounds/dialogue-box.png
 backgrounds/fighttext.png
@@ -28,6 +34,7 @@ backgrounds/thankyou_background.jpg
 backgrounds/usernameScreenPlayer1_background.jpg
 backgrounds/usernameScreenPlayer2_background.jpg
 backgrounds/usernameScreen_background.jpg
+backgrounds/vs.png
 backgrounds/vsbg.png
 backgrounds/yellow_background.png
 backstory/page_1.jpg
