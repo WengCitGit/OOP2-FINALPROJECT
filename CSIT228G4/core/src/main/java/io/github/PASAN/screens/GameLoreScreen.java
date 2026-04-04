@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.PASAN.Main;
 
 
 public class GameLoreScreen implements Screen {
@@ -128,9 +129,18 @@ public class GameLoreScreen implements Screen {
     private void handleInput() {
 
         if (Gdx.input.justTouched()) {
-            if (backBounds.contains(touchPoint.x, touchPoint.y)) backPressed = true;
-            else if (mainStoryBounds.contains(touchPoint.x, touchPoint.y)) mainStoryPressed = true;
-            else if (characterInfoBounds.contains(touchPoint.x, touchPoint.y)) characterPressed = true;
+            if (backBounds.contains(touchPoint.x, touchPoint.y)) {
+                backPressed = true;
+                Main.clickSound.play();
+            }
+            else if (mainStoryBounds.contains(touchPoint.x, touchPoint.y)) {
+                mainStoryPressed = true;
+                Main.clickSound.play();
+            }
+            else if (characterInfoBounds.contains(touchPoint.x, touchPoint.y)) {
+                characterPressed = true;
+                Main.clickSound.play();
+            }
         }
 
         if (!Gdx.input.isTouched()) {

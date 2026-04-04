@@ -18,6 +18,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.PASAN.Main;
 import io.github.PASAN.MainMenu;
 import io.github.PASAN.leaderboard.Leaderboard;
 import io.github.PASAN.leaderboard.PlayerScore;
@@ -228,11 +229,26 @@ public class RankingsScreen implements Screen {
 
     private void handleInput() {
         if (Gdx.input.justTouched()) {
-            if      (pvpBounds    .contains(touchPoint.x, touchPoint.y)) pvpPressed     = true;
-            else if (pvcBounds    .contains(touchPoint.x, touchPoint.y)) pvcPressed     = true;
-            else if (endlessBounds.contains(touchPoint.x, touchPoint.y)) endlessPressed = true;
-            else if (arcadeBounds .contains(touchPoint.x, touchPoint.y)) arcadePressed  = true;
-            else if (backBounds   .contains(touchPoint.x, touchPoint.y)) backPressed    = true;
+            if      (pvpBounds    .contains(touchPoint.x, touchPoint.y)) {
+                pvpPressed     = true;
+                Main.clickSound.play();
+            }
+            else if (pvcBounds    .contains(touchPoint.x, touchPoint.y)) {
+                pvcPressed     = true;
+                Main.clickSound.play();
+            }
+            else if (endlessBounds.contains(touchPoint.x, touchPoint.y)) {
+                endlessPressed = true;
+                Main.clickSound.play();
+            }
+            else if (arcadeBounds .contains(touchPoint.x, touchPoint.y)) {
+                arcadePressed  = true;
+                Main.clickSound.play();
+            }
+            else if (backBounds   .contains(touchPoint.x, touchPoint.y)) {
+                backPressed    = true;
+                Main.clickSound.play();
+            }
         }
 
         if (!Gdx.input.isTouched()) {

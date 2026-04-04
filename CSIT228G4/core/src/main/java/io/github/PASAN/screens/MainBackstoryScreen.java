@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.*;
+import io.github.PASAN.Main;
 
 public class MainBackstoryScreen implements Screen {
 
@@ -163,9 +164,18 @@ public class MainBackstoryScreen implements Screen {
     private void handleInput() {
 
         if (Gdx.input.justTouched()) {
-            if (closeBounds.contains(touch.x, touch.y))                          closeHeld = true;
-            else if (nextBounds.contains(touch.x, touch.y) && currentPage < pages.length - 1) nextHeld = true;
-            else if (backBounds.contains(touch.x, touch.y) && currentPage > 0)   backHeld  = true;
+            if (closeBounds.contains(touch.x, touch.y)){
+                closeHeld = true;
+                Main.clickSound.play();
+            }
+            else if (nextBounds.contains(touch.x, touch.y) && currentPage < pages.length - 1){
+                nextHeld = true;
+                Main.clickSound.play();
+            }
+            else if (backBounds.contains(touch.x, touch.y) && currentPage > 0){
+                backHeld  = true;
+                Main.clickSound.play();
+            }
         }
 
         if (!Gdx.input.isTouched()) {
