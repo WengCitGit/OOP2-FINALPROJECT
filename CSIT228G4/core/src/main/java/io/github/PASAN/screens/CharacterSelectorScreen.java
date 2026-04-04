@@ -179,12 +179,23 @@ public class CharacterSelectorScreen implements Screen {
 
     private void handleInput() {
         if (Gdx.input.justTouched()) {
-            if (backBounds.contains(touch.x, touch.y)) backPressed = true;
-            if (selectedCharacter != -1 && confirmBounds.contains(touch.x, touch.y)) confirmPressed = true;
-            for (int i = 0; i < characters.length; i++) {
-                if (characters[i].contains(touch.x, touch.y)) {
-                    if (!(playerNum == 2 && characterNames[i].equals(p1Char))) {
+            if (backBounds.contains(touch.x, touch.y)) {
+                backPressed = true;
+                Main.clickSound.play();
+            }
+            if (selectedCharacter != -1 && confirmBounds.contains(touch.x, touch.y))
+            {
+                confirmPressed = true;
+                Main.clickSound.play();
+            }
+            for (int i = 0; i < characters.length; i++)
+            {
+                if (characters[i].contains(touch.x, touch.y))
+                {
+                    if (!(playerNum == 2 && characterNames[i].equals(p1Char)))
+                    {
                         characterPressed = i;
+                        Main.clickSound.play();
                     }
                 }
             }

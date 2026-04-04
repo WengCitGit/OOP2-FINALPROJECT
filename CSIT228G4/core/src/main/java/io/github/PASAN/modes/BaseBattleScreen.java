@@ -408,9 +408,21 @@ public abstract class BaseBattleScreen implements Screen {
     protected void handleGameLogic(float delta) {
         if (isPlayerTurn || isPVPMode()) {
             if (Gdx.input.justTouched()) {
-                if      (skill1Bounds.contains(touch.x, touch.y)) pressedSkillIndex = 0;
-                else if (skill2Bounds.contains(touch.x, touch.y)) pressedSkillIndex = 1;
-                else if (skill3Bounds.contains(touch.x, touch.y)) pressedSkillIndex = 2;
+                if      (skill1Bounds.contains(touch.x, touch.y))
+                {
+                    pressedSkillIndex = 0;
+                    Main.clickSound.play();
+                }
+                else if (skill2Bounds.contains(touch.x, touch.y))
+                {
+                    pressedSkillIndex = 1;
+                    Main.clickSound.play();
+                }
+                else if (skill3Bounds.contains(touch.x, touch.y))
+                {
+                    pressedSkillIndex = 2;
+                    Main.clickSound.play();
+                }
             }
             if (!Gdx.input.isTouched() && pressedSkillIndex != -1) {
                 if (getBounds(pressedSkillIndex).contains(touch.x, touch.y)) {
@@ -593,9 +605,18 @@ public abstract class BaseBattleScreen implements Screen {
 
     private void handlePauseInput() {
         if (Gdx.input.justTouched()) {
-            if (playBounds.contains(touch.x, touch.y)) playPressed = true;
-            if (muteBounds.contains(touch.x, touch.y)) mutePressed = true;
-            if (exitBounds.contains(touch.x, touch.y)) exitPressed = true;
+            if (playBounds.contains(touch.x, touch.y)) {
+                playPressed = true;
+                Main.clickSound.play();
+            }
+            if (muteBounds.contains(touch.x, touch.y)) {
+                mutePressed = true;
+                Main.clickSound.play();
+            }
+            if (exitBounds.contains(touch.x, touch.y)) {
+                exitPressed = true;
+                Main.clickSound.play();
+            }
         }
 
         if (!Gdx.input.isTouched()) {
@@ -613,6 +634,7 @@ public abstract class BaseBattleScreen implements Screen {
                 }
             } else if (exitPressed && exitBounds.contains(touch.x, touch.y)) {
                 game.setScreen(new MainMenu(game));
+                Main.clickSound.play();
                 dispose();
             }
             playPressed = false;

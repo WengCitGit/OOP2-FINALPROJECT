@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.PASAN.Main;
 import io.github.PASAN.MainMenu;
 
 public class FirstScreen implements Screen {
@@ -107,9 +108,21 @@ public class FirstScreen implements Screen {
         // Detect initial press
         if (Gdx.input.justTouched())
         {
-            if (modeBounds.contains(touchPoint.x, touchPoint.y)) modePressed = true;
-            else if (loreBounds.contains(touchPoint.x, touchPoint.y)) lorePressed = true;
-            else if (backBounds.contains(touchPoint.x, touchPoint.y)) backPressed = true;
+            if (modeBounds.contains(touchPoint.x, touchPoint.y))
+            {
+                modePressed = true;
+                Main.clickSound.play();
+            }
+            else if (loreBounds.contains(touchPoint.x, touchPoint.y))
+            {
+                lorePressed = true;
+                Main.clickSound.play();
+            }
+            else if (backBounds.contains(touchPoint.x, touchPoint.y))
+            {
+                backPressed = true;
+                Main.clickSound.play();
+            }
         }
 
         // Detect release

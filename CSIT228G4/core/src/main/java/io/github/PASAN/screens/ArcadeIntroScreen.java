@@ -89,6 +89,7 @@ public class ArcadeIntroScreen implements Screen {
         if (Gdx.input.justTouched()) {
             if (startBounds.contains(touchPoint.x, touchPoint.y)) {
                 startPressed = true;
+                Main.clickSound.play();
             }
         }
 

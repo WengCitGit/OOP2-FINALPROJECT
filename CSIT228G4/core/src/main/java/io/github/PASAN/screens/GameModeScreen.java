@@ -116,11 +116,26 @@ public class GameModeScreen implements Screen {
 
         if (Gdx.input.justTouched())
         {
-            if (pvpBounds.contains(touchPoint.x, touchPoint.y)) pvpPressed = true;
-            else if (pvcBounds.contains(touchPoint.x, touchPoint.y)) pvcPressed = true;
-            else if (arcadeBounds.contains(touchPoint.x, touchPoint.y)) arcadePressed = true;
-            else if (endlessBounds.contains(touchPoint.x, touchPoint.y)) endlessPressed = true;
-            else if (backBounds.contains(touchPoint.x, touchPoint.y)) backPressed = true;
+            if (pvpBounds.contains(touchPoint.x, touchPoint.y)) {
+                pvpPressed = true;
+                Main.clickSound.play();
+            }
+            else if (pvcBounds.contains(touchPoint.x, touchPoint.y)) {
+                pvcPressed = true;
+                Main.clickSound.play();
+            }
+            else if (arcadeBounds.contains(touchPoint.x, touchPoint.y)) {
+                arcadePressed = true;
+                Main.clickSound.play();
+            }
+            else if (endlessBounds.contains(touchPoint.x, touchPoint.y)) {
+                endlessPressed = true;
+                Main.clickSound.play();
+            }
+            else if (backBounds.contains(touchPoint.x, touchPoint.y)) {
+                backPressed = true;
+                Main.clickSound.play();
+            }
         }
 
         if (!Gdx.input.isTouched())

@@ -1,6 +1,7 @@
 arcade_scores.txt
 audio/arcade_bgm.wav
 audio/bgm.wav
+audio/button_click.wav
 audio/finalround_audio.wav
 audio/round1_audio.wav
 audio/round2_audio.wav

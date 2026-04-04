@@ -128,12 +128,16 @@ public class MainMenu implements Screen {
         if (Gdx.input.justTouched()) {
             if (this.playBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
                 this.playPressed = true;
+                Main.clickSound.play();
             } else if (this.rankingsBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
                 this.rankingsPressed = true;
+                Main.clickSound.play();
             } else if (this.creditsBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
                 this.creditsPressed = true;
+                Main.clickSound.play();
             } else if (this.exitBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
                 this.exitPressed = true;
+                Main.clickSound.play();
             }
         }
 

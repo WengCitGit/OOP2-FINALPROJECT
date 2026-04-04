@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.*;
+import io.github.PASAN.Main;
 
 public class CharacterInfoScreen implements Screen {
 
@@ -317,26 +318,42 @@ public class CharacterInfoScreen implements Screen {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    private void handleInput() {
-
-        if (Gdx.input.justTouched()) {
-
-            if (!showPanel) {
+    private void handleInput()
+    {
+        if (Gdx.input.justTouched())
+        {
+            if (!showPanel)
+            {
                 if (backBounds.contains(touch.x, touch.y))
+                {
                     backPressed = true;
-
-                for (int i = 0; i < characters.length; i++) {
+                    Main.clickSound.play();
+                }
+                for (int i = 0; i < characters.length; i++)
+                {
                     if (characters[i].contains(touch.x, touch.y))
+                    {
                         characterPressed = i;
+                        Main.clickSound.play();
+                    }
                 }
 
-            } else {
-                for (int i = 0; i < 4; i++) {
+            }
+            else
+            {
+                for (int i = 0; i < 4; i++)
+                {
                     if (tabBounds[i].contains(touch.x, touch.y))
+                    {
                         tabPressed = i;
+                        Main.clickSound.play();
+                    }
                 }
                 if (closeBounds.contains(touch.x, touch.y))
+                {
                     closeHeld = true;
+                    Main.clickSound.play();
+                }
             }
         }
 

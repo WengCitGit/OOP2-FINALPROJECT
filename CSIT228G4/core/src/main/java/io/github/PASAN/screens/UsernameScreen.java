@@ -175,8 +175,14 @@ public class UsernameScreen implements Screen {
 
     private void handleMouse() {
         if (Gdx.input.justTouched()) {
-            if (enterBounds.contains(touchPoint.x, touchPoint.y)) confirm();
-            if (backBounds.contains(touchPoint.x, touchPoint.y)) backPressed = true;
+            if (enterBounds.contains(touchPoint.x, touchPoint.y)) {
+                confirm();
+                Main.clickSound.play();
+            }
+            if (backBounds.contains(touchPoint.x, touchPoint.y)) {
+                backPressed = true;
+                Main.clickSound.play();
+            }
         }
 
         if (backPressed && !Gdx.input.isTouched()) {
