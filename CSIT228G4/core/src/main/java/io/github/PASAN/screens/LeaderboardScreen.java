@@ -137,7 +137,6 @@ public class LeaderboardScreen implements Screen {
                 touchPoint.set(screenX, screenY, 0);
                 viewport.unproject(touchPoint);
                 if (backPressed && backBounds.contains(touchPoint.x, touchPoint.y)) {
-                    Main.clickSound.play();
                     ((Main) Gdx.app.getApplicationListener()).setScreen(returnScreen);
                 }
                 backPressed = false;

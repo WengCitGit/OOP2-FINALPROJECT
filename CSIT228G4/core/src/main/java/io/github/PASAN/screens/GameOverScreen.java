@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.*;
+import io.github.PASAN.Main;
 import io.github.PASAN.MainMenu;
 
 public class GameOverScreen implements Screen {
@@ -172,9 +173,18 @@ public class GameOverScreen implements Screen {
     // -------------------------------------------------------
     private void handleInput() {
         if (Gdx.input.justTouched()) {
-            if (yesBounds        .contains(touch.x, touch.y)) yesPressed         = true;
-            if (noBounds         .contains(touch.x, touch.y)) noPressed          = true;
-            if (leaderboardBounds.contains(touch.x, touch.y)) leaderboardPressed = true;
+            if (yesBounds.contains(touch.x, touch.y)) {
+                yesPressed = true;
+                Main.clickSound.play();
+            }
+            if (noBounds.contains(touch.x, touch.y)) {
+                noPressed = true;
+                Main.clickSound.play();
+            }
+            if (leaderboardBounds.contains(touch.x, touch.y)) {
+                leaderboardPressed = true;
+                Main.clickSound.play();
+            }
         }
 
         if (!Gdx.input.isTouched()) {
