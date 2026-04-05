@@ -12,10 +12,6 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.PASAN.Main;
@@ -35,7 +31,7 @@ public class RankingsScreen implements Screen {
     private static final float WORLD_WIDTH  = 1920.0F;
     private static final float WORLD_HEIGHT = 1080.0F;
 
-    // Background (panel is baked in)
+    // Background
     private Texture background;
 
     // Tab buttons (normal + pressed)
@@ -65,11 +61,9 @@ public class RankingsScreen implements Screen {
 
     private Vector3 touchPoint;
 
-    // --- LEADERBOARD UI COMPONENTS ---
-    private Stage stage;
-    private Table scoresTable;
-    private ScrollPane scrollPane;
+    // --- FONTS ---
     private BitmapFont font;
+    private BitmapFont titleFont;
 
     // ------------------------------------------------------------------ //
     //  Layout constants
@@ -104,87 +98,22 @@ public class RankingsScreen implements Screen {
 
         pvpBounds     = new Rectangle(BTN_X, BTN_TOP_Y,                   BTN_W, BTN_H);
         pvcBounds     = new Rectangle(BTN_X, BTN_TOP_Y -     BTN_SPACING, BTN_W, BTN_H);
-        endlessBounds = new Rectangle(BTN_X, BTN_TOP_Y - 2 * BTN_SPACING, BTN_W, BTN_H);
-        arcadeBounds  = new Rectangle(BTN_X, BTN_TOP_Y - 3 * BTN_SPACING, BTN_W, BTN_H);
+        arcadeBounds  = new Rectangle(BTN_X, BTN_TOP_Y - 2 * BTN_SPACING, BTN_W, BTN_H);
+        endlessBounds = new Rectangle(BTN_X, BTN_TOP_Y - 3 * BTN_SPACING, BTN_W, BTN_H);
         backBounds    = new Rectangle(BTN_X, BTN_TOP_Y - 4 * BTN_SPACING, BTN_W, BTN_H);
 
-        // --- SETUP DYNAMIC SCORE BOARD ---
+        // Setup fonts
         font = new BitmapFont();
         font.getData().setScale(3.0f);
-        stage = new Stage(viewport, batch);
 
-        scoresTable = new Table();
-        scoresTable.top().center();
-
-        // 1. CREATE THE COMPLETELY EMPTY STYLE (This is the ultimate blackout fix!)
-        ScrollPane.ScrollPaneStyle emptyStyle = new ScrollPane.ScrollPaneStyle();
-        emptyStyle.background = null;    // Removes the dark background
-        emptyStyle.vScroll = null;       // Removes vertical scroll track
-        emptyStyle.vScrollKnob = null;   // Removes vertical scroll knob
-        emptyStyle.hScroll = null;       // Removes horizontal scroll track
-        emptyStyle.hScrollKnob = null;   // Removes horizontal scroll knob
-
-        // 2. APPLY THE STYLE TO THE SCROLLPANE
-        scrollPane = new ScrollPane(scoresTable, emptyStyle);
-        scrollPane.setScrollingDisabled(true, false);
-
-        // 3. DISABLE OVERSCROLL BOUNCE SHADOWS
-        scrollPane.setOverscroll(false, false);
-        scrollPane.setClamp(true); // Locks it perfectly to the bounds
-
-        float scrollWidth  = 1000;
-        float scrollHeight = 545;
-        float scrollX = 650;
-        float scrollY = 240;
-
-        scrollPane.setBounds(scrollX, scrollY, scrollWidth, scrollHeight);
-
-        stage.addActor(scrollPane);
-
-        updateLeaderboardUI(activeTab);
+        titleFont = new BitmapFont();
+        titleFont.getData().setScale(4.0f);
     }
 
     // ------------------------------------------------------------------ //
 
     @Override
     public void show() {
-        Gdx.input.setInputProcessor(stage);
-    }
-
-    // ------------------------------------------------------------------ //
-
-    private void updateLeaderboardUI(Tab tab) {
-        scoresTable.clear();
-
-        String fileName = "pvp_scores.txt";
-        if (tab == Tab.PVC) fileName = "pvc_scores.txt";
-        else if (tab == Tab.ENDLESS) fileName = "endless_scores.txt";
-        else if (tab == Tab.ARCADE) fileName = "arcade_scores.txt";
-
-        Leaderboard lbManager = new Leaderboard(fileName);
-        ArrayList<PlayerScore> topScores = lbManager.getTopScores();
-
-        Label.LabelStyle labelStyle = new Label.LabelStyle(font, Color.WHITE);
-
-        if (topScores.isEmpty()) {
-            Label emptyLabel = new Label("NO SCORES RECORDED YET! BE THE FIRST!", labelStyle);
-            scoresTable.add(emptyLabel).padTop(55);
-        } else {
-            for (int i = 0; i < topScores.size(); i++) {
-                PlayerScore ps = topScores.get(i);
-                String rankText  = (i + 1) + ". " + ps.getPlayer();
-                String scoreText = String.valueOf(ps.getScore());
-
-                Label rankLabel  = new Label(rankText,  labelStyle);
-                Label scoreLabel = new Label(scoreText, labelStyle);
-
-                // --- PUSHED TEXT TO THE EDGES OF THE GREEN LINES ---
-                // Name takes up 650 pixels on the left, Score takes up 100 on the right
-                scoresTable.add(rankLabel) .left() .width(650).padBottom(30);
-                scoresTable.add(scoreLabel).right().width(100).padBottom(30);
-                scoresTable.row();
-            }
-        }
     }
 
     // ------------------------------------------------------------------ //
@@ -201,20 +130,62 @@ public class RankingsScreen implements Screen {
         this.batch.setProjectionMatrix(this.camera.combined);
         this.batch.begin();
 
+        // Draw background
         this.batch.draw(this.background, 0f, 0f, WORLD_WIDTH, WORLD_HEIGHT);
 
+        // Draw tab buttons
         drawTabButton(pvpBtn,     pvpBtnPressed,     pvpBounds,     activeTab == Tab.PVP);
         drawTabButton(pvcBtn,     pvcBtnPressed,     pvcBounds,     activeTab == Tab.PVC);
-        drawTabButton(endlessBtn, endlessBtnPressed, endlessBounds, activeTab == Tab.ENDLESS);
         drawTabButton(arcadeBtn,  arcadeBtnPressed,  arcadeBounds,  activeTab == Tab.ARCADE);
+        drawTabButton(endlessBtn, endlessBtnPressed, endlessBounds, activeTab == Tab.ENDLESS);
         drawTabButton(backBtn,    backBtnPressed,    backBounds,    false);
+
+        // Draw title
+        String tabTitle = "PVP RANKINGS";
+        if (activeTab == Tab.PVC) tabTitle = "PVC RANKINGS";
+        else if (activeTab == Tab.ENDLESS) tabTitle = "ENDLESS RANKINGS";
+        else if (activeTab == Tab.ARCADE) tabTitle = "ARCADE RANKINGS";
+
+        titleFont.setColor(Color.BLUE);
+        GlyphLayout titleLayout = new GlyphLayout(titleFont, tabTitle);
+        titleFont.draw(batch, tabTitle, 1170 - titleLayout.width / 2, 830);
+
+        // Draw leaderboard scores (compact, no scrolling)
+        drawLeaderboard(activeTab);
 
         this.batch.end();
 
-        stage.act(delta);
-        stage.draw();
-
         handleInput();
+    }
+
+    // ------------------------------------------------------------------ //
+
+    private void drawLeaderboard(Tab tab) {
+        String fileName = "pvp_scores.txt";
+        if (tab == Tab.PVC) fileName = "pvc_scores.txt";
+        else if (tab == Tab.ENDLESS) fileName = "endless_scores.txt";
+        else if (tab == Tab.ARCADE) fileName = "arcade_scores.txt";
+
+        Leaderboard lbManager = new Leaderboard(fileName);
+        ArrayList<PlayerScore> topScores = lbManager.getTopScores();
+
+        font.setColor(Color.WHITE);
+        float yPos = 760;
+        float rowHeight = 50;
+
+        if (topScores.isEmpty()) {
+            font.draw(batch, "NO SCORES RECORDED YET! BE THE FIRST!", 700, yPos);
+        } else {
+            for (int i = 0; i < topScores.size() && yPos > 200; i++) {
+                PlayerScore ps = topScores.get(i);
+                String rankText = (i + 1) + ". " + ps.getPlayer();
+                String scoreText = String.valueOf(ps.getScore());
+
+                font.draw(batch, rankText, 700, yPos);
+                font.draw(batch, scoreText, 1400, yPos);
+                yPos -= rowHeight;
+            }
+        }
     }
 
     // ------------------------------------------------------------------ //
@@ -237,12 +208,12 @@ public class RankingsScreen implements Screen {
                 pvcPressed     = true;
                 Main.clickSound.play();
             }
-            else if (endlessBounds.contains(touchPoint.x, touchPoint.y)) {
-                endlessPressed = true;
-                Main.clickSound.play();
-            }
             else if (arcadeBounds .contains(touchPoint.x, touchPoint.y)) {
                 arcadePressed  = true;
+                Main.clickSound.play();
+            }
+            else if (endlessBounds.contains(touchPoint.x, touchPoint.y)) {
+                endlessPressed = true;
                 Main.clickSound.play();
             }
             else if (backBounds   .contains(touchPoint.x, touchPoint.y)) {
@@ -252,18 +223,12 @@ public class RankingsScreen implements Screen {
         }
 
         if (!Gdx.input.isTouched()) {
-            Tab previousTab = activeTab;
-
             if      (pvpPressed     && pvpBounds    .contains(touchPoint.x, touchPoint.y)) activeTab = Tab.PVP;
             else if (pvcPressed     && pvcBounds    .contains(touchPoint.x, touchPoint.y)) activeTab = Tab.PVC;
             else if (endlessPressed && endlessBounds.contains(touchPoint.x, touchPoint.y)) activeTab = Tab.ENDLESS;
             else if (arcadePressed  && arcadeBounds .contains(touchPoint.x, touchPoint.y)) activeTab = Tab.ARCADE;
             else if (backPressed    && backBounds   .contains(touchPoint.x, touchPoint.y)) {
                 game.setScreen(new MainMenu(game));
-            }
-
-            if (activeTab != previousTab) {
-                updateLeaderboardUI(activeTab);
             }
 
             pvpPressed = pvcPressed = endlessPressed = arcadePressed = backPressed = false;
@@ -283,12 +248,12 @@ public class RankingsScreen implements Screen {
     public void dispose() {
         batch.dispose();
         font.dispose();
-        stage.dispose();
+        titleFont.dispose();
         background.dispose();
         pvpBtn.dispose();      pvpBtnPressed.dispose();
         pvcBtn.dispose();      pvcBtnPressed.dispose();
-        endlessBtn.dispose();  endlessBtnPressed.dispose();
         arcadeBtn.dispose();   arcadeBtnPressed.dispose();
+        endlessBtn.dispose();  endlessBtnPressed.dispose();
         backBtn.dispose();     backBtnPressed.dispose();
     }
 }

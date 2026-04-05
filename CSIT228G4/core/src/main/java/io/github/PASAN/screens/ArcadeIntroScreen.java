@@ -46,7 +46,7 @@ public class ArcadeIntroScreen implements Screen {
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
 
         // Assets
-        background = new Texture("backgrounds/arcade_intro_bg.png");
+        background = new Texture("backgrounds/arcade_intro_bg.jpg");
         startBtn = new Texture("buttons/start_button.png"); // Ensure these paths match your assets
         startBtnPressed = new Texture("buttons/start_button_pressed.png");
 

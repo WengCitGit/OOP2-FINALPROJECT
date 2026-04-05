@@ -1,0 +1,638 @@
+@startuml FastFeud_System_Complete
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FAFAFA
+
+' ════════════════════════════════════════════════════════════════════
+' CORE APPLICATION
+' ════════════════════════════════════════════════════════════════════
+class Main extends Game {
+  - bgm : Music
+  + create()
+  + dispose()
+}
+
+class DesktopLauncher {
+  + main(args : String[])
+}
+
+abstract class Game
+
+' ════════════════════════════════════════════════════════════════════
+' INTERFACES & BASE CLASSES
+' ════════════════════════════════════════════════════════════════════
+interface Screen {
+  + render(delta : float)
+  + resize(width : int, height : int)
+  + show()
+  + hide()
+  + pause()
+  + resume()
+  + dispose()
+}
+
+abstract class BaseBattleScreen implements Screen {
+  # game : Game
+  # username : String
+  # player2Name : String
+  # batch : SpriteBatch
+  # camera : OrthographicCamera
+  # player : Character
+  # enemy : Character
+  # currentRound : int
+  # playerWins : int
+  # enemyWins : int
+  # isPlayerTurn : boolean
+  # matchIsOver : boolean
+  --
+  # executeSkill(index : int)
+  # endOfRound()
+  # checkMatchState()
+  # resetRound()
+  + render(delta : float)
+  # {abstract} isPVPMode() : boolean
+  # {abstract} executeEnemyTurn()
+  # {abstract} onMatchOver(playerWon : boolean)
+  + dispose()
+}
+
+' ════════════════════════════════════════════════════════════════════
+' MENU & NAVIGATION SCREENS
+' ════════════════════════════════════════════════════════════════════
+class MainMenu implements Screen {
+  - game : Game
+  - batch : SpriteBatch
+  - background : Texture
+  - playBtn : Texture
+  - rankingsBtn : Texture
+  - creditsBtn : Texture
+  - exitBtn : Texture
+  + render(delta : float)
+  - drawButton()
+  - handleInput()
+}
+
+class FirstScreen implements Screen {
+  - game : Game
+  - batch : SpriteBatch
+  - modeBtn : Texture
+  - loreBtn : Texture
+  - backBtn : Texture
+  + render(delta : float)
+  - handleInput()
+}
+
+class GameModeScreen implements Screen {
+  - game : Game
+  - batch : SpriteBatch
+  - pvpBtn : Texture
+  - pvcBtn : Texture
+  - arcadeBtn : Texture
+  - endlessBtn : Texture
+  - backBtn : Texture
+  + render(delta : float)
+  - handleInput()
+}
+
+class GameLoreScreen implements Screen {
+  - game : Game
+  - batch : SpriteBatch
+  - mainStoryImg : Texture
+  - characterInfoImg : Texture
+  + render(delta : float)
+  - handleInput()
+}
+
+class CharacterInfoScreen implements Screen {
+  - game : Game
+  - batch : SpriteBatch
+  - font : BitmapFont
+  - characterNames : String[]
+  - characterTextures : Texture[]
+  - tabImages : Texture[][]
+  - selectedCharacter : int
+  - showPanel : boolean
+  + render(delta : float)
+  - handleInput()
+  - drawPanel()
+}
+
+class MainBackstoryScreen implements Screen {
+  - game : Game
+  - batch : SpriteBatch
+  - pages : Texture[]
+  - currentPage : int
+  + render(delta : float)
+  - loadPage(index : int)
+  - handleInput()
+}
+
+class UsernameScreen implements Screen {
+  - game : Game
+  - batch : SpriteBatch
+  - font : BitmapFont
+  - username : String
+  - gameMode : String
+  - playerNum : int
+  + show()
+  + render(delta : float)
+  - handleMouse()
+  - confirm()
+  - cancel()
+}
+
+class CharacterSelectorScreen implements Screen {
+  - batch : SpriteBatch
+  - font : BitmapFont
+  - username : String
+  - mode : String
+  - {static} characterNames : String[]
+  - characters : Rectangle[]
+  - selectedCharacter : int
+  - playerNum : int
+  + render(delta : float)
+  - handleInput()
+}
+
+class ArcadeIntroScreen implements Screen {
+  - batch : SpriteBatch
+  - username : String
+  - characterIndex : int
+  - startBtn : Texture
+  + render(delta : float)
+  - startGame()
+}
+
+class VSScreen implements Screen {
+  - batch : SpriteBatch
+  - mode : String
+  - player1Name : String
+  - player2Name : String
+  - player1Char : String
+  - player2Char : String
+  - transitionTimer : float
+  + render(delta : float)
+  - startGame()
+}
+
+class VictoryScreen implements Screen {
+  - game : Game
+  - username : String
+  - score : int
+  - subMessage : String
+  + render(delta : float)
+  - handleInput()
+}
+
+class GameOverScreen implements Screen {
+  - game : Game
+  - username : String
+  - mode : String
+  - winStreak : int
+  - pvcPlayerWon : boolean
+  + render(delta : float)
+  - handleInput()
+}
+
+class LeaderboardScreen implements Screen {
+  - batch : SpriteBatch
+  - font : BitmapFont
+  - leaderboardManager : Leaderboard
+  - topScores : ArrayList<PlayerScore>
+  - stage : Stage
+  - scrollPane : ScrollPane
+  + show()
+  + render(delta : float)
+  - setupScrollableLeaderboard()
+}
+
+class RankingsScreen implements Screen {
+  - game : Game
+  - batch : SpriteBatch
+  - activeTab : Tab
+  - scoresTable : Table
+  - scrollPane : ScrollPane
+  + show()
+  + render(delta : float)
+  - updateLeaderboardUI(tab : Tab)
+  - handleInput()
+}
+
+' ════════════════════════════════════════════════════════════════════
+' BATTLE SCREENS
+' ════════════════════════════════════════════════════════════════════
+class ArcadeBattleScreen extends BaseBattleScreen {
+  - arcadeMode : ArcadeMode
+  - arcadeBoard : Texture
+  - showingIntro : boolean
+  - introTimer : float
+  --
+  # isPVPMode() : boolean
+  # executeEnemyTurn()
+  # onMatchOver(playerWon : boolean)
+  # getHUDText() : String
+  - loadNextStage()
+  - resetBattleState()
+}
+
+class EndlessBattleScreen extends BaseBattleScreen {
+  - endlessMode : EndlessMode
+  - arcadeBoard : Texture
+  - showingIntro : boolean
+  - introTimer : float
+  --
+  # isPVPMode() : boolean
+  # executeEnemyTurn()
+  # onMatchOver(playerWon : boolean)
+  # getHUDText() : String
+  - loadNextOpponent()
+  - resetBattleState()
+}
+
+class PVCBattleScreen extends BaseBattleScreen {
+  # isPVPMode() : boolean
+  # executeEnemyTurn()
+  # onMatchOver(playerWon : boolean)
+}
+
+class PVPBattleScreen extends BaseBattleScreen {
+  - player2Name : String
+  --
+  # isPVPMode() : boolean
+  # executeEnemyTurn()
+  # onMatchOver(player1Won : boolean)
+}
+
+' ════════════════════════════════════════════════════════════════════
+' GAME MODES & PROGRESSION
+' ════════════════════════════════════════════════════════════════════
+abstract class Mode {
+  # playerCharName : String
+  # enemyQueue : List<String>
+  # queueIndex : int
+  # {static} ALL_CHARACTERS : String[]
+  --
+  # buildEnemyQueue()
+  # getNextEnemyName() : String
+  # getCurrentEnemyName() : String
+  + getPlayerCharName() : String
+  + {abstract} onMatchWon()
+  + {abstract} onMatchLost()
+  + {abstract} isRunOver() : boolean
+  + {abstract} getHUDLabel() : String
+}
+
+class ArcadeMode extends Mode {
+  - {static} TOTAL_STAGES : int = 8
+  - {static} FINAL_BOSSES : String[]
+  - currentStage : int
+  - stageEnemies : List<String>
+  - runOver : boolean
+  - playerDefeated : boolean
+  --
+  - buildStageEnemies()
+  + onMatchWon()
+  + onMatchLost()
+  + isRunOver() : boolean
+  + getHUDLabel() : String
+  + getCurrentStageName() : String
+  + isFinalStage() : boolean
+  + getStagesCleared() : int
+}
+
+class EndlessMode extends Mode {
+  - winStreak : int
+  --
+  + onMatchWon()
+  + onMatchLost()
+  + isRunOver() : boolean
+  + getHUDLabel() : String
+  + getCurrentOpponent() : String
+  + nextOpponent() : String
+  + getWinStreak() : int
+}
+
+class PVCMode {
+  + {static} chooseSkill(enemy : Character, enemyCD : int[]) : int
+}
+
+class PVPMode {
+  ' Placeholder for future PVP-specific rules
+}
+
+' ════════════════════════════════════════════════════════════════════
+' CHARACTERS & SKILLS
+' ════════════════════════════════════════════════════════════════════
+abstract class Character {
+  # name : String
+  # maxHP : int
+  # currentHP : int
+  # maxMana : int
+  # currentMana : int
+  # skills : List<Skill>
+  --
+  + getName() : String
+  + getHealth() : int
+  + getCurrentMana() : int
+  + getSkills() : List<Skill>
+  + takeDamage(amount : int)
+  + addMana(amount : int)
+  + restoreHP()
+  + restoreMana()
+  + isAlive() : boolean
+}
+
+class Jollibee extends Character {
+  - skill1 : Skill
+  - skill2 : Skill
+  - skill3 : Skill
+  --
+  + Jollibee()
+}
+
+class ColonelSanders extends Character {
+  - skill1 : Skill
+  - skill2 : Skill
+  - skill3 : Skill
+  --
+  + ColonelSanders()
+}
+
+class McDonald extends Character {
+  - skill1 : Skill
+  - skill2 : Skill
+  - skill3 : Skill
+  --
+  + McDonald()
+}
+
+class BurgerKing extends Character {
+  - skill1 : Skill
+  - skill2 : Skill
+  - skill3 : Skill
+  --
+  + BurgerKing()
+}
+
+class Wendy extends Character {
+  - skill1 : Skill
+  - skill2 : Skill
+  - skill3 : Skill
+  --
+  + Wendy()
+}
+
+class JackInTheBox extends Character {
+  - skill1 : Skill
+  - skill2 : Skill
+  - skill3 : Skill
+  --
+  + JackInTheBox()
+}
+
+class LittleCaesar extends Character {
+  - skill1 : Skill
+  - skill2 : Skill
+  - skill3 : Skill
+  --
+  + LittleCaesar()
+}
+
+class ChiefKhai extends Character {
+  - skill1 : Skill
+  - skill2 : Skill
+  - skill3 : Skill
+  --
+  + ChiefKhai()
+}
+
+class GameDevs extends Character {
+  - skill1 : Skill
+  - skill2 : Skill
+  - skill3 : Skill
+  --
+  + GameDevs()
+}
+
+class Skill {
+  - name : String
+  - damage : int
+  - manaCost : int
+  - cooldown : int
+  --
+  + getName() : String
+  + getDamage() : int
+  + getManaCost() : int
+  + getCooldown() : int
+}
+
+' ════════════════════════════════════════════════════════════════════
+' LEADERBOARD & SCORING
+' ════════════════════════════════════════════════════════════════════
+class Leaderboard {
+  - filePath : String
+  - scores : ArrayList<PlayerScore>
+  - {static} MAX_ENTRIES : int = 10
+  --
+  + addScore(playerName : String, newScore : int)
+  + getTopScores() : ArrayList<PlayerScore>
+  - sortScoresDescending()
+  - readFile()
+  - writeFile()
+}
+
+class PlayerScore {
+  - player : String
+  - score : int
+  --
+  + getPlayer() : String
+  + getScore() : int
+  + toString() : String
+}
+
+class CalculateScore {
+  + {static} calculateArcadeScore(stagesCleared : int, remainingHP : int) : int
+  + {static} calculateEndlessScore(enemiesDefeated : int) : int
+  + {static} calculatePVCScore(isVictory : boolean, remainingHP : int, enemyWins : int) : int
+  + calculatePVPScore(isWinner : boolean, remainingHP : int) : int
+}
+
+' ════════════════════════════════════════════════════════════════════
+' LIBGDX DEPENDENCIES
+' ════════════════════════════════════════════════════════════════════
+class Lwjgl3Application
+class Lwjgl3ApplicationConfiguration
+class Music
+class Texture
+class SpriteBatch
+class BitmapFont
+class OrthographicCamera
+class Viewport
+class Rectangle
+class Vector3
+
+' ════════════════════════════════════════════════════════════════════
+' INHERITANCE RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════
+Main --|> Game
+Jollibee --|> Character
+ColonelSanders --|> Character
+McDonald --|> Character
+BurgerKing --|> Character
+Wendy --|> Character
+JackInTheBox --|> Character
+LittleCaesar --|> Character
+ChiefKhai --|> Character
+GameDevs --|> Character
+ArcadeMode --|> Mode
+EndlessMode --|> Mode
+
+' ════════════════════════════════════════════════════════════════════
+' SCREEN IMPLEMENTATIONS
+' ════════════════════════════════════════════════════════════════════
+MainMenu ..|> Screen
+FirstScreen ..|> Screen
+GameModeScreen ..|> Screen
+GameLoreScreen ..|> Screen
+CharacterInfoScreen ..|> Screen
+MainBackstoryScreen ..|> Screen
+UsernameScreen ..|> Screen
+CharacterSelectorScreen ..|> Screen
+ArcadeIntroScreen ..|> Screen
+VSScreen ..|> Screen
+VictoryScreen ..|> Screen
+GameOverScreen ..|> Screen
+LeaderboardScreen ..|> Screen
+RankingsScreen ..|> Screen
+ArcadeBattleScreen ..|> Screen
+EndlessBattleScreen ..|> Screen
+PVCBattleScreen ..|> Screen
+PVPBattleScreen ..|> Screen
+
+' ════════════════════════════════════════════════════════════════════
+' COMPOSITION & DEPENDENCY RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════
+DesktopLauncher --> Main : launches
+DesktopLauncher --> Lwjgl3Application : uses
+DesktopLauncher --> Lwjgl3ApplicationConfiguration : uses
+
+Main --> MainMenu : creates
+Main --> Music : manages
+
+' Battle Systems
+ArcadeBattleScreen --> ArcadeMode : uses
+ArcadeBattleScreen --> Character : controls (player)
+ArcadeBattleScreen --> Character : controls (enemy)
+ArcadeBattleScreen --> CalculateScore : calculates score
+
+EndlessBattleScreen --> EndlessMode : uses
+EndlessBattleScreen --> Character : controls (player)
+EndlessBattleScreen --> Character : controls (enemy)
+EndlessBattleScreen --> CalculateScore : calculates score
+
+PVCBattleScreen --> PVCMode : uses CPU AI
+PVCBattleScreen --> Character : controls (player)
+PVCBattleScreen --> Character : controls (CPU)
+PVCBattleScreen --> CalculateScore : calculates score
+
+PVPBattleScreen --> PVPMode : handles PVP rules
+PVPBattleScreen --> Character : controls (player1)
+PVPBattleScreen --> Character : controls (player2)
+PVPBattleScreen --> CalculateScore : calculates score
+
+' Leaderboard
+LeaderboardScreen --> Leaderboard : reads/displays
+Leaderboard --> PlayerScore : contains
+
+' Character System
+BaseBattleScreen --> Character : creates
+Character --> Skill : has 3
+
+' ════════════════════════════════════════════════════════════════════
+' NAVIGATION FLOWS
+' ════════════════════════════════════════════════════════════════════
+MainMenu --> FirstScreen : Play
+MainMenu --> RankingsScreen : Rankings
+MainMenu --> MainMenu : Main
+
+FirstScreen --> GameModeScreen : Game Mode
+FirstScreen --> GameLoreScreen : Lore
+FirstScreen --> MainMenu : Back
+
+GameModeScreen --> UsernameScreen : mode selected
+GameModeScreen --> FirstScreen : Back
+
+GameLoreScreen --> MainBackstoryScreen : Main Story
+GameLoreScreen --> CharacterInfoScreen : Character Info
+GameLoreScreen --> FirstScreen : Back
+
+MainBackstoryScreen --> GameLoreScreen : Back
+
+CharacterInfoScreen --> GameLoreScreen : Back
+
+UsernameScreen --> CharacterSelectorScreen : username confirmed
+UsernameScreen --> GameModeScreen : Back
+
+CharacterSelectorScreen --> ArcadeIntroScreen : ARCADE mode
+CharacterSelectorScreen --> VSScreen : character confirmed
+CharacterSelectorScreen --> UsernameScreen : Back
+
+ArcadeIntroScreen --> VSScreen : Start
+
+VSScreen --> ArcadeBattleScreen : ARCADE mode
+VSScreen --> EndlessBattleScreen : ENDLESS mode
+VSScreen --> PVCBattleScreen : PVC mode
+VSScreen --> PVPBattleScreen : PVP mode
+
+ArcadeBattleScreen --> VictoryScreen : Victory
+ArcadeBattleScreen --> GameOverScreen : Loss
+
+EndlessBattleScreen --> GameOverScreen : Loss/Game Over
+
+PVCBattleScreen --> GameOverScreen : Always
+
+PVPBattleScreen --> GameOverScreen : Always
+
+VictoryScreen --> FirstScreen : Menu
+
+GameOverScreen --> CharacterSelectorScreen : Replay
+GameOverScreen --> MainMenu : Exit
+GameOverScreen --> LeaderboardScreen : View Leaderboard
+
+LeaderboardScreen --> GameOverScreen : Back
+
+RankingsScreen --> MainMenu : Back
+
+' ════════════════════════════════════════════════════════════════════
+' NOTES
+' ════════════════════════════════════════════════════════════════════
+note right of BaseBattleScreen
+  Abstract base for all battle screens.
+  Handles: rendering, turn logic, combat flow.
+  Subclasses implement mode-specific behavior.
+end note
+
+note right of Mode
+  Abstract progression logic for game modes.
+  Manages enemy queues and win conditions.
+  Subclasses: ArcadeMode, EndlessMode.
+end note
+
+note right of Character
+  Base class for all 9 game characters.
+  Manages: HP, Mana, Skills, combat stats.
+end note
+
+note right of Leaderboard
+  File-based score persistence.
+  Files: arcade_scores.txt, endless_scores.txt,
+  pvc_scores.txt, pvp_scores.txt.
+  Keeps top 10 per mode.
+end note
+
+note right of CalculateScore
+  Static utility for score calculations.
+  Different formulas per game mode.
+  Called before saving to leaderboard.
+end note
+
+@enduml

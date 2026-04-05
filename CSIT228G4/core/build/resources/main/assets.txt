@@ -35,6 +35,7 @@ backgrounds/thankyou_background.jpg
 backgrounds/usernameScreenPlayer1_background.jpg
 backgrounds/usernameScreenPlayer2_background.jpg
 backgrounds/usernameScreen_background.jpg
+backgrounds/victory_background.jpg
 backgrounds/vs.png
 backgrounds/vsbg.png
 backgrounds/yellow_background.png
@@ -129,6 +130,7 @@ icons/Jollibee_icon.png
 icons/LittleCaesar_icon.png
 icons/Mcdonald_icon.png
 icons/Wendy_icon.png
+icons/pasan_icon.png
 info/BurgerKing_stats.png
 info/BurgerKing_where.png
 info/BurgerKing_who.png

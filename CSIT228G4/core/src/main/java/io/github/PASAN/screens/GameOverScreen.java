@@ -38,7 +38,7 @@ public class GameOverScreen implements Screen {
     private static final float BTN_W  = 400f;
     private static final float BTN_H  = 130f;
     // Buttons are moved down significantly to the bottom black area
-    private static final float BTN_Y  = WORLD_HEIGHT / 2f - 300f;
+    private static final float BTN_Y  = WORLD_HEIGHT / 2f - 100f;
     private static final float YES_X  = WORLD_WIDTH  / 2f - 480f;
     private static final float NO_X   = WORLD_WIDTH  / 2f +  90f;
 
@@ -46,10 +46,10 @@ public class GameOverScreen implements Screen {
     private static final float LB_W = 560f;
     private static final float LB_H =  70f;
     private static final float LB_X = (WORLD_WIDTH - LB_W) / 2f;
-    private static final float LB_Y = 60f;
+    private static final float LB_Y = 330f;
 
     // Endless/PVP/PVC Sub-message position - placed in dark center black space
-    private static final float MSG_Y = WORLD_HEIGHT / 2f - 80f;
+    private static final float MSG_Y = WORLD_HEIGHT / 2f - -140f;
 
     // -------------------------------------------------------
     // Constructor 1: ARCADE (Defaults on Arcade Loss)
