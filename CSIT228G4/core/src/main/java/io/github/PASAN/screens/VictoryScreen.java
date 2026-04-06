@@ -7,6 +7,7 @@ import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.*;
 import io.github.PASAN.Main;
+import io.github.PASAN.MainMenu;
 
 public class VictoryScreen implements Screen {
 
@@ -133,7 +134,7 @@ public class VictoryScreen implements Screen {
 
         if (!Gdx.input.isTouched()) {
             if (menuPressed && menuBounds.contains(touch.x, touch.y)) {
-                game.setScreen(new FirstScreen(game));
+                game.setScreen(new MainMenu(game));
                 dispose();
             }
             menuPressed = false;

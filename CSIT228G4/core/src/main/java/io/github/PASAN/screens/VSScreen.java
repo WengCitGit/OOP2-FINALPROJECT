@@ -130,13 +130,13 @@ public class VSScreen implements Screen {
         font.getData().setScale(4.5f);
 
         // PLAYER 1 NAME: Placed BELOW the character
-        font.setColor(Color.RED);
+        font.setColor(Color.GREEN);
         GlyphLayout p1NameLayout = new GlyphLayout(font, player1Char.toUpperCase());
         // spriteY - 40f pushes the text just below the bottom edge of the crop
         font.draw(batch, p1NameLayout, p1X + (charW / 2f) - (p1NameLayout.width / 2f) - 150f, spriteY - 40f);
 
         // PLAYER 2 NAME: Placed ABOVE the character
-        font.setColor(Color.BLUE);
+        font.setColor(Color.RED);
         GlyphLayout p2NameLayout = new GlyphLayout(font, player2Char.toUpperCase());
         // spriteY + charH + 60f pushes the text just above the top edge of the crop
         font.draw(batch, p2NameLayout, p2X + (charW / 2f) - (p2NameLayout.width / 2f) + 150f, spriteY + charH + 60f);

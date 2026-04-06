@@ -3,5 +3,8 @@ c,620
 2,600
 aryanie,590
 aller,558
+player1,354
+x,354
+s,346
+a,340
 riahh,100
-a,100

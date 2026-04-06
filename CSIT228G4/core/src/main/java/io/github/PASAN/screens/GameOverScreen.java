@@ -14,6 +14,7 @@ public class GameOverScreen implements Screen {
     private String username;
     private String mode;
     private int winStreak;
+    private int score;
     private boolean pvcPlayerWon;
 
     private SpriteBatch batch;
@@ -53,33 +54,35 @@ public class GameOverScreen implements Screen {
 
     // -------------------------------------------------------
     // Constructor 1: ARCADE (Defaults on Arcade Loss)
-    public GameOverScreen(Game game, String username) {
-        this(game, username, "ARCADE", 0, false);
+    public GameOverScreen(Game game, String username, int score, boolean dummyArcade) {
+        this(game, username, "ARCADE", 0, score, false);
     }
 
     // Constructor 2: ENDLESS (Loss passes streak)
     public GameOverScreen(Game game, String username, int winStreak) {
-        this(game, username, "ENDLESS", winStreak, false);
+        this(game, username, "ENDLESS", winStreak, 0, false);
     }
 
     // Constructor 3: PVP (Winner name, dummyPVP used for overloading)
     public GameOverScreen(Game game, String winnerName, boolean dummyPVP) {
         // Here, 'username' will hold the winner's specific name.
-        this(game, winnerName, "PVP", 0, false);
+        this(game, winnerName, "PVP", 0, 0, false);
     }
 
     // Constructor 4: PVC (Username, who won, dummyPVC used for overloading)
     public GameOverScreen(Game game, String username, boolean playerWon, boolean dummyPVC) {
-        this(game, username, "PVC", 0, playerWon);
+        this(game, username, "PVC", 0, 0, playerWon);
     }
 
     // Private Master Constructor
-    private GameOverScreen(Game game, String username, String mode, int winStreak, boolean pvcPlayerWon) {
+    private GameOverScreen(Game game, String username, String mode, int winStreak, int score, boolean pvcPlayerWon) {
         this.game      = game;
         this.username  = username;
         this.mode      = mode;
         this.winStreak = winStreak;
+        this.score = score;
         this.pvcPlayerWon = pvcPlayerWon;
+
 
         batch = new SpriteBatch();
         font  = new BitmapFont();
@@ -129,7 +132,7 @@ public class GameOverScreen implements Screen {
         // Draw VIEW LEADERBOARD text
         boolean hoverLb = leaderboardBounds.contains(touch.x, touch.y);
         font.getData().setScale(3.5f);
-        font.setColor(hoverLb ? Color.RED : Color.CYAN);
+        font.setColor(hoverLb ? Color.GREEN : Color.CYAN);
         GlyphLayout ll = new GlyphLayout(font, "VIEW LEADERBOARD");
         font.draw(batch, ll,
                 WORLD_WIDTH / 2f - ll.width / 2f,
@@ -138,7 +141,7 @@ public class GameOverScreen implements Screen {
         // --- DYNAMIC SUB-MESSAGE RENDERING (ENDLESS, PVP, PVC) ---
         // DRAWN IN BLACK SPACE AT MSG_Y
         font.getData().setScale(4.5f);
-        font.setColor(Color.GOLD);
+        font.setColor(Color.BLUE);
         String finalMsg = "";
 
         if (mode.equals("ENDLESS")) {
@@ -157,8 +160,11 @@ public class GameOverScreen implements Screen {
                 font.setColor(Color.RED);
                 finalMsg = "CPU WINS!";
             }
+        } else if (mode.equals("ARCADE")) {
+            finalMsg = score == 0
+                    ? "You were defeated..."
+                    : "Score: " + score;
         }
-
         // Draw the calculated message
         if (!finalMsg.equals("")) {
             GlyphLayout ml = new GlyphLayout(font, finalMsg);

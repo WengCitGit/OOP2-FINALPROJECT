@@ -331,14 +331,14 @@ public abstract class BaseBattleScreen implements Screen {
 
         if (isTransitioning) {
             font.getData().setScale(5.0f);
-            font.setColor(Color.GOLD);
+            font.setColor(Color.BLUE);
             GlyphLayout tl = new GlyphLayout(font, transitionMessage);
             font.draw(batch, tl, (WORLD_WIDTH - tl.width) / 2, WORLD_HEIGHT / 2 + 100);
             font.getData().setScale(2.5f);
         } else {
             // Turn indicator
             String turnMsg = isPlayerTurn ? player.getName() + "'s Turn!" : enemy.getName() + "'s Turn...";
-            font.setColor(isPlayerTurn ? Color.YELLOW : Color.RED);
+            font.setColor(isPlayerTurn ? Color.GREEN : Color.RED);
             GlyphLayout turnLayout = new GlyphLayout(font, turnMsg);
             font.draw(batch, turnLayout, (WORLD_WIDTH - turnLayout.width) / 2f, 800);
         }

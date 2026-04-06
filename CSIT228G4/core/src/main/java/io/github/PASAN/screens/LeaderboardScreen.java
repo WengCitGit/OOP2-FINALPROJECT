@@ -69,7 +69,7 @@ public class LeaderboardScreen implements Screen {
             modeTitle          = "PVP MODE TOP 10";
             leaderboardManager = new Leaderboard("pvp_scores.txt");
 
-        } else {
+        } else if (mode.equalsIgnoreCase("ENDLESS")){
             modeTitle          = "ENDLESS MODE TOP 10";
             leaderboardManager = new Leaderboard("endless_scores.txt");
         }
@@ -88,7 +88,7 @@ public class LeaderboardScreen implements Screen {
 
         if (topScores.isEmpty()) {
             Label emptyLabel = new Label("NO SCORES RECORDED YET! BE THE FIRST!", labelStyle);
-            innerTable.add(emptyLabel).padTop(50);
+            innerTable.add(emptyLabel).padTop(30);
         } else {
             for (int i = 0; i < topScores.size(); i++) {
                 PlayerScore ps = topScores.get(i);
@@ -98,8 +98,8 @@ public class LeaderboardScreen implements Screen {
                 Label rankLabel  = new Label(rankText,  labelStyle);
                 Label scoreLabel = new Label(scoreText, labelStyle);
 
-                innerTable.add(rankLabel) .left() .width(400).padBottom(30);
-                innerTable.add(scoreLabel).right().width(200).padBottom(30);
+                innerTable.add(rankLabel) .left() .width(400).padBottom(10);
+                innerTable.add(scoreLabel).right().width(200).padBottom(10);
                 innerTable.row();
             }
         }
@@ -111,7 +111,7 @@ public class LeaderboardScreen implements Screen {
         float scrollHeight = 400;
         scrollPane.setBounds(
                 (WORLD_WIDTH / 2) - (scrollWidth / 2) + 45,
-                150, scrollWidth, scrollHeight);
+                250, scrollWidth, scrollHeight);
 
         stage.addActor(scrollPane);
     }
@@ -168,10 +168,10 @@ public class LeaderboardScreen implements Screen {
         batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
         font.getData().setScale(3.5f);
-        font.setColor(Color.WHITE);
+        font.setColor(Color.BLUE);
         GlyphLayout titleLayout = new GlyphLayout(font, modeTitle);
         font.draw(batch, titleLayout,
-                (WORLD_WIDTH / 2) - (titleLayout.width / 2), 650);
+                (WORLD_WIDTH / 2) - (titleLayout.width / 2), 720);
 
         batch.draw(
                 isTouchingBack ? backBtnP : backBtn,
