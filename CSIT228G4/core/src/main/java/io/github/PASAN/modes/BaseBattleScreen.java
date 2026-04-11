@@ -1,9 +1,11 @@
 package io.github.PASAN.modes;
 
+import io.github.PASAN.AnimationManager;
 import io.github.PASAN.Main;
 import io.github.PASAN.MainMenu;
 import io.github.PASAN.characters.*;
 import io.github.PASAN.characters.Character;
+import io.github.PASAN.SkillEffect;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.*;
@@ -12,10 +14,12 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.*;
 import java.util.Random;
+import java.util.ArrayList;
 
 public abstract class BaseBattleScreen implements Screen {
     public static String currentBackgroundPath = "backgrounds/bg1.png";
-    // --- CORE GDX ---
+    protected static final float WORLD_WIDTH = 1920, WORLD_HEIGHT = 1080;
+
     protected Game game;
     protected SpriteBatch batch;
     protected BitmapFont font;
@@ -28,12 +32,18 @@ public abstract class BaseBattleScreen implements Screen {
     protected String player2Name = "Player 2";
 
     // --- TEXTURES ---
-    protected Texture background, playerSprite, enemySprite, playerIcon, enemyIcon;
-    protected TextureRegion enemyRegion, enemyIconRegion;
-    protected Texture redUi, yellowUi, skill1Btn, skill1BtnP, skill2Btn, skill2BtnP, skill3Btn, skill3BtnP;
+    protected Texture background, playerIcon, enemyIcon;
+    protected TextureRegion enemyIconRegion;
+    protected Texture redUi, yellowUi;
+    protected Texture skill1Btn, skill1BtnP, skill2Btn, skill2BtnP, skill3Btn, skill3BtnP;
     protected Texture round1Img, round2Img, round3Img, fightImg;
     protected Rectangle skill1Bounds, skill2Bounds, skill3Bounds;
 
+    // --- FALLBACK TEXTURES (1x1 solid colour, always valid, never null) ---
+    private Texture fallbackWhite;
+    private Texture fallbackBlack;
+
+    // --- PAUSE MENU ---
     protected boolean isPaused = false, playPressed = false, mutePressed = false, exitPressed = false;
     protected Texture dialogueBox, playBtn, playBtnP, muteBtn, muteBtnP, unmuteBtn, unmuteBtnP, exitBtn, exitBtnP;
     protected Rectangle dialogueBounds, playBounds, muteBounds, exitBounds;
@@ -42,162 +52,179 @@ public abstract class BaseBattleScreen implements Screen {
     // --- CHARACTERS ---
     protected Character player, enemy;
 
-    // --- FLOATING TEXTS ---
-    protected class FloatingText
-    {
-        String text;
-        float x, y, timer;
-        Color color;
-        public FloatingText(String text, float x, float y, Color color)
-        {
-            this.text = text;
-            this.x = x;
-            this.y = y;
-            this.color = color;
-            this.timer = 1.5f;
+    // --- ANIMATION ---
+    protected AnimationManager animManager;
+    protected String playerCharName, enemyCharName;
+
+    protected float playerSkillPoseTimer = 0f;
+    protected float enemySkillPoseTimer  = 0f;
+    protected static final float SKILL_POSE_DURATION = 0.5f;
+
+    protected ArrayList<SkillEffect> activeEffects = new ArrayList<>();
+
+    // --- HIT FLASH ---
+    private boolean hitActive  = false;
+    private boolean hitTarget  = true;
+    private float   hitTimer   = 0f;
+    private static final float HIT_FLASH_DURATION = 0.35f;
+
+    private boolean burstActive = false;
+    private float   burstTimer  = 0f;
+    private float   burstX, burstY;
+    private static final float BURST_DURATION   = 0.25f;
+    private static final float BURST_MAX_RADIUS = 140f;
+
+    // --- FLOATING TEXT ---
+    protected class FloatingText {
+        String text; float x, y, timer; Color color;
+        public FloatingText(String text, float x, float y, Color color) {
+            this.text = text; this.x = x; this.y = y; this.color = color; this.timer = 1.5f;
         }
     }
-    protected java.util.ArrayList<FloatingText> floatingTexts = new java.util.ArrayList<>();
-    // --- STATE ---
-    protected boolean isPlayerTurn = true;
-    protected int pressedSkillIndex = -1;
-    protected float turnDelay = 1.5f, turnTimer = 0;
-    protected int[] playerCD = {0, 0, 0}, enemyCD = {0, 0, 0};
-    protected Random random = new Random();
+    protected ArrayList<FloatingText> floatingTexts = new ArrayList<>();
 
-    protected int currentRound = 1, playerWins = 0, enemyWins = 0;
+    // --- COMBAT STATE ---
+    protected boolean isPlayerTurn     = true;
+    protected int     pressedSkillIndex = -1;
+    protected float   turnDelay = 1.5f, turnTimer = 0;
+    protected int[]   playerCD  = {0, 0, 0}, enemyCD = {0, 0, 0};
+    protected Random  random    = new Random();
+
+    protected int     currentRound    = 1, playerWins = 0, enemyWins = 0;
     protected boolean isTransitioning = false, matchIsOver = false, showingRoundIntro = true;
-    protected float transitionTimer = 0, roundIntroTimer = 0f;
-    protected String transitionMessage = "";
-
-    protected static final float WORLD_WIDTH = 1920, WORLD_HEIGHT = 1080;
+    protected float   transitionTimer = 0, roundIntroTimer = 0f;
+    protected String  transitionMessage = "";
 
     // --- AUDIO ---
     protected Sound round1Sound, round2Sound, finalRoundSound;
 
+    // =========================================================================
+    // CONSTRUCTOR
+    // =========================================================================
+
     public BaseBattleScreen(Game game, String username, String playerCharName, String enemyCharName) {
-        this.game = game;
+        this.game     = game;
         this.username = username;
         init(playerCharName, enemyCharName);
     }
 
+    // =========================================================================
+    // INIT
+    // =========================================================================
+
     private void init(String playerCharName, String enemyCharName) {
-        batch = new SpriteBatch();
+        this.playerCharName = playerCharName.replace(" ", "");
+        this.enemyCharName  = enemyCharName.replace(" ", "");
+
+        batch         = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
-        font = new BitmapFont();
+        font          = new BitmapFont();
         font.getData().setScale(2.5f);
 
-        camera = new OrthographicCamera();
+        camera   = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
         touch = new Vector3();
+
+        // Build 1x1 fallback textures — these NEVER fail and are used when
+        // any UI texture file is missing, so batch.draw() never receives null.
+        fallbackWhite = buildSolidTexture(1f, 1f, 1f, 0.4f);
+        fallbackBlack = buildSolidTexture(0f, 0f, 0f, 0.4f);
+
         background = loadTexture(currentBackgroundPath);
 
-        // Load Textures
-        redUi = loadTexture("backgrounds/red_background.png");
-        yellowUi = loadTexture("backgrounds/yellow_background.png");
-        skill1Btn = loadTexture("buttons/skill1_button.png");
+        redUi      = loadTexture("backgrounds/red_background.png");
+        yellowUi   = loadTexture("backgrounds/yellow_background.png");
+        skill1Btn  = loadTexture("buttons/skill1_button.png");
         skill1BtnP = loadTexture("buttons/skill1_button_pressed.png");
-        skill2Btn = loadTexture("buttons/skill2_button.png");
+        skill2Btn  = loadTexture("buttons/skill2_button.png");
         skill2BtnP = loadTexture("buttons/skill2_button_pressed.png");
-        skill3Btn = loadTexture("buttons/skill3_button.png");
+        skill3Btn  = loadTexture("buttons/skill3_button.png");
         skill3BtnP = loadTexture("buttons/skill3_button_pressed.png");
-        round1Img = loadTexture("backgrounds/round1.png");
-        round2Img = loadTexture("backgrounds/round2.png");
-        round3Img = loadTexture("backgrounds/finalround.png");
-        fightImg = loadTexture("backgrounds/fighttext.png");
+        round1Img  = loadTexture("backgrounds/round1.png");
+        round2Img  = loadTexture("backgrounds/round2.png");
+        round3Img  = loadTexture("backgrounds/finalround.png");
+        fightImg   = loadTexture("backgrounds/fighttext.png");
 
-        playerSprite = loadTexture("characters/" + playerCharName.replace(" ", "") + ".png");
-        enemySprite = loadTexture("characters/" + enemyCharName.replace(" ", "") + ".png");
-        if (enemySprite != null) {
-            enemyRegion = new TextureRegion(enemySprite);
-            enemyRegion.flip(true, false);
-        }
-
-        playerIcon = loadTexture("icons/" + playerCharName.replace(" ", "") + "_icon.png");
-        enemyIcon = loadTexture("icons/" + enemyCharName.replace(" ", "") + "_icon.png");
+        playerIcon = loadTexture("icons/" + this.playerCharName + "_icon.png");
+        enemyIcon  = loadTexture("icons/" + this.enemyCharName  + "_icon.png");
         if (enemyIcon != null) {
             enemyIconRegion = new TextureRegion(enemyIcon);
             enemyIconRegion.flip(true, false);
         }
 
         player = createCharacter(playerCharName);
-        enemy = createCharacter(enemyCharName);
+        enemy  = createCharacter(enemyCharName);
+
+        animManager = new AnimationManager();
+        animManager.loadCharacter(this.playerCharName);
+        animManager.loadCharacter(this.enemyCharName);
 
         skill1Bounds = new Rectangle(555, 230, 250, 70);
         skill2Bounds = new Rectangle(555, 145, 250, 70);
-        skill3Bounds = new Rectangle(555, 60, 250, 70);
+        skill3Bounds = new Rectangle(555,  60, 250, 70);
 
-        // Audio
-        round1Sound = loadSound("audio/round1_audio.wav");
-        round2Sound = loadSound("audio/round2_audio.wav");
+        round1Sound     = loadSound("audio/round1_audio.wav");
+        round2Sound     = loadSound("audio/round2_audio.wav");
         finalRoundSound = loadSound("audio/finalround_audio.wav");
 
-        // --- PAUSE MENU INIT ---
         dialogueBox = loadTexture("backgrounds/dialogue-box.png");
-        playBtn = loadTexture("buttons/resume_button.png");
-        playBtnP = loadTexture("buttons/resume_button_pressed.png");
-        muteBtn = loadTexture("buttons/mute_button.png");
-        muteBtnP = loadTexture("buttons/mute_button_pressed.png");
-        unmuteBtn = loadTexture("buttons/unmute_button.png");
-        unmuteBtnP = loadTexture("buttons/unmute_button_pressed.png");
-        exitBtn = loadTexture("buttons/exit_button.png");
-        exitBtnP = loadTexture("buttons/exit_button_pressed.png");
+        playBtn     = loadTexture("buttons/resume_button.png");
+        playBtnP    = loadTexture("buttons/resume_button_pressed.png");
+        muteBtn     = loadTexture("buttons/mute_button.png");
+        muteBtnP    = loadTexture("buttons/mute_button_pressed.png");
+        unmuteBtn   = loadTexture("buttons/unmute_button.png");
+        unmuteBtnP  = loadTexture("buttons/unmute_button_pressed.png");
+        exitBtn     = loadTexture("buttons/exit_button.png");
+        exitBtnP    = loadTexture("buttons/exit_button_pressed.png");
 
-        float cx = WORLD_WIDTH / 2f;
-        float cy = WORLD_HEIGHT / 2f;
-
-        float boxW = 800f;
-        float boxH = 600f;
-        dialogueBounds = new Rectangle(cx - boxW / 2f, cy - boxH / 2f, boxW, boxH);
-
-        float btnW = 350f;
-        float btnH = 100f;
-        playBounds = new Rectangle(cx - btnW / 2f, cy + 100f, btnW, btnH);
-        muteBounds = new Rectangle(cx - btnW / 2f, cy - 20f, btnW, btnH);
-        exitBounds = new Rectangle(cx - btnW / 2f, cy - 140f, btnW, btnH);
+        float cx = WORLD_WIDTH / 2f, cy = WORLD_HEIGHT / 2f;
+        dialogueBounds = new Rectangle(cx - 400, cy - 300, 800, 600);
+        playBounds     = new Rectangle(cx - 175, cy + 100, 350, 100);
+        muteBounds     = new Rectangle(cx - 175, cy -  20, 350, 100);
+        exitBounds     = new Rectangle(cx - 175, cy - 140, 350, 100);
     }
 
-    protected void randomizeBackground() {
-        if (background != null) {
-            background.dispose();
-        }
-        int randomBgNum = random.nextInt(8) + 1;
-        currentBackgroundPath = "backgrounds/bg" + randomBgNum + ".png";
-        background = loadTexture(currentBackgroundPath);
-    }
-    private void playRoundSound() {
-        if (playerWins == 1 && enemyWins == 1) { if (finalRoundSound != null) finalRoundSound.play(); }
-        else if (currentRound == 1) { if (round1Sound != null) round1Sound.play(); }
-        else if (currentRound == 2) { if (round2Sound != null) round2Sound.play(); }
+    // =========================================================================
+    // FALLBACK TEXTURE — always returns a valid non-null Texture
+    // =========================================================================
+
+    private Texture buildSolidTexture(float r, float g, float b, float a) {
+        Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pm.setColor(r, g, b, a);
+        pm.fill();
+        Texture t = new Texture(pm);
+        pm.dispose();
+        return t;
     }
 
-    protected Character createCharacter(String name) {
-        switch (name) {
-            case "Jollibee": return new Jollibee();
-            case "Colonel Sanders": return new ColonelSanders();
-            case "McDonald": return new McDonald();
-            case "Burger King": return new BurgerKing();
-            case "Wendy": return new Wendy();
-            case "Jack in the Box": return new JackInTheBox();
-            case "Little Caesar": return new LittleCaesar();
-            case "Chief Khai": return new ChiefKhai();
-            case "Dev Kishanta": return new GameDevs("Dev Kishanta");
-            case "Dev Rothesa":  return new GameDevs("Dev Rothesa");
-            case "Dev Wengie":   return new GameDevs("Dev Wengie");
-            case "Dev Kunihiko": return new GameDevs("Dev Kunihiko");
-            case "Dev Ayella":   return new GameDevs("Dev Ayella");
-            default: return new Jollibee();
-        }
+    /** Returns tex if non-null, otherwise fallbackWhite. NEVER returns null. */
+    private Texture safe(Texture tex) {
+        return tex != null ? tex : fallbackWhite;
     }
 
-    private Texture loadTexture(String path) {
-        try { return new Texture(path); } catch (Exception e) { return null; }
+    /** Returns tex if non-null, otherwise the supplied fallback. NEVER returns null. */
+    private Texture safe(Texture tex, Texture fallback) {
+        return tex != null ? tex : (fallback != null ? fallback : fallbackWhite);
     }
 
-    private Sound loadSound(String path) {
-        try { return Gdx.audio.newSound(Gdx.files.internal(path)); } catch (Exception e) { return null; }
+    // =========================================================================
+    // HIT EFFECT
+    // =========================================================================
+
+    protected void triggerHitEffect(boolean targetIsEnemy, float impactX, float impactY) {
+        hitActive   = true;
+        hitTarget   = targetIsEnemy;
+        hitTimer    = 0f;
+        burstActive = true;
+        burstTimer  = 0f;
+        burstX      = impactX;
+        burstY      = impactY;
     }
+
+    // =========================================================================
+    // RENDER
+    // =========================================================================
 
     @Override
     public void render(float delta) {
@@ -208,226 +235,203 @@ public abstract class BaseBattleScreen implements Screen {
         touch.set(Gdx.input.getX(), Gdx.input.getY(), 0);
         viewport.unproject(touch);
 
-        if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)){
-            isPaused = !isPaused;
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) isPaused = !isPaused;
+
+        if (!isPaused) {
+            if (hitActive)   { hitTimer   += delta; if (hitTimer   >= HIT_FLASH_DURATION) hitActive   = false; }
+            if (burstActive) { burstTimer += delta; if (burstTimer >= BURST_DURATION)     burstActive = false; }
+            if (playerSkillPoseTimer > 0) playerSkillPoseTimer -= delta;
+            if (enemySkillPoseTimer  > 0) enemySkillPoseTimer  -= delta;
         }
 
+        // Background — safe() ensures never null
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        if (background != null) batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        batch.draw(safe(background), 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        batch.end();
 
+        // Character frames — AnimationManager always returns non-null (magenta placeholder)
+        TextureRegion pFrame = playerSkillPoseTimer > 0
+                ? animManager.getPose2(playerCharName)
+                : animManager.getPose1(playerCharName);
+        TextureRegion eFrame = enemySkillPoseTimer > 0
+                ? animManager.getPose2(enemyCharName)
+                : animManager.getPose1(enemyCharName);
+        if (!eFrame.isFlipX()) eFrame.flip(true, false);
+
+        batch.begin();
         if (showingRoundIntro) {
-            if (playerSprite != null) batch.draw(playerSprite, 100, 100, 750, 850);
-            if (enemyRegion != null) batch.draw(enemyRegion, WORLD_WIDTH - 850, 100, 750, 850);
+            batch.draw(pFrame, 80,  100, 850, 950);
+            batch.draw(eFrame, WORLD_WIDTH - 900, 100, 850, 950);
         } else {
-            if (playerSprite != null) batch.draw(playerSprite, 200, 350, 450, 500);
-            if (enemyRegion != null) batch.draw(enemyRegion, WORLD_WIDTH - 700, 350, 450, 500);
+            // Player — flash + shake if hit
+            if (hitActive && !hitTarget) {
+                float alpha  = 1f - (hitTimer / HIT_FLASH_DURATION);
+                float shakeX = (random.nextFloat() * 2 - 1) * 18f * alpha;
+                batch.setColor(1f, 0.15f, 0.15f, 1f);
+                batch.draw(pFrame, 200 + shakeX, 350, 550, 600);
+                batch.setColor(Color.WHITE);
+            } else {
+                batch.draw(pFrame, 200, 350, 550, 600);
+            }
+
+            // Enemy — flash + shake if hit
+            if (hitActive && hitTarget) {
+                float alpha  = 1f - (hitTimer / HIT_FLASH_DURATION);
+                float shakeX = (random.nextFloat() * 2 - 1) * 18f * alpha;
+                batch.setColor(1f, 0.15f, 0.15f, 1f);
+                batch.draw(eFrame, WORLD_WIDTH - 800 + shakeX, 350, 550, 600);
+                batch.setColor(Color.WHITE);
+            } else {
+                batch.draw(eFrame, WORLD_WIDTH - 800, 350, 550, 600);
+            }
+
+            // Skill projectiles
+            for (int i = activeEffects.size() - 1; i >= 0; i--) {
+                SkillEffect effect    = activeEffects.get(i);
+                boolean     wasActive = effect.active;
+                if (!isPaused) effect.update(delta);
+                TextureRegion frame = effect.getCurrentFrame();
+                if (frame != null) {
+                    batch.draw(frame,
+                            effect.position.x - 250, effect.position.y - 250, 500, 500);
+                }
+                if (wasActive && !effect.active) {
+                    boolean enemyWasTarget = !effect.isFlipX();
+                    float   hitCentreX     = enemyWasTarget ? WORLD_WIDTH - 700 + 225 : 200 + 225;
+                    triggerHitEffect(enemyWasTarget, hitCentreX, 600f);
+                }
+                if (!effect.active) activeEffects.remove(i);
+            }
         }
         batch.end();
 
-        if (showingRoundIntro) {
-            if(!isPaused)
-            {
-                if (roundIntroTimer == 0f) playRoundSound();
-                roundIntroTimer += delta;
-            }
-            batch.begin();
-            if (roundIntroTimer < 1.5f) {
-                Texture popUp = getRoundIntroTexture();
-                if (popUp != null) batch.draw(popUp, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-            } else if (roundIntroTimer < 2.5f) {
-                if (fightImg != null) batch.draw(fightImg, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-            } else {
-                showingRoundIntro = false;
-                roundIntroTimer = 0f;
-            }
-            batch.end();
-            return;
+        // Impact burst circle
+        if (burstActive && !showingRoundIntro) {
+            float progress = burstTimer / BURST_DURATION;
+            float radius   = BURST_MAX_RADIUS * progress;
+            float alpha    = 1f - progress;
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            shapeRenderer.setProjectionMatrix(camera.combined);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(1f, 0.9f, 0.3f, alpha * 0.55f);
+            shapeRenderer.circle(burstX, burstY, radius * 0.55f);
+            shapeRenderer.end();
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.setColor(1f, 1f, 1f, alpha);
+            shapeRenderer.circle(burstX, burstY, radius);
+            shapeRenderer.end();
+            Gdx.gl.glDisable(GL20.GL_BLEND);
         }
+
+        if (showingRoundIntro) { renderRoundIntro(delta); return; }
 
         drawHealthBars();
         drawBattleUI();
-
-        // --- RENDER FLOATING TEXT ---
-        batch.begin();
-        for (int i = floatingTexts.size() - 1; i >= 0; i--)
-        {
-            FloatingText ft = floatingTexts.get(i);
-            ft.y += 100 * delta;
-            ft.timer -= delta;
-
-            font.setColor(ft.color.r, ft.color.g, ft.color.b, Math.max(0, ft.timer / 1.5f));
-            GlyphLayout layout = new GlyphLayout(font, ft.text);
-            font.draw(batch, ft.text, ft.x - layout.width / 2f, ft.y);
-
-            if (ft.timer <= 0) {
-
-                floatingTexts.remove(i);
-            }
-        }
-        font.setColor(Color.WHITE);
-        batch.end();
+        renderFloatingText(delta);
 
         if (isPaused) {
             drawPauseMenu();
             handlePauseInput();
-        } else if (!showingRoundIntro) {
-            if (isTransitioning) {
-                transitionTimer += delta;
-                if (transitionTimer >= 2.0f) {
-                    if (matchIsOver) onMatchOver(playerWins >= 2);
-                    else {
-                        isTransitioning = false;
-                        transitionTimer = 0;
-                        resetRound();
-                    }
-                }
-            } else {
-                handleGameLogic(delta);
-            }
-        }
-    }
-
-    private Texture getRoundIntroTexture() {
-        if (playerWins == 1 && enemyWins == 1) return round3Img;
-        if (currentRound == 1) return round1Img;
-        if (currentRound == 2) return round2Img;
-        return round3Img;
-    }
-
-    private void drawBattleUI() {
-        batch.begin();
-        if (yellowUi != null) batch.draw(yellowUi, 40, 20, 1420, 320);
-        if (redUi != null) {
-            batch.draw(redUi, 140, 60, 350, 250);
-            batch.draw(redUi, 1480, 20, 400, 300);
-        }
-
-        Character uiChar = (isPVPMode() && !isPlayerTurn) ? enemy : player;
-        int[] uiCD = (isPVPMode() && !isPlayerTurn) ? enemyCD : playerCD;
-        boolean disableBtns = !isPlayerTurn && !isPVPMode();
-
-        if (uiChar.getSkills() != null && uiChar.getSkills().size() >= 3) {
-            drawSkillUI(0, uiChar.getSkills().get(0).getName(), skill1Bounds, uiCD[0], uiChar, disableBtns);
-            drawSkillUI(1, uiChar.getSkills().get(1).getName(), skill2Bounds, uiCD[1], uiChar, disableBtns);
-            drawSkillUI(2, uiChar.getSkills().get(2).getName(), skill3Bounds, uiCD[2], uiChar, disableBtns);
-        }
-
-        font.setColor(Color.WHITE);
-        font.draw(batch, "What will\n" + uiChar.getName() + "\ndo?", 180, 240);
-        font.draw(batch, "HP  - " + uiChar.getHealth() + "/" + uiChar.getMaxHealth(), 1540, 220);
-        font.draw(batch, "Mana- " + uiChar.getCurrentMana() + "/" + uiChar.getMaxMana(), 1540, 140);
-
-        font.draw(batch, username + " (" + player.getName() + ")", 160, 1040);
-        String p2Disp = (isPVPMode() ? player2Name : "CPU") + " (" + enemy.getName() + ")";
-        GlyphLayout p2Layout = new GlyphLayout(font, p2Disp);
-        font.draw(batch, p2Disp, WORLD_WIDTH - 160 - p2Layout.width, 1040);
-
-        GlyphLayout hudLayout = new GlyphLayout(font, getHUDText());
-        font.draw(batch, hudLayout, (WORLD_WIDTH - hudLayout.width) / 2f, 1040);
-
-        if (playerIcon != null) batch.draw(playerIcon, 30, 910, 120, 120);
-        if (enemyIconRegion != null) batch.draw(enemyIconRegion, WORLD_WIDTH - 150, 910, 120, 120);
-
-        if (isTransitioning) {
-            font.getData().setScale(5.0f);
-            font.setColor(Color.BLUE);
-            GlyphLayout tl = new GlyphLayout(font, transitionMessage);
-            font.draw(batch, tl, (WORLD_WIDTH - tl.width) / 2, WORLD_HEIGHT / 2 + 100);
-            font.getData().setScale(2.5f);
         } else {
-            // Turn indicator
-            String turnMsg = isPlayerTurn ? player.getName() + "'s Turn!" : enemy.getName() + "'s Turn...";
-            font.setColor(isPlayerTurn ? Color.GREEN : Color.RED);
-            GlyphLayout turnLayout = new GlyphLayout(font, turnMsg);
-            font.draw(batch, turnLayout, (WORLD_WIDTH - turnLayout.width) / 2f, 800);
+            handleCombatState(delta);
         }
+    }
 
-        //--- HP INDICATORS ---
-        font.setColor(Color.WHITE);
-        String pHealth = player.getHealth()+" / "+player.getMaxHealth();
-        String eHealth = enemy.getHealth()+" / "+enemy.getMaxHealth();
+    // =========================================================================
+    // ROUND INTRO
+    // =========================================================================
 
-        GlyphLayout pHealthLayout = new GlyphLayout(font, pHealth);
-        GlyphLayout eHealthLayout = new GlyphLayout(font, eHealth);
-
-        font.draw(batch, pHealth, 160 + (450 - pHealthLayout.width) / 2f, 950 + 38);
-        font.draw(batch, eHealth, (WORLD_WIDTH - 610) + (450 - eHealthLayout.width) / 2f, 950 + 38);
-
-        // --- DRAW TOOLTIPS ---
-        // Only show tooltips if the game is active and it's someone's turn to choose
-        if (!isPaused && !isTransitioning && !showingRoundIntro && (isPlayerTurn || isPVPMode())) {
-            drawHoverTooltip(uiChar);
+    protected void renderRoundIntro(float delta) {
+        if (!isPaused) {
+            if (roundIntroTimer == 0f) playRoundSound();
+            roundIntroTimer += delta;
         }
-
+        batch.begin();
+        if (roundIntroTimer < 1.5f) {
+            Texture popUp = getRoundIntroTexture();
+            if (popUp != null) batch.draw(popUp, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        } else if (roundIntroTimer < 2.5f) {
+            if (fightImg != null) batch.draw(fightImg, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        } else {
+            showingRoundIntro = false;
+            roundIntroTimer   = 0f;
+        }
         batch.end();
     }
 
-    private void drawHealthBars() {
-        shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        // Player HP Bar — turns red when low
-        shapeRenderer.setColor(Color.DARK_GRAY);
-        shapeRenderer.rect(160, 950, 450, 50);
-        float pPercent = (float) player.getHealth() / player.getMaxHealth();
-        shapeRenderer.setColor(pPercent > 0.3f ? Color.GREEN : Color.RED);
-        shapeRenderer.rect(165, 955, 440 * pPercent, 40);
-
-        // Enemy HP Bar
-        shapeRenderer.setColor(Color.DARK_GRAY);
-        shapeRenderer.rect(WORLD_WIDTH - 610, 950, 450, 50);
-        float ePercent = (float) enemy.getHealth() / enemy.getMaxHealth();
-        shapeRenderer.setColor(Color.RED);
-        shapeRenderer.rect(WORLD_WIDTH - 605, 955, 440 * ePercent, 40);
-
-        // Win Orbs
-        for (int i = 0; i < 2; i++) {
-            shapeRenderer.setColor(i < playerWins ? Color.GOLD : Color.DARK_GRAY);
-            shapeRenderer.rect(580 - (i * 35), 915, 25, 25);
-            shapeRenderer.setColor(i < enemyWins ? Color.GOLD : Color.DARK_GRAY);
-            shapeRenderer.rect(1315 + (i * 35), 915, 25, 25);
+    protected Texture getRoundIntroTexture() {
+        // Show correct round image based on current round and win counts
+        if (playerWins == 1 && enemyWins == 1) {
+            return round3Img; // Final round
+        } else if (currentRound == 1 && playerWins == 0 && enemyWins == 0) {
+            return round1Img; // First round of match
+        } else if (currentRound == 2) {
+            return round2Img; // Second round
+        } else if (currentRound == 3) {
+            return round3Img; // Third/final round
         }
-        shapeRenderer.end();
+        return round1Img; // Default fallback
     }
 
-    private void drawSkillUI(int i, String name, Rectangle bounds, int cd, Character activeChar, boolean disabled) {
-        Texture normal = (i == 0) ? skill1Btn : (i == 1) ? skill2Btn : skill3Btn;
-        Texture pressed = (i == 0) ? skill1BtnP : (i == 1) ? skill2BtnP : skill3BtnP;
+    // =========================================================================
+    // FLOATING TEXT
+    // =========================================================================
 
-        boolean canAfford = activeChar.getCurrentMana() >= activeChar.getSkills().get(i).getManaCost();
-        boolean isTouching = !isPaused && !disabled && Gdx.input.isTouched() && bounds.contains(touch.x, touch.y);
-
-        Texture toUse = (isTouching || cd > 0 || !canAfford) ? pressed : normal;
-        batch.draw(toUse, bounds.x, bounds.y, 250, 70);
-
-        font.setColor(cd > 0 || !canAfford || disabled ? Color.GRAY : Color.BLACK);
-        font.draw(batch, "- " + name + (cd > 0 ? " (" + cd + ")" : ""), bounds.x + 280, bounds.y + 50);
+    private void renderFloatingText(float delta) {
+        batch.begin();
+        for (int i = floatingTexts.size() - 1; i >= 0; i--) {
+            FloatingText ft = floatingTexts.get(i);
+            ft.y    += 100 * delta;
+            ft.timer -= delta;
+            font.setColor(ft.color.r, ft.color.g, ft.color.b, Math.max(0, ft.timer / 1.5f));
+            GlyphLayout layout = new GlyphLayout(font, ft.text);
+            font.draw(batch, ft.text, ft.x - layout.width / 2f, ft.y);
+            if (ft.timer <= 0) floatingTexts.remove(i);
+        }
+        font.setColor(Color.WHITE);
+        batch.end();
     }
+
+    // =========================================================================
+    // COMBAT STATE — FIX: draws transition message, then waits 2s
+    // =========================================================================
+
+    protected void handleCombatState(float delta) {
+        if (isTransitioning) {
+            transitionTimer += delta;
+
+            batch.begin();
+            font.getData().setScale(5.0f);
+            font.setColor(Color.YELLOW);
+            GlyphLayout tl = new GlyphLayout(font, transitionMessage);
+            font.draw(batch, tl, (WORLD_WIDTH - tl.width) / 2f, WORLD_HEIGHT / 2f + 100);
+            font.getData().setScale(2.5f);
+            font.setColor(Color.WHITE);
+            batch.end();
+
+            if (transitionTimer >= 2.0f) {
+                if (matchIsOver) onMatchOver(playerWins >= 2);
+                else { isTransitioning = false; transitionTimer = 0; resetRound(); }
+            }
+        } else {
+            handleGameLogic(delta);
+        }
+    }
+
+    // =========================================================================
+    // GAME LOGIC
+    // =========================================================================
 
     protected void handleGameLogic(float delta) {
         if (isPlayerTurn || isPVPMode()) {
             if (Gdx.input.justTouched()) {
-                if      (skill1Bounds.contains(touch.x, touch.y))
-                {
-                    pressedSkillIndex = 0;
-                    Main.clickSound.play();
-                }
-                else if (skill2Bounds.contains(touch.x, touch.y))
-                {
-                    pressedSkillIndex = 1;
-                    Main.clickSound.play();
-                }
-                else if (skill3Bounds.contains(touch.x, touch.y))
-                {
-                    pressedSkillIndex = 2;
-                    Main.clickSound.play();
-                }
+                if      (skill1Bounds.contains(touch.x, touch.y)) { pressedSkillIndex = 0; Main.clickSound.play(); }
+                else if (skill2Bounds.contains(touch.x, touch.y)) { pressedSkillIndex = 1; Main.clickSound.play(); }
+                else if (skill3Bounds.contains(touch.x, touch.y)) { pressedSkillIndex = 2; Main.clickSound.play(); }
             }
             if (!Gdx.input.isTouched() && pressedSkillIndex != -1) {
-                if (getBounds(pressedSkillIndex).contains(touch.x, touch.y)) {
-                    executeSkill(pressedSkillIndex);
-                }
+                if (getBounds(pressedSkillIndex).contains(touch.x, touch.y)) executeSkill(pressedSkillIndex);
                 pressedSkillIndex = -1;
             }
         } else {
@@ -436,49 +440,68 @@ public abstract class BaseBattleScreen implements Screen {
         }
     }
 
+    // =========================================================================
+    // EXECUTE SKILL
+    // =========================================================================
+
     protected void executeSkill(int index) {
         if (index < 0 || index > 2) return;
-        Character attacker = isPlayerTurn ? player : enemy;
-        Character defender = isPlayerTurn ? enemy : player;
-        int[] activeCD = isPlayerTurn ? playerCD : enemyCD;
 
-        int cost = attacker.getSkills().get(index).getManaCost();
+        Character attacker = isPlayerTurn ? player : enemy;
+        Character defender = isPlayerTurn ? enemy  : player;
+        int[]  activeCD    = isPlayerTurn ? playerCD : enemyCD;
+        int    cost        = attacker.getSkills().get(index).getManaCost();
+
         if (attacker.getCurrentMana() < cost || activeCD[index] > 0) return;
 
-        // --- CAPTURE OLD HP ---
-        int oldHp = defender.getHealth();
+        float startX  = isPlayerTurn ? 450 : WORLD_WIDTH - 450;
+        float targetX = isPlayerTurn ? WORLD_WIDTH - 450 : 450;
+        int   skillNum = index + 1;
 
+        Animation<TextureRegion> skillAnim = isPlayerTurn
+                ? animManager.getSkillAnimation(playerCharName, skillNum)
+                : animManager.getSkillAnimation(enemyCharName,  skillNum);
+
+        activeEffects.add(new SkillEffect(skillAnim, startX, 600, targetX, 600, !isPlayerTurn));
+
+        if (isPlayerTurn) playerSkillPoseTimer = SKILL_POSE_DURATION;
+        else              enemySkillPoseTimer  = SKILL_POSE_DURATION;
+
+        int oldHp = defender.getHealth();
         switch (index) {
-            case 0: attacker.basicAttack(defender);    break;
+            case 0: attacker.basicAttack(defender);                      break;
             case 1: attacker.secondarySkill(defender); activeCD[1] = 3; break;
             case 2: attacker.ultimateSkill(defender);  activeCD[2] = 5; break;
         }
 
-        // --- CALCULATE DAMAGE & SPAWN TEXT ---
-        int damage = oldHp - defender.getHealth();
+        spawnCombatText(oldHp - defender.getHealth(), cost);
 
-        // Calculate center top of character sprites
-        float pSpriteX = 200 + (450 / 2f);
-        float eSpriteX = (WORLD_WIDTH - 700) + (450 / 2f);
-        float yPos = 850f; // Above their heads
+        // FIX: always tick cooldowns/mana after every skill, not just enemy turns
+        endOfRound();
 
-        if (isPlayerTurn)
-        {
-            if (damage > 0) floatingTexts.add(new FloatingText("-" + damage, eSpriteX, yPos, Color.RED));
-            if (cost > 0) floatingTexts.add(new FloatingText("-" + cost + " MP", pSpriteX, yPos - 50, Color.CYAN));
-        } else
-        {
-            if (damage > 0) floatingTexts.add(new FloatingText("-" + damage, pSpriteX, yPos, Color.RED));
-            if (cost > 0) floatingTexts.add(new FloatingText("-" + cost + " MP", eSpriteX, yPos - 50, Color.CYAN));
-        }
-
-        if (!isPlayerTurn || isPVPMode()) {
-            endOfRound();
-        }
         isPlayerTurn = !isPlayerTurn;
-        turnTimer = 0;
+        turnTimer    = 0;
         checkMatchState();
     }
+
+    // =========================================================================
+    // COMBAT TEXT
+    // =========================================================================
+
+    private void spawnCombatText(int damage, int cost) {
+        float pX = 200 + 225f, eX = WORLD_WIDTH - 700 + 225f;
+        if (isPlayerTurn) {
+            if (damage > 0) floatingTexts.add(new FloatingText("-" + damage,        eX, 850, Color.RED));
+            if (cost   > 0) floatingTexts.add(new FloatingText("-" + cost + " MP",  pX, 800, Color.CYAN));
+        } else {
+            if (damage > 0) floatingTexts.add(new FloatingText("-" + damage,        pX, 850, Color.RED));
+            if (cost   > 0) floatingTexts.add(new FloatingText("-" + cost + " MP",  eX, 800, Color.CYAN));
+        }
+    }
+
+    // =========================================================================
+    // END OF ROUND
+    // =========================================================================
 
     protected void endOfRound() {
         for (int i = 0; i < 3; i++) {
@@ -489,77 +512,97 @@ public abstract class BaseBattleScreen implements Screen {
         enemy.addMana(random.nextInt(6) + 5);
     }
 
+    // =========================================================================
+    // CHECK MATCH STATE — FIX: proper round AND match messages, no double ++
+    // =========================================================================
+
     protected void checkMatchState() {
         if (!player.isAlive() || !enemy.isAlive()) {
             isTransitioning = true;
             transitionTimer = 0;
 
-            boolean p1WonRound = player.isAlive();
-            if (p1WonRound) {
+            if (player.isAlive()) {
                 playerWins++;
-                if (isPVPMode()) {
-                    transitionMessage = username.toUpperCase() + " WINS ROUND " + currentRound + "!";
-                } else {
-                    transitionMessage = "YOU WIN ROUND " + currentRound + "!";
-                }
+                transitionMessage = isPVPMode()
+                        ? username.toUpperCase() + " WINS ROUND " + currentRound + "!"
+                        : "YOU WIN ROUND " + currentRound + "!";
             } else {
                 enemyWins++;
-                if (isPVPMode()) {
-                    transitionMessage = player2Name.toUpperCase() + " WINS ROUND " + currentRound + "!";
-                } else {
-                    transitionMessage = enemy.getName().toUpperCase() + " WINS ROUND " + currentRound + "!";
-                }
+                transitionMessage = isPVPMode()
+                        ? player2Name.toUpperCase() + " WINS ROUND " + currentRound + "!"
+                        : enemy.getName().toUpperCase() + " WINS ROUND " + currentRound + "!";
             }
 
+            // Overwrite with match-over message if someone reached 2 wins
             if (playerWins == 2 || enemyWins == 2) {
                 matchIsOver = true;
-
                 if (isPVPMode()) {
-                    transitionMessage = (playerWins == 2) ?
-                            username.toUpperCase() + " WINS THE MATCH!" :
-                            player2Name.toUpperCase() + " WINS THE MATCH!";
+                    transitionMessage = (playerWins == 2)
+                            ? username.toUpperCase()    + " WINS THE MATCH!"
+                            : player2Name.toUpperCase() + " WINS THE MATCH!";
                 } else {
                     transitionMessage = (playerWins == 2) ? "VICTORY!" : "DEFEATED!";
                 }
-            } else {
-                currentRound++;
             }
+            // NOTE: currentRound is incremented in resetRound(), NOT here
         }
     }
 
-    private Rectangle getBounds(int i) {
-        if (i == 0) return skill1Bounds;
-        if (i == 1) return skill2Bounds;
-        return skill3Bounds;
-    }
+    // =========================================================================
+    // RESET ROUND — FIX: currentRound++ only here, only when match not over
+    // =========================================================================
 
     protected void resetRound() {
-        player.restoreHP(); player.restoreMana();
-        enemy.restoreHP(); enemy.restoreMana();
-        playerCD = new int[]{0,0,0}; enemyCD = new int[]{0,0,0};
-        isPlayerTurn = true;
-        showingRoundIntro = true;
-        roundIntroTimer = 0f;
+        player.restoreHP();   player.restoreMana();
+        enemy.restoreHP();    enemy.restoreMana();
+        playerCD = new int[]{0, 0, 0};
+        enemyCD  = new int[]{0, 0, 0};
+        isPlayerTurn         = true;
+        showingRoundIntro    = true;
+        roundIntroTimer      = 0f;
+        activeEffects.clear();
+        hitActive            = false;
+        burstActive          = false;
+        playerSkillPoseTimer = 0f;
+        enemySkillPoseTimer  = 0f;
+
+        // FIX: Only increment round if match is NOT over and we're not transitioning to next stage
+        if (!matchIsOver && !isTransitioning) {
+            currentRound++;
+        }
     }
 
-    protected abstract boolean isPVPMode();
-    protected abstract void executeEnemyTurn();
-    protected abstract void onMatchOver(boolean playerWon);
+    // =========================================================================
+    // RESET FOR NEW STAGE — Called when moving to next stage in Arcade/Endless
+    // =========================================================================
 
-    // Subclasses override getHUDText() to customise the centre HUD label.
-    // getTopHUDText() is kept as an alias so both naming conventions work.
-    protected String getHUDText() { return "ROUND: " + currentRound; }
-    protected String getTopHUDText() { return getHUDText(); }
+    protected void resetForNewStage() {
+        currentRound = 1;
+        playerWins = 0;
+        enemyWins = 0;
+        matchIsOver = false;
+        isTransitioning = false;
+        transitionTimer = 0;
 
-    @Override public void resize(int w, int h) { viewport.update(w, h); }
-    @Override public void show()   {}
-    @Override public void hide()   {}
-    @Override public void pause()  {}
-    @Override public void resume() {}
+        player.restoreHP();   player.restoreMana();
+        enemy.restoreHP();    enemy.restoreMana();
+        playerCD = new int[]{0, 0, 0};
+        enemyCD  = new int[]{0, 0, 0};
+        isPlayerTurn         = true;
+        showingRoundIntro    = true;
+        roundIntroTimer      = 0f;
+        activeEffects.clear();
+        hitActive            = false;
+        burstActive          = false;
+        playerSkillPoseTimer = 0f;
+        enemySkillPoseTimer  = 0f;
+    }
 
+    // =========================================================================
+    // PAUSE MENU — all batch.draw calls use safe() to guard against null textures
+    // =========================================================================
 
-    private void drawPauseMenu() {
-        // 1. Draw a dark transparent overlay
+    protected void drawPauseMenu() {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         shapeRenderer.setProjectionMatrix(camera.combined);
@@ -570,176 +613,257 @@ public abstract class BaseBattleScreen implements Screen {
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
         batch.begin();
+        batch.draw(safe(dialogueBox),
+                dialogueBounds.x, dialogueBounds.y, dialogueBounds.width, dialogueBounds.height);
 
-        // 2. Draw the Dialogue Box background first
-        if (dialogueBox != null) {
-            batch.draw(dialogueBox, dialogueBounds.x, dialogueBounds.y, dialogueBounds.width, dialogueBounds.height);
-        }
+        boolean tp = playBounds.contains(touch.x, touch.y) && Gdx.input.isTouched();
+        batch.draw(safe(tp ? playBtnP : playBtn),
+                playBounds.x, playBounds.y, playBounds.width, playBounds.height);
 
-        // 3. Draw Resume Button
-        if (Gdx.input.isTouched() && playBounds.contains(touch.x, touch.y)) {
-            if (playBtnP != null) batch.draw(playBtnP, playBounds.x, playBounds.y, playBounds.width, playBounds.height);
-        } else {
-            if (playBtn != null) batch.draw(playBtn, playBounds.x, playBounds.y, playBounds.width, playBounds.height);
-        }
+        Texture mNorm = isMuted ? unmuteBtn  : muteBtn;
+        Texture mPres = isMuted ? unmuteBtnP : muteBtnP;
+        boolean tm = muteBounds.contains(touch.x, touch.y) && Gdx.input.isTouched();
+        batch.draw(safe(tm ? mPres : mNorm),
+                muteBounds.x, muteBounds.y, muteBounds.width, muteBounds.height);
 
-        // 4. Draw Mute/Unmute Button (displays mute button if unmuted, unmute button if muted)
-        Texture muteButtonToShow = isMuted ? unmuteBtn : muteBtn;
-        Texture muteButtonPressed = isMuted ? unmuteBtnP : muteBtnP;
-
-        if (Gdx.input.isTouched() && muteBounds.contains(touch.x, touch.y)) {
-            if (muteButtonPressed != null) batch.draw(muteButtonPressed, muteBounds.x, muteBounds.y, muteBounds.width, muteBounds.height);
-        } else {
-            if (muteButtonToShow != null) batch.draw(muteButtonToShow, muteBounds.x, muteBounds.y, muteBounds.width, muteBounds.height);
-        }
-
-        // 5. Draw Exit Button
-        if (Gdx.input.isTouched() && exitBounds.contains(touch.x, touch.y)) {
-            if (exitBtnP != null) batch.draw(exitBtnP, exitBounds.x, exitBounds.y, exitBounds.width, exitBounds.height);
-        } else {
-            if (exitBtn != null) batch.draw(exitBtn, exitBounds.x, exitBounds.y, exitBounds.width, exitBounds.height);
-        }
-
+        boolean te = exitBounds.contains(touch.x, touch.y) && Gdx.input.isTouched();
+        batch.draw(safe(te ? exitBtnP : exitBtn),
+                exitBounds.x, exitBounds.y, exitBounds.width, exitBounds.height);
         batch.end();
     }
 
-    private void handlePauseInput() {
+    protected void handlePauseInput() {
         if (Gdx.input.justTouched()) {
-            if (playBounds.contains(touch.x, touch.y)) {
-                playPressed = true;
-                Main.clickSound.play();
-            }
-            if (muteBounds.contains(touch.x, touch.y)) {
-                mutePressed = true;
-                Main.clickSound.play();
-            }
-            if (exitBounds.contains(touch.x, touch.y)) {
-                exitPressed = true;
-                Main.clickSound.play();
-            }
+            if (playBounds.contains(touch.x, touch.y)) { playPressed = true; Main.clickSound.play(); }
+            if (muteBounds.contains(touch.x, touch.y)) { mutePressed = true; Main.clickSound.play(); }
+            if (exitBounds.contains(touch.x, touch.y)) { exitPressed = true; Main.clickSound.play(); }
         }
-
         if (!Gdx.input.isTouched()) {
-            if (playPressed && playBounds.contains(touch.x, touch.y)) {
-                isPaused = false;
-            } else if (mutePressed && muteBounds.contains(touch.x, touch.y)) {
+            if (playPressed && playBounds.contains(touch.x, touch.y)) isPaused = false;
+            if (mutePressed && muteBounds.contains(touch.x, touch.y)) {
                 isMuted = !isMuted;
-
-                if (Main.bgm != null) {
-                    if (isMuted) {
-                        Main.bgm.pause();
-                    } else {
-                        Main.bgm.play();
-                    }
-                }
-            } else if (exitPressed && exitBounds.contains(touch.x, touch.y)) {
-                game.setScreen(new MainMenu(game));
-                Main.clickSound.play();
-                dispose();
+                if (Main.bgm != null) { if (isMuted) Main.bgm.pause(); else Main.bgm.play(); }
             }
-            playPressed = false;
-            mutePressed = false;
-            exitPressed = false;
+            if (exitPressed && exitBounds.contains(touch.x, touch.y)) {
+                game.setScreen(new MainMenu(game)); dispose();
+            }
+            playPressed = mutePressed = exitPressed = false;
         }
     }
 
-    private void drawHoverTooltip(Character uiChar) {
-        int hoveredIndex = -1;
+    // =========================================================================
+    // HEALTH BARS
+    // =========================================================================
 
-        // Find out which skill the mouse is currently hovering over
-        if (skill1Bounds.contains(touch.x, touch.y)) hoveredIndex = 0;
-        else if (skill2Bounds.contains(touch.x, touch.y)) hoveredIndex = 1;
-        else if (skill3Bounds.contains(touch.x, touch.y)) hoveredIndex = 2;
+    protected void drawHealthBars() {
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        // If hovering over a valid skill, draw the tooltip
-        if (hoveredIndex != -1 && uiChar.getSkills() != null && uiChar.getSkills().size() > hoveredIndex) {
+        shapeRenderer.setColor(Color.DARK_GRAY);
+        shapeRenderer.rect(160, 950, 450, 50);
+        float pP = (float) player.getHealth() / player.getMaxHealth();
+        shapeRenderer.setColor(pP > 0.3f ? Color.GREEN : Color.RED);
+        shapeRenderer.rect(165, 955, 440 * pP, 40);
 
-            Skill skill = uiChar.getSkills().get(hoveredIndex);
+        shapeRenderer.setColor(Color.DARK_GRAY);
+        shapeRenderer.rect(WORLD_WIDTH - 610, 950, 450, 50);
+        float eP = (float) enemy.getHealth() / enemy.getMaxHealth();
+        shapeRenderer.setColor(Color.RED);
+        shapeRenderer.rect(WORLD_WIDTH - 605, 955, 440 * eP, 40);
 
-            //Font Colors
-            font.getData().markupEnabled = true;
-            // Format the text using the data from Skill.java
-            String tooltipText = "[RED]"+skill.getName() +
-                    "\n[BLACK]Damage: [RED]" + skill.getMinDmg() + " - " + skill.getMaxDmg() +
-                    "\n[BLACK]Cost: [BLUE]" + skill.getManaCost() + " MP";
+        for (int i = 0; i < 2; i++) {
+            shapeRenderer.setColor(i < playerWins ? Color.GOLD : Color.DARK_GRAY);
+            shapeRenderer.rect(580 - (i * 35), 915, 25, 25);
+            shapeRenderer.setColor(i < enemyWins ? Color.GOLD : Color.DARK_GRAY);
+            shapeRenderer.rect(1315 + (i * 35), 915, 25, 25);
+        }
+        shapeRenderer.end();
 
-            font.getData().setScale(2.0f); // Make tooltip font slightly smaller
-            GlyphLayout layout = new GlyphLayout(font, tooltipText);
+        batch.begin();
+        font.setColor(Color.WHITE);
+        String pHealth = player.getHealth() + " / " + player.getMaxHealth();
+        GlyphLayout pLayout = new GlyphLayout(font, pHealth);
+        font.draw(batch, pHealth, 160 + (450 - pLayout.width) / 2f, 988);
 
+        String eHealth = enemy.getHealth() + " / " + enemy.getMaxHealth();
+        GlyphLayout eLayout = new GlyphLayout(font, eHealth);
+        font.draw(batch, eHealth, (WORLD_WIDTH - 610) + (450 - eLayout.width) / 2f, 988);
+        batch.end();
+    }
 
-            // --- INCREASED PADDING FOR THICK BORDERS ---
-            float hPad = 50f;
-            float vPad = 40f;
+    // =========================================================================
+    // BATTLE UI — all batch.draw calls use safe() to guard against null textures
+    // =========================================================================
 
-            // Calculate padding and total box size
-            float boxW = layout.width + (hPad * 2);
-            float boxH = layout.height + (vPad * 2);
+    protected void drawBattleUI() {
+        batch.begin();
+        if (yellowUi != null) batch.draw(yellowUi, 40,   20, 1420, 320);
+        if (redUi    != null) {
+            batch.draw(redUi, 140,  60,  350, 250);
+            batch.draw(redUi, 1480, 20,  400, 300);
+        }
 
-            // Offset the box slightly so the mouse cursor doesn't cover it
-            float tipX = touch.x + 20f;
-            float tipY = touch.y - 20f;
+        Character uiChar      = (isPVPMode() && !isPlayerTurn) ? enemy   : player;
+        int[]     uiCD        = (isPVPMode() && !isPlayerTurn) ? enemyCD : playerCD;
+        boolean   disableBtns = !isPlayerTurn && !isPVPMode();
 
-            // Prevent the tooltip from going off the right edge of the screen
-            if (tipX + boxW > WORLD_WIDTH) {
-                tipX = WORLD_WIDTH - boxW - 10f;
-            }
+        if (uiChar.getSkills() != null && uiChar.getSkills().size() >= 3) {
+            drawSkillUI(0, uiChar.getSkills().get(0).getName(), skill1Bounds, uiCD[0], uiChar, disableBtns);
+            drawSkillUI(1, uiChar.getSkills().get(1).getName(), skill2Bounds, uiCD[1], uiChar, disableBtns);
+            drawSkillUI(2, uiChar.getSkills().get(2).getName(), skill3Bounds, uiCD[2], uiChar, disableBtns);
+        }
 
-            // Prevent the tooltip from clipping off the bottom of the screen
-            if (tipY - boxH < 10f) {
-                // If it's too low, flip the tooltip to render ABOVE the cursor!
-                tipY = touch.y + boxH + 20f;
-            }
+        font.setColor(Color.WHITE);
+        font.draw(batch, "What will\n" + uiChar.getName() + "\ndo?", 180, 240);
+        font.draw(batch, "HP  - " + uiChar.getHealth()      + "/" + uiChar.getMaxHealth(), 1540, 220);
+        font.draw(batch, "Mana- " + uiChar.getCurrentMana() + "/" + uiChar.getMaxMana(),   1540, 140);
+        font.draw(batch, username + " (" + player.getName() + ")", 160, 1040);
 
-            // Draw the dialogue box texture as the background
-            if (dialogueBox != null) {
-                batch.draw(dialogueBox, tipX, tipY - boxH, boxW, boxH);
-            }
+        String p2Disp = (isPVPMode() ? player2Name : "CPU") + " (" + enemy.getName() + ")";
+        GlyphLayout p2L = new GlyphLayout(font, p2Disp);
+        font.draw(batch, p2Disp, WORLD_WIDTH - 160 - p2L.width, 1040);
 
-            // Draw the text over the dialogue box
-            font.setColor(Color.WHITE);
-            font.draw(batch, tooltipText, tipX + hPad, tipY - vPad);
+        // Centre HUD label (subclasses override getHUDText())
+        GlyphLayout hudL = new GlyphLayout(font, getHUDText());
+        font.draw(batch, hudL, (WORLD_WIDTH - hudL.width) / 2f, 1040);
 
-            // Reset font scale for the rest of the game UI
-            font.getData().setScale(2.5f);
-            font.getData().markupEnabled = false;
+        if (playerIcon    != null) batch.draw(playerIcon,    30,               910, 120, 120);
+        if (enemyIconRegion != null) batch.draw(enemyIconRegion, WORLD_WIDTH - 150, 910, 120, 120);
+
+        String turnMsg = isPlayerTurn ? player.getName() + "'s Turn!" : enemy.getName() + "'s Turn...";
+        font.setColor(isPlayerTurn ? Color.GREEN : Color.RED);
+        GlyphLayout tL = new GlyphLayout(font, turnMsg);
+        font.draw(batch, tL, (WORLD_WIDTH - tL.width) / 2f, 800);
+        font.setColor(Color.WHITE);
+        batch.end();
+    }
+
+    // FIX: safe() on every skill button so a missing PNG never crashes the draw call
+    private void drawSkillUI(int i, String name, Rectangle b, int cd, Character activeC, boolean disabled) {
+        Texture normalTex  = (i == 0) ? skill1Btn  : (i == 1) ? skill2Btn  : skill3Btn;
+        Texture pressedTex = (i == 0) ? skill1BtnP : (i == 1) ? skill2BtnP : skill3BtnP;
+
+        boolean canAfford  = activeC.getCurrentMana() >= activeC.getSkills().get(i).getManaCost();
+        boolean isTouching = !isPaused && !disabled && Gdx.input.isTouched() && b.contains(touch.x, touch.y);
+        boolean usePressed = isTouching || cd > 0 || !canAfford;
+
+        Texture toUse = safe(usePressed ? pressedTex : normalTex,
+                usePressed ? fallbackBlack : fallbackWhite);
+        batch.draw(toUse, b.x, b.y, 250, 70);
+
+        font.setColor(cd > 0 || !canAfford || disabled ? Color.GRAY : Color.BLACK);
+        font.draw(batch, "- " + name + (cd > 0 ? " (" + cd + ")" : ""), b.x + 280, b.y + 50);
+    }
+
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+
+    protected void randomizeBackground() {
+        if (background != null) background.dispose();
+        background = loadTexture("backgrounds/bg" + (random.nextInt(8) + 1) + ".png");
+    }
+
+    private Rectangle getBounds(int i) {
+        return i == 0 ? skill1Bounds : (i == 1 ? skill2Bounds : skill3Bounds);
+    }
+
+    protected Character createCharacter(String name) {
+        switch (name) {
+            case "Jollibee":        return new Jollibee();
+            case "Colonel Sanders": return new ColonelSanders();
+            case "McDonald":        return new McDonald();
+            case "Burger King":     return new BurgerKing();
+            case "Wendy":           return new Wendy();
+            case "Jack in the Box": return new JackInTheBox();
+            case "Little Caesar":   return new LittleCaesar();
+            case "Chief Khai":      return new ChiefKhai();
+            case "Dev Kishanta":    return new GameDevs("Dev Kishanta");
+            case "Dev Rothesa":     return new GameDevs("Dev Rothesa");
+            case "Dev Wengie":      return new GameDevs("Dev Wengie");
+            case "Dev Kunihiko":    return new GameDevs("Dev Kunihiko");
+            case "Dev Ayella":      return new GameDevs("Dev Ayella");
+            default:                return new Jollibee();
         }
     }
+
+    private Texture loadTexture(String path) {
+        try {
+            return new Texture(Gdx.files.internal(path));
+        } catch (Exception e) {
+            Gdx.app.log("BaseBattleScreen", "Missing texture: " + path);
+            return null;
+        }
+    }
+
+    private Sound loadSound(String path) {
+        try {
+            return Gdx.audio.newSound(Gdx.files.internal(path));
+        } catch (Exception e) {
+            Gdx.app.log("BaseBattleScreen", "Missing sound: " + path);
+            return null;
+        }
+    }
+
+    private void playRoundSound() {
+        if (playerWins == 1 && enemyWins == 1) { if (finalRoundSound != null) finalRoundSound.play(); }
+        else if (currentRound == 1)             { if (round1Sound     != null) round1Sound.play(); }
+        else if (currentRound == 2)             { if (round2Sound     != null) round2Sound.play(); }
+    }
+
+    // =========================================================================
+    // ABSTRACT / OVERRIDABLE
+    // =========================================================================
+
+    protected abstract boolean isPVPMode();
+    protected abstract void executeEnemyTurn();
+    protected abstract void onMatchOver(boolean playerWon);
+    protected String getHUDText() { return "ROUND: " + currentRound; }
+
+    // =========================================================================
+    // SCREEN LIFECYCLE
+    // =========================================================================
+
+    @Override public void resize(int w, int h) { viewport.update(w, h); }
+    @Override public void show()    {}
+    @Override public void hide()    {}
+    @Override public void pause()   {}
+    @Override public void resume()  {}
+
     @Override
     public void dispose() {
-        batch.dispose(); font.dispose(); shapeRenderer.dispose();
-
-        if (background   != null) background.dispose();
-        if (redUi        != null) redUi.dispose();
-        if (yellowUi     != null) yellowUi.dispose();
-        if (playerSprite != null) playerSprite.dispose();
-        if (enemySprite  != null) enemySprite.dispose();
-        if (playerIcon   != null) playerIcon.dispose();
-        if (enemyIcon    != null) enemyIcon.dispose();
-
-        if (round1Img != null) round1Img.dispose();
-        if (round2Img != null) round2Img.dispose();
-        if (round3Img != null) round3Img.dispose();
-        if (fightImg  != null) fightImg.dispose();
-
-        if (skill1Btn  != null) skill1Btn.dispose();
-        if (skill1BtnP != null) skill1BtnP.dispose();
-        if (skill2Btn  != null) skill2Btn.dispose();
-        if (skill2BtnP != null) skill2BtnP.dispose();
-        if (skill3Btn  != null) skill3Btn.dispose();
-        if (skill3BtnP != null) skill3BtnP.dispose();
-
-        if (round1Sound    != null) round1Sound.dispose();
-        if (round2Sound    != null) round2Sound.dispose();
+        batch.dispose();
+        font.dispose();
+        shapeRenderer.dispose();
+        if (background      != null) background.dispose();
+        if (redUi           != null) redUi.dispose();
+        if (yellowUi        != null) yellowUi.dispose();
+        if (playerIcon      != null) playerIcon.dispose();
+        if (enemyIcon       != null) enemyIcon.dispose();
+        if (round1Img       != null) round1Img.dispose();
+        if (round2Img       != null) round2Img.dispose();
+        if (round3Img       != null) round3Img.dispose();
+        if (fightImg        != null) fightImg.dispose();
+        if (skill1Btn       != null) skill1Btn.dispose();
+        if (skill1BtnP      != null) skill1BtnP.dispose();
+        if (skill2Btn       != null) skill2Btn.dispose();
+        if (skill2BtnP      != null) skill2BtnP.dispose();
+        if (skill3Btn       != null) skill3Btn.dispose();
+        if (skill3BtnP      != null) skill3BtnP.dispose();
+        if (round1Sound     != null) round1Sound.dispose();
+        if (round2Sound     != null) round2Sound.dispose();
         if (finalRoundSound != null) finalRoundSound.dispose();
-
-        if (dialogueBox != null) dialogueBox.dispose();
-        if (playBtn != null) playBtn.dispose();
-        if (playBtnP != null) playBtnP.dispose();
-        if (muteBtn != null) muteBtn.dispose();
-        if (muteBtnP != null) muteBtnP.dispose();
-        if (unmuteBtn != null) unmuteBtn.dispose();
-        if (unmuteBtnP != null) unmuteBtnP.dispose();
-        if (exitBtn != null) exitBtn.dispose();
-        if (exitBtnP != null) exitBtnP.dispose();
+        if (dialogueBox     != null) dialogueBox.dispose();
+        if (playBtn         != null) playBtn.dispose();
+        if (playBtnP        != null) playBtnP.dispose();
+        if (muteBtn         != null) muteBtn.dispose();
+        if (muteBtnP        != null) muteBtnP.dispose();
+        if (unmuteBtn       != null) unmuteBtn.dispose();
+        if (unmuteBtnP      != null) unmuteBtnP.dispose();
+        if (exitBtn         != null) exitBtn.dispose();
+        if (exitBtnP        != null) exitBtnP.dispose();
+        if (fallbackWhite   != null) fallbackWhite.dispose();
+        if (fallbackBlack   != null) fallbackBlack.dispose();
+        animManager.dispose();
     }
 }

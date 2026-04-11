@@ -10,6 +10,8 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+
+import io.github.PASAN.screens.DevSelectorScreen;
 import io.github.PASAN.screens.FirstScreen;
 import io.github.PASAN.screens.RankingsScreen;
 
@@ -146,8 +148,9 @@ public class MainMenu implements Screen {
                 this.game.setScreen(new FirstScreen(this.game));
             } else if (this.rankingsPressed && this.rankingsBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
                 this.game.setScreen(new RankingsScreen(this.game));
-            } else if ((!this.creditsPressed || !this.creditsBounds.contains(this.touchPoint.x, this.touchPoint.y))
-                    && this.exitPressed && this.exitBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
+            } else if (this.creditsPressed && this.creditsBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
+                this.game.setScreen(new DevSelectorScreen());
+            } else if (this.exitPressed && this.exitBounds.contains(this.touchPoint.x, this.touchPoint.y)) {
                 this.showingThankYou = true; // trigger the fade
             }
 

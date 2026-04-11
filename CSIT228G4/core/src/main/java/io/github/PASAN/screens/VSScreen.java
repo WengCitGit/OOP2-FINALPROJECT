@@ -101,7 +101,6 @@ public class VSScreen implements Screen {
             }
         }
 
-        // --- FIXED ASPECT RATIO MATH ---
         // Width is 1200, Height is 660. This matches the 55% crop so they don't look skinny!
         float charW = 1200f;
         float charH = 660f;
