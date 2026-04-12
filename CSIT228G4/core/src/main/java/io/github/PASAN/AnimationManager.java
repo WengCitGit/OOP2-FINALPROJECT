@@ -168,7 +168,7 @@ public class AnimationManager {
      * Loads a 5-frame skill animation for charName.
      * @param skillNum 1-based (matches filename: skill1, skill2, skill3)
      *
-     * ✅ FIX: Now properly builds placeholder animation with all 5 frames
+     *
      * if any frame is missing, preventing null reference errors.
      */
     private Animation<TextureRegion> loadSkillAnimation(String charName, int skillNum) {

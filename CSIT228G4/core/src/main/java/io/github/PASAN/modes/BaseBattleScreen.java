@@ -394,7 +394,7 @@ public abstract class BaseBattleScreen implements Screen {
     }
 
     // =========================================================================
-    // COMBAT STATE — FIX: draws transition message, then waits 2s
+    // COMBAT STATE — draws transition message, then waits 2s
     // =========================================================================
 
     protected void handleCombatState(float delta) {
@@ -441,7 +441,7 @@ public abstract class BaseBattleScreen implements Screen {
     }
 
     // =========================================================================
-    // EXECUTE SKILL
+    // EXECUTE SKILL - Cooldowns only decrement on current player's turn
     // =========================================================================
 
     protected void executeSkill(int index) {
@@ -468,20 +468,52 @@ public abstract class BaseBattleScreen implements Screen {
         else              enemySkillPoseTimer  = SKILL_POSE_DURATION;
 
         int oldHp = defender.getHealth();
+
+        // Set cooldowns ONLY for the skill being used
         switch (index) {
-            case 0: attacker.basicAttack(defender);                      break;
-            case 1: attacker.secondarySkill(defender); activeCD[1] = 3; break;
-            case 2: attacker.ultimateSkill(defender);  activeCD[2] = 5; break;
+            case 0:
+                attacker.basicAttack(defender);
+                // Basic attack has no cooldown
+                break;
+            case 1:
+                attacker.secondarySkill(defender);
+                activeCD[1] = 3;  // Secondary skill: 3-turn cooldown
+                break;
+            case 2:
+                attacker.ultimateSkill(defender);
+                activeCD[2] = 5;  // Ultimate skill: 5-turn cooldown
+                break;
         }
 
         spawnCombatText(oldHp - defender.getHealth(), cost);
 
-        // FIX: always tick cooldowns/mana after every skill, not just enemy turns
-        endOfRound();
-
+        // Switch turns FIRST
         isPlayerTurn = !isPlayerTurn;
         turnTimer    = 0;
+
+        // Decrement cooldowns ONLY for the NEW current player
+        decrementCooldowns();
+
         checkMatchState();
+    }
+
+    // =========================================================================
+    // DECREMENT COOLDOWNS - Cooldowns ONLY decrement on current player's turn
+    // =========================================================================
+
+    protected void decrementCooldowns() {
+        int[] currentCD = isPlayerTurn ? playerCD : enemyCD;
+
+        // Only decrement cooldowns for the CURRENT player whose turn it is
+        for (int i = 0; i < 3; i++) {
+            if (currentCD[i] > 0) {
+                currentCD[i]--;
+            }
+        }
+
+        // Add mana to both players every turn
+        player.addMana(random.nextInt(6) + 5);
+        enemy.addMana(random.nextInt(6) + 5);
     }
 
     // =========================================================================
@@ -500,20 +532,7 @@ public abstract class BaseBattleScreen implements Screen {
     }
 
     // =========================================================================
-    // END OF ROUND
-    // =========================================================================
-
-    protected void endOfRound() {
-        for (int i = 0; i < 3; i++) {
-            if (playerCD[i] > 0) playerCD[i]--;
-            if (enemyCD[i]  > 0) enemyCD[i]--;
-        }
-        player.addMana(random.nextInt(6) + 5);
-        enemy.addMana(random.nextInt(6) + 5);
-    }
-
-    // =========================================================================
-    // CHECK MATCH STATE — FIX: proper round AND match messages, no double ++
+    // CHECK MATCH STATE
     // =========================================================================
 
     protected void checkMatchState() {
@@ -544,12 +563,11 @@ public abstract class BaseBattleScreen implements Screen {
                     transitionMessage = (playerWins == 2) ? "VICTORY!" : "DEFEATED!";
                 }
             }
-            // NOTE: currentRound is incremented in resetRound(), NOT here
         }
     }
 
     // =========================================================================
-    // RESET ROUND — FIX: currentRound++ only here, only when match not over
+    // RESET ROUND
     // =========================================================================
 
     protected void resetRound() {
@@ -566,14 +584,14 @@ public abstract class BaseBattleScreen implements Screen {
         playerSkillPoseTimer = 0f;
         enemySkillPoseTimer  = 0f;
 
-        // FIX: Only increment round if match is NOT over and we're not transitioning to next stage
+        // Only increment round if match is NOT over
         if (!matchIsOver && !isTransitioning) {
             currentRound++;
         }
     }
 
     // =========================================================================
-    // RESET FOR NEW STAGE — Called when moving to next stage in Arcade/Endless
+    // RESET FOR NEW STAGE
     // =========================================================================
 
     protected void resetForNewStage() {
@@ -599,7 +617,7 @@ public abstract class BaseBattleScreen implements Screen {
     }
 
     // =========================================================================
-    // PAUSE MENU — all batch.draw calls use safe() to guard against null textures
+    // PAUSE MENU
     // =========================================================================
 
     protected void drawPauseMenu() {
@@ -692,7 +710,7 @@ public abstract class BaseBattleScreen implements Screen {
     }
 
     // =========================================================================
-    // BATTLE UI — all batch.draw calls use safe() to guard against null textures
+    // BATTLE UI
     // =========================================================================
 
     protected void drawBattleUI() {
@@ -723,7 +741,6 @@ public abstract class BaseBattleScreen implements Screen {
         GlyphLayout p2L = new GlyphLayout(font, p2Disp);
         font.draw(batch, p2Disp, WORLD_WIDTH - 160 - p2L.width, 1040);
 
-        // Centre HUD label (subclasses override getHUDText())
         GlyphLayout hudL = new GlyphLayout(font, getHUDText());
         font.draw(batch, hudL, (WORLD_WIDTH - hudL.width) / 2f, 1040);
 
@@ -738,7 +755,6 @@ public abstract class BaseBattleScreen implements Screen {
         batch.end();
     }
 
-    // FIX: safe() on every skill button so a missing PNG never crashes the draw call
     private void drawSkillUI(int i, String name, Rectangle b, int cd, Character activeC, boolean disabled) {
         Texture normalTex  = (i == 0) ? skill1Btn  : (i == 1) ? skill2Btn  : skill3Btn;
         Texture pressedTex = (i == 0) ? skill1BtnP : (i == 1) ? skill2BtnP : skill3BtnP;
