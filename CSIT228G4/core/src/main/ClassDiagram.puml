@@ -1,0 +1,211 @@
+@startuml FastFeud_7_Core_Classes
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FAFAFA
+
+' ════════════════════════════════════════════════════════════════════
+' 7 MOST IMPORTANT CLASSES
+' ════════════════════════════════════════════════════════════════════
+
+' 1. MAIN APPLICATION
+class Main extends Game {
+  - bgm : Music
+  --
+  + create()
+  + dispose()
+}
+
+' 2. CORE BATTLE ENGINE
+abstract class BaseBattleScreen implements Screen {
+  # game : Game
+  # username : String
+  # player : Character
+  # enemy : Character
+  # currentRound : int
+  # playerWins : int
+  # enemyWins : int
+  # isPlayerTurn : boolean
+  # matchIsOver : boolean
+  --
+  # executeSkill(index : int)
+  # checkMatchState()
+  # endOfRound()
+  + render(delta : float)
+  # {abstract} isPVPMode() : boolean
+  # {abstract} executeEnemyTurn()
+  # {abstract} onMatchOver(playerWon : boolean)
+  + dispose()
+}
+
+' 3. CHARACTER SYSTEM
+abstract class Character {
+  # name : String
+  # maxHP : int
+  # currentHP : int
+  # maxMana : int
+  # currentMana : int
+  # skills : List<Skill>
+  --
+  + getName() : String
+  + getHealth() : int
+  + getCurrentMana() : int
+  + getSkills() : List<Skill>
+  + takeDamage(amount : int)
+  + addMana(amount : int)
+  + restoreHP()
+  + restoreMana()
+  + isAlive() : boolean
+}
+
+' 4. GAME MODE PROGRESSION
+abstract class Mode {
+  # playerCharName : String
+  # enemyQueue : List<String>
+  # queueIndex : int
+  --
+  # buildEnemyQueue()
+  # getNextEnemyName() : String
+  # getCurrentEnemyName() : String
+  + getPlayerCharName() : String
+  + {abstract} onMatchWon()
+  + {abstract} onMatchLost()
+  + {abstract} isRunOver() : boolean
+  + {abstract} getHUDLabel() : String
+}
+
+' 5. ARCADE MODE (8 STAGES)
+class ArcadeMode extends Mode {
+  - {static} TOTAL_STAGES : int = 8
+  - currentStage : int
+  - stageEnemies : List<String>
+  - playerDefeated : boolean
+  --
+  + onMatchWon()
+  + onMatchLost()
+  + isRunOver() : boolean
+  + getHUDLabel() : String
+  + getCurrentStageName() : String
+  + getStagesCleared() : int
+}
+
+' 6. LEADERBOARD SYSTEM
+class Leaderboard {
+  - filePath : String
+  - scores : ArrayList<PlayerScore>
+  - {static} MAX_ENTRIES : int = 10
+  --
+  + addScore(playerName : String, newScore : int)
+  + getTopScores() : ArrayList<PlayerScore>
+  - readFile()
+  - writeFile()
+}
+
+' 7. SCORE CALCULATION
+class CalculateScore {
+  + {static} calculateArcadeScore(stagesCleared : int, remainingHP : int) : int
+  + {static} calculateEndlessScore(enemiesDefeated : int) : int
+  + {static} calculatePVCScore(isVictory : boolean, remainingHP : int, enemyWins : int) : int
+  + calculatePVPScore(isWinner : boolean, remainingHP : int) : int
+}
+
+' ════════════════════════════════════════════════════════════════════
+' SUPPORTING CLASSES (Referenced)
+' ════════════════════════════════════════════════════════════════════
+interface Screen {
+  + render(delta : float)
+  + dispose()
+}
+
+abstract class Game
+
+class Skill {
+  - name : String
+  - damage : int
+  - manaCost : int
+  - cooldown : int
+}
+
+class PlayerScore {
+  - player : String
+  - score : int
+}
+
+' ════════════════════════════════════════════════════════════════════
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════
+
+' Inheritance
+Main --|> Game
+BaseBattleScreen ..|> Screen
+ArcadeMode --|> Mode
+
+' Composition & Dependencies
+Main --> BaseBattleScreen : creates battle screen
+BaseBattleScreen --> Character : controls (player & enemy)
+BaseBattleScreen --> Mode : uses for progression
+BaseBattleScreen --> CalculateScore : calculates score
+
+Character --> Skill : has 3
+Mode --> Character : manages queue
+Leaderboard --> PlayerScore : stores scores
+Leaderboard --> CalculateScore : uses for scoring
+
+' ════════════════════════════════════════════════════════════════════
+' KEY NOTES
+' ════════════════════════════════════════════════════════════════════
+
+note right of Main
+  **Entry Point**
+  - Initializes game
+  - Loads BGM
+  - Creates MainMenu
+end note
+
+note right of BaseBattleScreen
+  **Combat Engine**
+  - Turn-based battles (best of 3)
+  - Manages HP, Mana, Skills
+  - Handles cooldowns
+  - Calls mode logic for progression
+end note
+
+note right of Character
+  **Game Entities**
+  - 9 characters total
+  - 3 skills per character
+  - Stats: HP, Mana
+  - Damage calculations
+end note
+
+note right of Mode
+  **Progression Logic**
+  - ArcadeMode: 8 stages + boss
+  - EndlessMode: Infinite with streak
+  - Manages enemy queues
+  - Defines win/loss conditions
+end note
+
+note right of ArcadeMode
+  **Arcade Progression**
+  - 7 random enemies
+  - 1 final boss
+  - Score = (stages × 1000) + (HP × 5)
+  - Max score: 13,000
+end note
+
+note right of Leaderboard
+  **Score Persistence**
+  - Files: arcade_scores.txt, etc.
+  - Keeps top 10 per mode
+  - Case-insensitive names
+  - Sorted descending by score
+end note
+
+note right of CalculateScore
+  **Scoring Formulas**
+  - Arcade: (stages × 1000) + (HP × 5)
+  - Endless: Σ(i × 100) for streak
+  - PVC: 500 + (HP × 3) + bonus
+  - PVP: 300/100 + (HP × 2)
+end note
+
+@enduml
