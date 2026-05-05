@@ -3,10 +3,9 @@ package io.github.PASAN.characters;
 public class BurgerKing extends Character {
 
     public BurgerKing() {
-        // base Stats: Name, Max HP, Max Mana, Mana Regen
+
         super("Burger King", 160, 60, 6);
 
-        // skills: Name, Mana Cost, Min Damage, Max Damage
 
         // basic attack
         skills.add(new Skill("Whopper Flame", 0, 11, 16));

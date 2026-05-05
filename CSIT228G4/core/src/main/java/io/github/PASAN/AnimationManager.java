@@ -39,16 +39,12 @@ public class AnimationManager {
     public static final float SKILL_FRAME_DUR = 0.10f; // seconds per skill frame
 
     // ── internal cache ─────────────────────────────────────────────────────
-    /** "Jollibee_pose1" → TextureRegion (idle) */
-    /** "Jollibee_pose2" → TextureRegion (skill casting) */
+
     private final Map<String, TextureRegion> poses = new HashMap<>();
 
-    /** "Jollibee_skill1" → Animation (5-frame projectile) */
-    /** "Jollibee_skill2" → Animation (5-frame projectile) */
-    /** "Jollibee_skill3" → Animation (5-frame projectile) */
     private final Map<String, Animation<TextureRegion>> skillAnimations = new HashMap<>();
 
-    /** Every Texture we created — disposed together when this manager is disposed */
+
     private final java.util.List<Texture> ownedTextures = new java.util.ArrayList<>();
 
     // ── placeholder (shared) ───────────────────────────────────────────────
@@ -120,12 +116,7 @@ public class AnimationManager {
     //  PUBLIC API — SKILL ANIMATIONS
     // ══════════════════════════════════════════════════════════════════════
 
-    /**
-     * Returns the skill animation (projectile) for a character.
-     * @param charName character name
-     * @param skillNum 1-based (1=basic, 2=secondary, 3=ultimate)
-     * Returns a 5-frame animation, or placeholder animation if missing.
-     */
+
     public Animation<TextureRegion> getSkillAnimation(String charName, int skillNum) {
         if (skillNum < 1 || skillNum > 3) skillNum = 1;
         String key = charName + "_skill" + skillNum;
@@ -164,13 +155,7 @@ public class AnimationManager {
     //  PRIVATE HELPERS
     // ══════════════════════════════════════════════════════════════════════
 
-    /**
-     * Loads a 5-frame skill animation for charName.
-     * @param skillNum 1-based (matches filename: skill1, skill2, skill3)
-     *
-     *
-     * if any frame is missing, preventing null reference errors.
-     */
+
     private Animation<TextureRegion> loadSkillAnimation(String charName, int skillNum) {
         TextureRegion[] frames = new TextureRegion[SKILL_FRAMES];
         boolean allLoaded = true;
@@ -191,7 +176,7 @@ public class AnimationManager {
             Gdx.app.log("AnimationManager",
                     "⚠ Skill" + skillNum + " frames incomplete for '" + charName + "' — using placeholder animation.");
 
-            // ✅ FIX: Return the proper placeholder animation, not a broken one
+
             return placeholderAnimation;
         }
 
@@ -200,12 +185,7 @@ public class AnimationManager {
         return anim;
     }
 
-    /**
-     * Attempts to load a texture from the given internal path.
-     * Returns null (never throws) if the file doesn't exist.
-     *
-     *  Added better error handling and file existence check
-     */
+
     private TextureRegion safeLoad(String internalPath) {
         try {
             if (!Gdx.files.internal(internalPath).exists()) {
@@ -222,11 +202,7 @@ public class AnimationManager {
         }
     }
 
-    /**
-     * 1×1 magenta pixel texture so missing characters are visually obvious in dev.
-     *
-     *
-     */
+
     private void buildPlaceholder() {
         com.badlogic.gdx.graphics.Pixmap pm =
                 new com.badlogic.gdx.graphics.Pixmap(1, 1,

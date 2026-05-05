@@ -13,7 +13,7 @@ package io.github.PASAN.characters;
 public class Jollibee extends Character {
 
     public Jollibee() {
-        // stats: Name, Max HP, Max Mana, Mana Regen
+
         super("Jollibee", 165, 55, 6);
         skills.add(new Skill("Juicylicious Slam", 0, 12, 17));
         skills.add(new Skill("Langhap Sarap Aura", 15, 18, 28));

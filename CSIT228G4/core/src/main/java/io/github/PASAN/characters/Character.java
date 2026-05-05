@@ -14,7 +14,7 @@ import java.util.Random;
  */
 public abstract class Character {
 
-    // ENCAPSULATION: private fields — nothing outside this class touches these directly
+
     private final String name;
     private int hp;
     private final int maxHp;

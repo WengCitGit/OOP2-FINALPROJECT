@@ -3,7 +3,7 @@ package io.github.PASAN.characters;
 public class GameDevs extends Character
 {
     public GameDevs(String name) {
-        // stats: Name, Max HP, Max Mana, Mana Regen
+
         super(name, 435, 100, 5);
         skills.add(new Skill("Dev Strike", 5, 5, 8));
         skills.add(new Skill("Dev Blast", 10, 7, 12));

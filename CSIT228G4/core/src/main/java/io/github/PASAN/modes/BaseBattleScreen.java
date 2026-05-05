@@ -94,6 +94,7 @@ public abstract class BaseBattleScreen implements Screen {
     protected boolean isTransitioning = false, matchIsOver = false, showingRoundIntro = true;
     protected float   transitionTimer = 0, roundIntroTimer = 0f;
     protected String  transitionMessage = "";
+    protected boolean player1GoesFirstNextRound = true;
 
     // --- AUDIO ---
     protected Sound round1Sound, round2Sound, finalRoundSound;
@@ -575,7 +576,8 @@ public abstract class BaseBattleScreen implements Screen {
         enemy.restoreHP();    enemy.restoreMana();
         playerCD = new int[]{0, 0, 0};
         enemyCD  = new int[]{0, 0, 0};
-        isPlayerTurn         = true;
+        player1GoesFirstNextRound = !player1GoesFirstNextRound;
+        isPlayerTurn         = player1GoesFirstNextRound;
         showingRoundIntro    = true;
         roundIntroTimer      = 0f;
         activeEffects.clear();
@@ -601,6 +603,7 @@ public abstract class BaseBattleScreen implements Screen {
         matchIsOver = false;
         isTransitioning = false;
         transitionTimer = 0;
+        player1GoesFirstNextRound = true;
 
         player.restoreHP();   player.restoreMana();
         enemy.restoreHP();    enemy.restoreMana();
@@ -752,6 +755,10 @@ public abstract class BaseBattleScreen implements Screen {
         GlyphLayout tL = new GlyphLayout(font, turnMsg);
         font.draw(batch, tL, (WORLD_WIDTH - tL.width) / 2f, 800);
         font.setColor(Color.WHITE);
+        if (!isPaused && !isTransitioning && !showingRoundIntro && (isPlayerTurn || isPVPMode())) {
+            drawHoverTooltip(uiChar);
+        }
+
         batch.end();
     }
 
@@ -836,6 +843,41 @@ public abstract class BaseBattleScreen implements Screen {
     protected abstract void onMatchOver(boolean playerWon);
     protected String getHUDText() { return "ROUND: " + currentRound; }
 
+    // =========================================================================
+    // tooltip
+    // =========================================================================
+    private void drawHoverTooltip(Character uiChar) {
+        int hoveredIndex = -1;
+        if      (skill1Bounds.contains(touch.x, touch.y)) hoveredIndex = 0;
+        else if (skill2Bounds.contains(touch.x, touch.y)) hoveredIndex = 1;
+        else if (skill3Bounds.contains(touch.x, touch.y)) hoveredIndex = 2;
+
+        if (hoveredIndex != -1 && uiChar.getSkills() != null && uiChar.getSkills().size() > hoveredIndex) {
+            Skill skill = uiChar.getSkills().get(hoveredIndex);
+            font.getData().markupEnabled = true;
+            String tooltipText = "[RED]"    + skill.getName()
+                    + "\n[BLACK]Damage: [RED]"  + skill.getMinDmg() + " - " + skill.getMaxDmg()
+                    + "\n[BLACK]Cost: [BLUE]"   + skill.getManaCost() + " MP";
+
+            font.getData().setScale(2.0f);
+            GlyphLayout layout = new GlyphLayout(font, tooltipText);
+
+            float hPad = 50f, vPad = 40f;
+            float boxW = layout.width  + (hPad * 2);
+            float boxH = layout.height + (vPad * 2);
+            float tipX = touch.x + 20f;
+            float tipY = touch.y - 20f;
+
+            if (tipX + boxW > WORLD_WIDTH) tipX = WORLD_WIDTH - boxW - 10f;
+            if (tipY - boxH < 10f)         tipY = touch.y + boxH + 20f;
+
+            if (dialogueBox != null) batch.draw(dialogueBox, tipX, tipY - boxH, boxW, boxH);
+            font.setColor(Color.WHITE);
+            font.draw(batch, tooltipText, tipX + hPad, tipY - vPad);
+            font.getData().setScale(2.5f);
+            font.getData().markupEnabled = false;
+        }
+    }
     // =========================================================================
     // SCREEN LIFECYCLE
     // =========================================================================

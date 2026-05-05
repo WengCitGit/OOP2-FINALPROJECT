@@ -40,9 +40,6 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
                 + " | Enemy: " + mode.getCurrentStageName());
     }
 
-    // =========================================================================
-    //  OVERRIDES
-    // =========================================================================
 
     @Override
     protected boolean isPVPMode() { return false; }
@@ -216,7 +213,6 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
 
         randomizeBackground();
 
-        // FIX: Use resetForNewStage instead of resetBattleState to ensure clean round state
         resetForNewStage();
         showingIntro = true;
         introTimer = 0f;

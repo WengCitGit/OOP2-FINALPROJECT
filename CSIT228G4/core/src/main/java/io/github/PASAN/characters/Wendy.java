@@ -3,7 +3,7 @@ package io.github.PASAN.characters;
 public class Wendy extends Character {
 
     public Wendy() {
-        //stats: Name, Max HP, Max Mana, Mana Regen
+
         super("Wendy", 165, 55, 6);
 
         skills.add(new Skill("Sassy Roast", 0, 12, 17));

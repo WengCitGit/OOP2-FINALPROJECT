@@ -3,11 +3,11 @@ package io.github.PASAN.characters;
 public class ColonelSanders extends Character {
 
     public ColonelSanders() {
-        //stats: Name, Max HP, Max Mana, Mana Regen
+
         super("Colonel Sanders", 165, 60, 7);
 
         skills.add(new Skill("DrumStick Smash", 0, 12, 17));
-        skills.add(new Skill("Shooting Flaming Hotshot", 15, 20, 30));
+        skills.add(new Skill("Hotshot Burst", 15, 20, 30));
         skills.add(new Skill("Secret Sauce Overload", 30, 32, 50));
     }
 
