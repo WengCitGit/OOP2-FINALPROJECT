@@ -196,7 +196,7 @@ public class GameOverScreen implements Screen {
         if (!Gdx.input.isTouched()) {
             if (yesPressed && yesBounds.contains(touch.x, touch.y)) {
                 // Return directly to Character Select, keeping the current mode and username!
-                game.setScreen(new CharacterSelectorScreen(username, mode, 1, "", ""));
+                game.setScreen(new CharacterSelectorScreen(game, username, mode, 1, "", ""));
             }
             if (noPressed && noBounds.contains(touch.x, touch.y)) {
                 // Exit to Main Menu.

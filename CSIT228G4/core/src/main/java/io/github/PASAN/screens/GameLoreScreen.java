@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.PASAN.Main;
+import io.github.PASAN.MainMenu;
 
 
 public class GameLoreScreen implements Screen {
@@ -146,17 +147,20 @@ public class GameLoreScreen implements Screen {
         if (!Gdx.input.isTouched()) {
 
             if (backPressed && backBounds.contains(touchPoint.x, touchPoint.y)) {
-                game.setScreen(new FirstScreen(game));
+                game.setScreen(new MainMenu(game));
+                dispose();
             }
 
             else if (mainStoryPressed && mainStoryBounds.contains(touchPoint.x, touchPoint.y)) {
                 System.out.println("Main Story Clicked");
                 game.setScreen(new MainBackstoryScreen(game));
+                dispose();
             }
 
             else if (characterPressed && characterInfoBounds.contains(touchPoint.x, touchPoint.y)) {
                 System.out.println("Character Info Clicked");
                 game.setScreen(new CharacterInfoScreen(game));
+                dispose();
             }
 
             backPressed = false;

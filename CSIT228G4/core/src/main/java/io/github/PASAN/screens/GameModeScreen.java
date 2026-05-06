@@ -112,7 +112,6 @@ public class GameModeScreen implements Screen {
 
     private void handleInput()
     {
-        Main game = (Main) Gdx.app.getApplicationListener();
 
         if (Gdx.input.justTouched())
         {
@@ -140,11 +139,30 @@ public class GameModeScreen implements Screen {
 
         if (!Gdx.input.isTouched())
         {
-            if (pvpPressed && pvpBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new UsernameScreen("PVP"));
-            else if (pvcPressed && pvcBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new UsernameScreen("PVC"));
-            else if (arcadePressed && arcadeBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new UsernameScreen("ARCADE"));
-            else if (endlessPressed && endlessBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new UsernameScreen("ENDLESS"));
-            else if (backPressed && backBounds.contains(touchPoint.x, touchPoint.y)) game.setScreen(new FirstScreen(game));
+            if (pvpPressed && pvpBounds.contains(touchPoint.x, touchPoint.y)) {
+                game.setScreen(new UsernameScreen(game, "PVP"));
+                dispose();
+            }
+
+            else if (pvcPressed && pvcBounds.contains(touchPoint.x, touchPoint.y)) {
+                game.setScreen(new UsernameScreen(game,"PVC"));
+                dispose();
+            }
+
+            else if (arcadePressed && arcadeBounds.contains(touchPoint.x, touchPoint.y)) {
+                game.setScreen(new UsernameScreen(game,"ARCADE"));
+                dispose();
+            }
+
+            else if (endlessPressed && endlessBounds.contains(touchPoint.x, touchPoint.y)) {
+                game.setScreen(new UsernameScreen(game,"ENDLESS"));
+                dispose();
+            }
+
+            else if (backPressed && backBounds.contains(touchPoint.x, touchPoint.y)) {
+                game.setScreen(new FirstScreen(game));
+                dispose();
+            }
 
             pvpPressed = false;
             pvcPressed = false;
