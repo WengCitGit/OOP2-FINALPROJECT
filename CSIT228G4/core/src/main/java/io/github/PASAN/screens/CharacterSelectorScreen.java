@@ -159,6 +159,7 @@ public class CharacterSelectorScreen implements Screen {
             font.draw(batch, layout,
                     r.x + (r.width - layout.width) / 2f,
                     r.y + r.height + 40);
+            font.setColor(Color.WHITE);
         }
 
         batch.end();

@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.PASAN.Main;
+import io.github.PASAN.MainMenu;
 
 public class GameModeScreen implements Screen {
     private Game game;
@@ -160,7 +161,7 @@ public class GameModeScreen implements Screen {
             }
 
             else if (backPressed && backBounds.contains(touchPoint.x, touchPoint.y)) {
-                game.setScreen(new FirstScreen(game));
+                game.setScreen(new MainMenu(game));
                 dispose();
             }
 
