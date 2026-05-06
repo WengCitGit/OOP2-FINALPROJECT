@@ -361,8 +361,11 @@ public class CharacterInfoScreen implements Screen {
 
             if (!showPanel) {
                 if (backPressed && backBounds.contains(touch.x, touch.y))
+                {
+                    dispose();
                     game.setScreen(new GameLoreScreen(game));
-
+                    return;
+                }
                 if (characterPressed != -1 && characters[characterPressed].contains(touch.x, touch.y)) {
                     selectedCharacter = characterPressed;
                     loadTabImagesFor(selectedCharacter); // load only this character's 4 images
