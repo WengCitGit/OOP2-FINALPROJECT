@@ -8,30 +8,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * ENCAPSULATION : All animation loading and caching lives here.
- * ABSTRACTION   : Callers ask for poses or skill animations — never
- *                 touch file paths or Texture objects directly.
- *
- * Naming convention expected on disk:
- *
- *   POSES (character sprite swaps):
- *   Idle  : assets/characters/<n>/<n>_pose1.png  (normal/idle state — 1 frame)
- *   Skill : assets/characters/<n>/<n>_pose2.png  (casting stance — 1 frame)
- *
- *   SKILL ANIMATIONS (projectile animations):
- *   Skill1: assets/characters/<n>/<n>_skill1_frame1.png ... _frame5.png (5 frames)
- *   Skill2: assets/characters/<n>/<n>_skill2_frame1.png ... _frame5.png (5 frames)
- *   Skill3: assets/characters/<n>/<n>_skill3_frame1.png ... _frame5.png (5 frames)
- *
- * Workflow:
- *   1. Character stands in pose1 (idle)
- *   2. Skill pressed → character sprite swaps to pose2 (casting stance)
- *   3. Skill animation (multi-frame projectile) launches separately
- *   4. Projectile lands → character returns to pose1
- *
- * Characters with missing assets fall back to a 1×1 placeholder texture.
- */
+
 public class AnimationManager {
 
     // ── constants ──────────────────────────────────────────────────────────

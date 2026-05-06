@@ -116,7 +116,7 @@ public class DeveloperCreditsScreen implements Screen {
         if (!Gdx.input.isTouched()) {
             if (backPressed && backBounds.contains(touch.x, touch.y)) {
                 // Return to DevSelectorScreen
-                ((Main) Gdx.app.getApplicationListener()).setScreen(new DevSelectorScreen());
+                ((Main) Gdx.app.getApplicationListener()).setScreen(new DevSelectorScreen(game));
             }
             backPressed = false;
         }

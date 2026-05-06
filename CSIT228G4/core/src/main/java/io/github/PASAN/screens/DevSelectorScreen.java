@@ -17,6 +17,8 @@ public class DevSelectorScreen implements Screen {
 
     private Rectangle[] developerBoxes;
 
+    private Game game;
+
     private static final String[] developerNames = {
             "Rothesa Arcena",
             "Kishanta Siton",
@@ -49,7 +51,8 @@ public class DevSelectorScreen implements Screen {
     private static final float WORLD_WIDTH = 1920;
     private static final float WORLD_HEIGHT = 1080;
 
-    public DevSelectorScreen() {
+    public DevSelectorScreen(Game game) {
+        this.game = game;
         batch = new SpriteBatch();
         font = new BitmapFont();
         shape = new ShapeRenderer();
@@ -173,14 +176,14 @@ public class DevSelectorScreen implements Screen {
 
         if (!Gdx.input.isTouched()) {
             if (backPressed && backBounds.contains(touch.x, touch.y)) {
-                ((Main) Gdx.app.getApplicationListener()).setScreen(new MainMenu((Game) Gdx.app.getApplicationListener()));
+                game.setScreen(new MainMenu(game));
+                dispose();
             }
 
             if (developerPressed != -1 && developerBoxes[developerPressed].contains(touch.x, touch.y)) {
                 // Pass the selected developer index to DeveloperCreditsScreen
-                ((Main) Gdx.app.getApplicationListener()).setScreen(
-                        new DeveloperCreditsScreen((Game) Gdx.app.getApplicationListener(), developerPressed)
-                );
+                game.setScreen(new DeveloperCreditsScreen(game, developerPressed));
+                dispose();
             }
 
             backPressed = false;

@@ -23,7 +23,7 @@ public class SkillEffect {
     private float targetX, targetY;
 
     public boolean active = true;
-    public boolean hasHit = false; // ✅ prevents multiple hit triggers
+    public boolean hasHit = false;
     private boolean flipX;
 
     public SkillEffect(Animation<TextureRegion> animation,
