@@ -82,24 +82,50 @@ public class LeaderboardScreen implements Screen {
         stage = new Stage(viewport, batch);
 
         font.getData().setScale(2.5f);
-        Label.LabelStyle labelStyle = new Label.LabelStyle(font, Color.WHITE);
+        Label.LabelStyle labelStyle    = new Label.LabelStyle(font, Color.WHITE);
+        Label.LabelStyle headerStyle   = new Label.LabelStyle(font, Color.BLACK);
         Table innerTable = new Table();
         innerTable.top();
 
+        boolean showTime = modeTitle != null
+                && (modeTitle.contains("ARCADE") || modeTitle.contains("ENDLESS"));
+
+        // --- Header row ---
+        Label headerRank  = new Label("PLAYER",  headerStyle);
+        Label headerScore = new Label("SCORE",   headerStyle);
+        innerTable.add(headerRank) .left() .width(400).padBottom(15);
+        innerTable.add(headerScore).right().width(200).padBottom(15);
+        if (showTime) {
+            Label headerTime = new Label("TIME", headerStyle);
+            innerTable.add(headerTime).right().width(160).padBottom(15).padLeft(20);
+        }
+        innerTable.row();
+
         if (topScores.isEmpty()) {
             Label emptyLabel = new Label("NO SCORES RECORDED YET! BE THE FIRST!", labelStyle);
-            innerTable.add(emptyLabel).padTop(30);
+            innerTable.add(emptyLabel).colspan(showTime ? 3 : 2).padTop(30);
         } else {
             for (int i = 0; i < topScores.size(); i++) {
-                PlayerScore ps = topScores.get(i);
-                String rankText  = (i + 1) + ". " + ps.getPlayer();
-                String scoreText = String.valueOf(ps.getScore());
+                PlayerScore ps         = topScores.get(i);
+                String      rankText   = (i + 1) + ". " + ps.getPlayer();
+                String      scoreText  = String.valueOf(ps.getScore());
 
                 Label rankLabel  = new Label(rankText,  labelStyle);
                 Label scoreLabel = new Label(scoreText, labelStyle);
 
                 innerTable.add(rankLabel) .left() .width(400).padBottom(10);
                 innerTable.add(scoreLabel).right().width(200).padBottom(10);
+
+                if (showTime) {
+                    long   secs      = ps.getTimeSeconds();
+                    // 0 — entries saved before timer existed show "--:--"
+                    String timeText  = secs > 0
+                            ? String.format("%d:%02d", secs / 60, secs % 60)
+                            : "--:--";
+                    Label  timeLabel = new Label(timeText, labelStyle);
+                    innerTable.add(timeLabel).right().width(160).padBottom(10).padLeft(20);
+                }
+
                 innerTable.row();
             }
         }
@@ -107,11 +133,11 @@ public class LeaderboardScreen implements Screen {
         scrollPane = new ScrollPane(innerTable);
         scrollPane.setScrollingDisabled(true, false);
 
-        float scrollWidth  = 750;
-        float scrollHeight = 400;
+        float scrollWidth  = showTime ? 920f : 750f;
+        float scrollHeight = 400f;
         scrollPane.setBounds(
-                (WORLD_WIDTH / 2) - (scrollWidth / 2) + 45,
-                250, scrollWidth, scrollHeight);
+                (WORLD_WIDTH / 2f) - (scrollWidth / 2f) + 45f,
+                250f, scrollWidth, scrollHeight);
 
         stage.addActor(scrollPane);
     }

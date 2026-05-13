@@ -171,6 +171,9 @@ public class CharacterSelectorScreen implements Screen {
     private void drawBorders() {
 
         shape.setProjectionMatrix(camera.combined);
+
+        Gdx.gl.glLineWidth(7f);
+
         shape.begin(ShapeRenderer.ShapeType.Line);
 
         for (int i = 0; i < characters.length; i++) {
@@ -181,14 +184,17 @@ public class CharacterSelectorScreen implements Screen {
                 shape.setColor(Color.DARK_GRAY);
                 shape.rect(characters[i].x, characters[i].y,
                         characters[i].width, characters[i].height);
+
             } else if (i == selectedCharacter) {
-                shape.setColor(Color.WHITE);
+                shape.setColor(Color.GREEN);
                 shape.rect(characters[i].x, characters[i].y,
                         characters[i].width, characters[i].height);
             }
         }
 
         shape.end();
+
+        Gdx.gl.glLineWidth(1f);
     }
 
     private void handleInput() {

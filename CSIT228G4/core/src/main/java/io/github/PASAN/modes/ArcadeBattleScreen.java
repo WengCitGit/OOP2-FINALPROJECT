@@ -26,6 +26,8 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
     private float introTimer = 0f;
     private static final float INTRO_DURATION = 3.0f;
 
+    private float arcadeRunTimer = 0f;
+
     public ArcadeBattleScreen(Game game, String playerName, String playerCharName) {
         this(game, playerName, playerCharName, new ArcadeMode(playerCharName));
     }
@@ -70,6 +72,8 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
         }
     }
 
+
+
     @Override
     protected void executeEnemyTurn() {
         if (!enemy.isAlive()) return;
@@ -88,11 +92,16 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
         else           arcadeMode.onMatchLost();
 
         if (arcadeMode.isRunOver()) {
-            int remainingHP = playerWon ? player.getHealth() : 0;
-            int score = CalculateScore.calculateArcadeScore(arcadeMode.getStagesCleared(), remainingHP);
+            int  remainingHP  = playerWon ? player.getHealth() : 0;
+            long timeSeconds  = (long) arcadeRunTimer;                    // TIMER
+            int  score        = CalculateScore.calculateArcadeScore(      // TIMER
+                    arcadeMode.getStagesCleared(), remainingHP, timeSeconds);
+
+            System.out.println("[ARCADE] Run time: " + timeSeconds + "s | Score: " + score);
 
             new Thread(() -> {
-                new Leaderboard("arcade_scores.txt").addScore(username, score);
+                new Leaderboard("arcade_scores.txt")
+                        .addScore(username, score, timeSeconds);          // TIMER
                 System.out.println("[Thread] Score saved successfully in background.");
             }).start();
 
@@ -117,6 +126,10 @@ public class ArcadeBattleScreen extends BaseBattleScreen {
         if (showingIntro) {
             drawIntroSequence(delta);
             return;
+        }
+        // TIMER — only tick when not paused and battle is live
+        if (!isPaused && !matchIsOver) {
+            arcadeRunTimer += delta;
         }
         super.render(delta);
     }

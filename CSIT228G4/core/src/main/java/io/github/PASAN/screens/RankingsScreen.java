@@ -148,7 +148,7 @@ public class RankingsScreen implements Screen {
 
         titleFont.setColor(Color.BLUE);
         GlyphLayout titleLayout = new GlyphLayout(titleFont, tabTitle);
-        titleFont.draw(batch, tabTitle, 1170 - titleLayout.width / 2, 830);
+        titleFont.draw(batch, tabTitle, 1170 - titleLayout.width / 2, 863);
 
         // Draw leaderboard scores (compact, no scrolling)
         drawLeaderboard(activeTab);
@@ -162,27 +162,46 @@ public class RankingsScreen implements Screen {
 
     private void drawLeaderboard(Tab tab) {
         String fileName = "pvp_scores.txt";
-        if (tab == Tab.PVC) fileName = "pvc_scores.txt";
+        if      (tab == Tab.PVC)     fileName = "pvc_scores.txt";
         else if (tab == Tab.ENDLESS) fileName = "endless_scores.txt";
-        else if (tab == Tab.ARCADE) fileName = "arcade_scores.txt";
+        else if (tab == Tab.ARCADE)  fileName = "arcade_scores.txt";
 
         Leaderboard lbManager = new Leaderboard(fileName);
         ArrayList<PlayerScore> topScores = lbManager.getTopScores();
 
+        boolean showTime = (tab == Tab.ARCADE || tab == Tab.ENDLESS);
+
         font.setColor(Color.WHITE);
-        float yPos = 760;
+        float yPos      = 800;
         float rowHeight = 50;
 
         if (topScores.isEmpty()) {
             font.draw(batch, "NO SCORES RECORDED YET! BE THE FIRST!", 700, yPos);
         } else {
-            for (int i = 0; i < topScores.size() && yPos > 200; i++) {
-                PlayerScore ps = topScores.get(i);
-                String rankText = (i + 1) + ". " + ps.getPlayer();
-                String scoreText = String.valueOf(ps.getScore());
+            // Header row
+            font.setColor(Color.YELLOW);
+            font.draw(batch, "PLAYER", 700,  yPos);
+            font.draw(batch, "SCORE",  1350, yPos);
+            if (showTime) font.draw(batch, "TIME", 1600, yPos);
+            yPos -= rowHeight;
 
-                font.draw(batch, rankText, 700, yPos);
-                font.draw(batch, scoreText, 1400, yPos);
+            font.setColor(Color.WHITE);
+            for (int i = 0; i < topScores.size() && yPos > 200; i++) {
+                PlayerScore ps        = topScores.get(i);
+                String      rankText  = (i + 1) + ". " + ps.getPlayer();
+                String      scoreText = String.valueOf(ps.getScore());
+
+                font.draw(batch, rankText,  700,  yPos);
+                font.draw(batch, scoreText, 1350, yPos);
+
+                if (showTime) {
+                    long   secs     = ps.getTimeSeconds();
+                    String timeText = secs > 0
+                            ? String.format("%d:%02d", secs / 60, secs % 60)
+                            : "--:--";
+                    font.draw(batch, timeText, 1600, yPos);
+                }
+
                 yPos -= rowHeight;
             }
         }

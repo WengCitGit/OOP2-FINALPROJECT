@@ -21,6 +21,8 @@ public class EndlessBattleScreen extends BaseBattleScreen {
     private float introTimer = 0f;
     private static final float INTRO_DURATION = 3.0f;
 
+    private float endlessRunTimer = 0f;
+
     public EndlessBattleScreen(Game game, String playerName, String playerCharName) {
         this(game, playerName, playerCharName, new EndlessMode(playerCharName));
     }
@@ -79,8 +81,16 @@ public class EndlessBattleScreen extends BaseBattleScreen {
         } else {
             endlessMode.onMatchLost();
 
-            int finalScore = CalculateScore.calculateEndlessScore(endlessMode.getWinStreak());
-            new Leaderboard("endless_scores.txt").addScore(username, finalScore);
+            long timeSeconds = (long) endlessRunTimer;
+            int  finalScore  = CalculateScore.calculateEndlessScore(
+                    endlessMode.getWinStreak(), timeSeconds);
+
+            System.out.println("[ENDLESS] Run time: " + timeSeconds + "s | Score: " + finalScore);
+
+            new Thread(() -> {
+                new Leaderboard("endless_scores.txt").addScore(username, finalScore, timeSeconds);
+                System.out.println("[Thread] Endless score saved in background.");
+            }).start();
 
             game.setScreen(new GameOverScreen(game, username, endlessMode.getWinStreak()));
             dispose();
@@ -150,6 +160,9 @@ public class EndlessBattleScreen extends BaseBattleScreen {
         if (showingIntro) {
             drawIntroSequence(delta);
             return;
+        }
+        if (!isPaused && !matchIsOver) {
+            endlessRunTimer += delta;
         }
         super.render(delta);
     }

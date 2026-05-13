@@ -184,6 +184,9 @@ public abstract class BaseBattleScreen implements Screen {
         playBounds     = new Rectangle(cx - 175, cy + 100, 350, 100);
         muteBounds     = new Rectangle(cx - 175, cy -  20, 350, 100);
         exitBounds     = new Rectangle(cx - 175, cy - 140, 350, 100);
+
+        player1GoesFirstNextRound = random.nextBoolean();
+        isPlayerTurn = player1GoesFirstNextRound;
     }
 
     // =========================================================================
@@ -576,7 +579,7 @@ public abstract class BaseBattleScreen implements Screen {
         enemy.restoreHP();    enemy.restoreMana();
         playerCD = new int[]{0, 0, 0};
         enemyCD  = new int[]{0, 0, 0};
-        player1GoesFirstNextRound = !player1GoesFirstNextRound;
+        player1GoesFirstNextRound = random.nextBoolean();
         isPlayerTurn         = player1GoesFirstNextRound;
         showingRoundIntro    = true;
         roundIntroTimer      = 0f;
@@ -587,7 +590,7 @@ public abstract class BaseBattleScreen implements Screen {
         enemySkillPoseTimer  = 0f;
 
         // Only increment round if match is NOT over
-        if (!matchIsOver && !isTransitioning) {
+        if (!matchIsOver) {
             currentRound++;
         }
     }
@@ -603,13 +606,13 @@ public abstract class BaseBattleScreen implements Screen {
         matchIsOver = false;
         isTransitioning = false;
         transitionTimer = 0;
-        player1GoesFirstNextRound = true;
+        player1GoesFirstNextRound = random.nextBoolean();
 
         player.restoreHP();   player.restoreMana();
         enemy.restoreHP();    enemy.restoreMana();
         playerCD = new int[]{0, 0, 0};
         enemyCD  = new int[]{0, 0, 0};
-        isPlayerTurn         = true;
+        isPlayerTurn = player1GoesFirstNextRound;
         showingRoundIntro    = true;
         roundIntroTimer      = 0f;
         activeEffects.clear();
