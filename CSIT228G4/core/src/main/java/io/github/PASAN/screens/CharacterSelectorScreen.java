@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.*;
 import io.github.PASAN.modes.EndlessBattleScreen;
 import io.github.PASAN.Main;
+import io.github.PASAN.characters.*;
 
 public class CharacterSelectorScreen implements Screen {
 
@@ -19,7 +20,6 @@ public class CharacterSelectorScreen implements Screen {
 
     private String username;
     private String mode;
-
     private Rectangle[] characters;
 
     public static String[] characterNames = {
@@ -60,7 +60,8 @@ public class CharacterSelectorScreen implements Screen {
     private int playerNum;
     private String p1Name;
     private String p1Char;
-
+    private Texture dialogueBox;
+    private io.github.PASAN.characters.Character[] characterInstances;
     private static final float WORLD_WIDTH = 1920;
     private static final float WORLD_HEIGHT = 1080;
 
@@ -107,6 +108,11 @@ public class CharacterSelectorScreen implements Screen {
 
         backBounds = new Rectangle(50, 50, 300, 100);
         confirmBounds = new Rectangle(WORLD_WIDTH - 350, 50, 300, 100);
+        dialogueBox = new Texture("backgrounds/dialogue-box.png");
+        characterInstances = new io.github.PASAN.characters.Character[8];
+        for (int i = 0; i < 8; i++) {
+            characterInstances[i] = createCharacter(characterNames[i]);
+        }
     }
 
     @Override
@@ -165,6 +171,7 @@ public class CharacterSelectorScreen implements Screen {
         batch.end();
 
         drawBorders();
+        drawHoverTooltip();
         handleInput();
     }
 
@@ -197,6 +204,78 @@ public class CharacterSelectorScreen implements Screen {
         Gdx.gl.glLineWidth(1f);
     }
 
+    private void drawHoverTooltip() {
+        int hoveredIndex = -1;
+        for (int i = 0; i < characters.length; i++) {
+            if (characters[i].contains(touch.x, touch.y)) {
+                // Ignore locked characters for Player 2
+                if (!(playerNum == 2 && characterNames[i].equals(p1Char))) {
+                    hoveredIndex = i;
+                }
+                break;
+            }
+        }
+
+        if (hoveredIndex != -1 && characterInstances[hoveredIndex] != null) {
+            io.github.PASAN.characters.Character c = characterInstances[hoveredIndex];
+            font.getData().markupEnabled = true;
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("[RED]").append(c.getName().toUpperCase())
+                    .append("\n[BLACK]HP: [GREEN]").append(c.getMaxHealth())
+                    .append("   [BLACK]Mana: [BLUE]").append(c.getMaxMana()).append("\n");
+
+            if (c.getSkills() != null) {
+                for (int j = 0; j < c.getSkills().size(); j++) {
+                    Skill skill = c.getSkills().get(j);
+                    sb.append("\n[RED]- ").append(skill.getName())
+                            .append("\n   [BLACK]Dmg: [RED]").append(skill.getMinDmg()).append("-").append(skill.getMaxDmg())
+                            .append("  [BLACK]Cost: [BLUE]").append(skill.getManaCost()).append(" MP");
+                }
+            }
+
+            String tooltipText = sb.toString();
+
+            font.getData().setScale(1.8f);
+            GlyphLayout layout = new GlyphLayout(font, tooltipText);
+
+            float hPad = 40f, vPad = 30f;
+            float boxW = layout.width + (hPad * 2);
+            float boxH = layout.height + (vPad * 2);
+            float tipX = touch.x + 20f;
+            float tipY = touch.y - 20f;
+
+            // Keep the tooltip inside the screen boundaries
+            if (tipX + boxW > WORLD_WIDTH) tipX = WORLD_WIDTH - boxW - 10f;
+            if (tipY - boxH < 10f) tipY = touch.y + boxH + 20f;
+
+            // Draw tooltip layered on top of everything
+            batch.begin();
+            if (dialogueBox != null) {
+                batch.draw(dialogueBox, tipX, tipY - boxH, boxW, boxH);
+            }
+            font.setColor(Color.WHITE);
+            font.draw(batch, tooltipText, tipX + hPad, tipY - 20f);
+            batch.end();
+
+            font.getData().setScale(2f); // Restore the standard font scale
+            font.getData().markupEnabled = false;
+        }
+    }
+
+    private io.github.PASAN.characters.Character createCharacter(String name) {
+        switch (name) {
+            case "Jollibee":        return new Jollibee();
+            case "Colonel Sanders": return new ColonelSanders();
+            case "McDonald":        return new McDonald();
+            case "Burger King":     return new BurgerKing();
+            case "Wendy":           return new Wendy();
+            case "Jack in the Box": return new JackInTheBox();
+            case "Little Caesar":   return new LittleCaesar();
+            case "Chief Khai":      return new ChiefKhai();
+            default:                return new Jollibee();
+        }
+    }
     private void handleInput() {
 
         if (Gdx.input.justTouched()) {
@@ -295,6 +374,7 @@ public class CharacterSelectorScreen implements Screen {
         confirmBtn.dispose();
         confirmBtnP.dispose();
 
+        if (dialogueBox != null) dialogueBox.dispose();
         for (Texture t : characterTextures) {
             if (t != null) t.dispose();
         }
