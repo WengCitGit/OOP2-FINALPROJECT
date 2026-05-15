@@ -25,7 +25,7 @@ public class ChiefKhai extends Character {
             // Arcade OP Skills
             skills.add(new Skill("OP Strike", 0, 13, 18));
             skills.add(new Skill("OP Kick", 18, 23, 33));
-            skills.add(new Skill("OP Ultimate", 30, 33, 60));
+            skills.add(new Skill("OP Ultimate", 30, 65, 80));
         } else {
             // Standard Skills
             skills.add(new Skill("Batuta Bonk", 0, 11, 16));

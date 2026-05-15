@@ -1,6 +1,4 @@
-chay,2820,36
-shanticobs,2745,51
-c,100,0
-Marimar,0,0
-Ella,0,0
-hoy,0,0
+arcena,2995,301,5
+sirkhai,2610,138,2
+Marimar,0,0,0
+Ella,0,0,0

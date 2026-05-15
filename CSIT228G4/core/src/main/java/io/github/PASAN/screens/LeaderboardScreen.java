@@ -20,7 +20,8 @@ public class LeaderboardScreen implements Screen {
     private Screen returnScreen;
 
     private SpriteBatch batch;
-    private BitmapFont font;
+    private BitmapFont font;       // used by stage Labels only — never rescaled
+    private BitmapFont titleFont;  // used by render() title only
     private OrthographicCamera camera;
     private Viewport viewport;
 
@@ -45,6 +46,7 @@ public class LeaderboardScreen implements Screen {
 
         batch      = new SpriteBatch();
         font       = new BitmapFont();
+        titleFont  = new BitmapFont();
         touchPoint = new Vector3();
 
         camera   = new OrthographicCamera();
@@ -57,19 +59,17 @@ public class LeaderboardScreen implements Screen {
         backBtnP   = new Texture("buttons/back_button_pressed.png");
 
         backBounds = new Rectangle(50, 50, 250, 100);
+
         if (mode.equalsIgnoreCase("ARCADE")) {
             modeTitle          = "ARCADE MODE TOP 10";
             leaderboardManager = new Leaderboard("arcade_scores.txt");
-
         } else if (mode.equalsIgnoreCase("PVC")) {
             modeTitle          = "PVC MODE TOP 10";
             leaderboardManager = new Leaderboard("pvc_scores.txt");
-
         } else if (mode.equalsIgnoreCase("PVP")) {
             modeTitle          = "PVP MODE TOP 10";
             leaderboardManager = new Leaderboard("pvp_scores.txt");
-
-        } else if (mode.equalsIgnoreCase("ENDLESS")){
+        } else if (mode.equalsIgnoreCase("ENDLESS")) {
             modeTitle          = "ENDLESS MODE TOP 10";
             leaderboardManager = new Leaderboard("endless_scores.txt");
         }
@@ -81,49 +81,44 @@ public class LeaderboardScreen implements Screen {
     private void setupScrollableLeaderboard() {
         stage = new Stage(viewport, batch);
 
-        font.getData().setScale(2.5f);
-        Label.LabelStyle labelStyle    = new Label.LabelStyle(font, Color.WHITE);
-        Label.LabelStyle headerStyle   = new Label.LabelStyle(font, Color.BLACK);
+        font.getData().setScale(2.3f);  // fixed — never changed after this
+        Label.LabelStyle labelStyle  = new Label.LabelStyle(font, Color.WHITE);
+        Label.LabelStyle headerStyle = new Label.LabelStyle(font, Color.BLACK);
         Table innerTable = new Table();
         innerTable.top();
 
-        boolean showTime = modeTitle != null
+        boolean showTime   = modeTitle != null
                 && (modeTitle.contains("ARCADE") || modeTitle.contains("ENDLESS"));
+        boolean showStreak = modeTitle != null && modeTitle.contains("ENDLESS");
 
-        // --- Header row ---
-        Label headerRank  = new Label("PLAYER",  headerStyle);
-        Label headerScore = new Label("SCORE",   headerStyle);
-        innerTable.add(headerRank) .left() .width(400).padBottom(15);
-        innerTable.add(headerScore).right().width(200).padBottom(15);
-        if (showTime) {
-            Label headerTime = new Label("TIME", headerStyle);
-            innerTable.add(headerTime).right().width(160).padBottom(15).padLeft(20);
-        }
+        // Header row
+        innerTable.add(new Label("PLAYER", headerStyle)).left() .width(400).padBottom(15);
+        innerTable.add(new Label("SCORE",  headerStyle)).right().width(200).padBottom(15);
+        if (showStreak) innerTable.add(new Label("STREAK", headerStyle)).right().width(160).padBottom(15).padLeft(20);
+        if (showTime)   innerTable.add(new Label("TIME",   headerStyle)).right().width(160).padBottom(15).padLeft(20);
         innerTable.row();
 
         if (topScores.isEmpty()) {
             Label emptyLabel = new Label("NO SCORES RECORDED YET! BE THE FIRST!", labelStyle);
-            innerTable.add(emptyLabel).colspan(showTime ? 3 : 2).padTop(30);
+            int colspan = 2 + (showStreak ? 1 : 0) + (showTime ? 1 : 0);
+            innerTable.add(emptyLabel).colspan(colspan).padTop(30);
         } else {
             for (int i = 0; i < topScores.size(); i++) {
-                PlayerScore ps         = topScores.get(i);
-                String      rankText   = (i + 1) + ". " + ps.getPlayer();
-                String      scoreText  = String.valueOf(ps.getScore());
+                PlayerScore ps = topScores.get(i);
 
-                Label rankLabel  = new Label(rankText,  labelStyle);
-                Label scoreLabel = new Label(scoreText, labelStyle);
+                innerTable.add(new Label((i + 1) + ". " + ps.getPlayer(), labelStyle)).left() .width(400).padBottom(10);
+                innerTable.add(new Label(String.valueOf(ps.getScore()),    labelStyle)).right().width(200).padBottom(10);
 
-                innerTable.add(rankLabel) .left() .width(400).padBottom(10);
-                innerTable.add(scoreLabel).right().width(200).padBottom(10);
+                if (showStreak) {
+                    innerTable.add(new Label("x" + ps.getStreak(), labelStyle)).right().width(160).padBottom(10).padLeft(20);
+                }
 
                 if (showTime) {
-                    long   secs      = ps.getTimeSeconds();
-                    // 0 — entries saved before timer existed show "--:--"
-                    String timeText  = secs > 0
+                    long   secs     = ps.getTimeSeconds();
+                    String timeText = secs > 0
                             ? String.format("%d:%02d", secs / 60, secs % 60)
                             : "--:--";
-                    Label  timeLabel = new Label(timeText, labelStyle);
-                    innerTable.add(timeLabel).right().width(160).padBottom(10).padLeft(20);
+                    innerTable.add(new Label(timeText, labelStyle)).right().width(160).padBottom(10).padLeft(20);
                 }
 
                 innerTable.row();
@@ -133,7 +128,7 @@ public class LeaderboardScreen implements Screen {
         scrollPane = new ScrollPane(innerTable);
         scrollPane.setScrollingDisabled(true, false);
 
-        float scrollWidth  = showTime ? 920f : 750f;
+        float scrollWidth  = 750f + (showStreak ? 170f : 0f) + (showTime ? 170f : 0f);
         float scrollHeight = 400f;
         scrollPane.setBounds(
                 (WORLD_WIDTH / 2f) - (scrollWidth / 2f) + 45f,
@@ -172,8 +167,6 @@ public class LeaderboardScreen implements Screen {
         Gdx.input.setInputProcessor(multiplexer);
     }
 
-    // -------------------------------------------------------
-
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -181,7 +174,6 @@ public class LeaderboardScreen implements Screen {
 
         camera.update();
 
-        // Update touchPoint for visual hover only (navigation is in InputAdapter)
         touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0);
         viewport.unproject(touchPoint);
 
@@ -193,10 +185,11 @@ public class LeaderboardScreen implements Screen {
         batch.setColor(Color.WHITE);
         batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
-        font.getData().setScale(3.5f);
-        font.setColor(Color.BLUE);
-        GlyphLayout titleLayout = new GlyphLayout(font, modeTitle);
-        font.draw(batch, titleLayout,
+        // titleFont is separate — changing its scale never affects stage Labels
+        titleFont.getData().setScale(3.5f);
+        titleFont.setColor(Color.BLUE);
+        GlyphLayout titleLayout = new GlyphLayout(titleFont, modeTitle);
+        titleFont.draw(batch, titleLayout,
                 (WORLD_WIDTH / 2) - (titleLayout.width / 2), 720);
 
         batch.draw(
@@ -209,19 +202,16 @@ public class LeaderboardScreen implements Screen {
         stage.draw();
     }
 
-    // -------------------------------------------------------
-
     @Override public void resize(int width, int height) { viewport.update(width, height); }
     @Override public void pause()  {}
     @Override public void resume() {}
-    @Override public void hide()   {
-        Gdx.input.setInputProcessor(null);
-    }
+    @Override public void hide()   { Gdx.input.setInputProcessor(null); }
 
     @Override
     public void dispose() {
         batch.dispose();
         font.dispose();
+        titleFont.dispose();
         background.dispose();
         backBtn.dispose();
         backBtnP.dispose();

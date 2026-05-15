@@ -16,26 +16,31 @@ public class Leaderboard {
         readFile();
     }
 
-    // Original — used by PVC, PVP, Endless (no time)
+    // PVC / PVP — no time, no streak
     public void addScore(String playerName, int newScore) {
-        addScore(playerName, newScore, 0L);
+        addScore(playerName, newScore, 0L, 0);
     }
 
-    // Arcade
+    // Arcade — time, no streak
     public void addScore(String playerName, int newScore, long timeSeconds) {
+        addScore(playerName, newScore, timeSeconds, 0);
+    }
+
+    // Endless — time + streak
+    public void addScore(String playerName, int newScore, long timeSeconds, int streak) {
         boolean playerExists = false;
         for (int i = 0; i < scores.size(); i++) {
             PlayerScore ps = scores.get(i);
             if (ps.getPlayer().equalsIgnoreCase(playerName)) {
                 playerExists = true;
                 if (newScore > ps.getScore()) {
-                    scores.set(i, new PlayerScore(playerName, newScore, timeSeconds));
+                    scores.set(i, new PlayerScore(playerName, newScore, timeSeconds, streak));
                 }
                 break;
             }
         }
         if (!playerExists) {
-            scores.add(new PlayerScore(playerName, newScore, timeSeconds));
+            scores.add(new PlayerScore(playerName, newScore, timeSeconds, streak));
         }
         sortScoresDescending();
         if (scores.size() > MAX_ENTRIES) scores.remove(scores.size() - 1);
@@ -57,10 +62,11 @@ public class Leaderboard {
                 String   line  = scanner.nextLine().trim();
                 String[] parts = line.split(",");
                 if (parts.length >= 2) {
-                    String name  = parts[0];
-                    int    score = Integer.parseInt(parts[1].trim());
-                    long   time  = (parts.length >= 3) ? Long.parseLong(parts[2].trim()) : 0L;
-                    scores.add(new PlayerScore(name, score, time));
+                    String name   = parts[0];
+                    int    score  = Integer.parseInt(parts[1].trim());
+                    long   time   = parts.length >= 3 ? Long.parseLong(parts[2].trim())   : 0L;
+                    int    streak = parts.length >= 4 ? Integer.parseInt(parts[3].trim()) : 0;
+                    scores.add(new PlayerScore(name, score, time, streak));
                 }
             }
         } catch (Exception e) {

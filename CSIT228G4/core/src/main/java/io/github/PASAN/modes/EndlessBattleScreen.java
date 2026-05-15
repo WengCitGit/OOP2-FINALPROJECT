@@ -82,13 +82,14 @@ public class EndlessBattleScreen extends BaseBattleScreen {
             endlessMode.onMatchLost();
 
             long timeSeconds = (long) endlessRunTimer;
-            int  finalScore  = CalculateScore.calculateEndlessScore(
-                    endlessMode.getWinStreak(), timeSeconds);
+            int  streak      = endlessMode.getWinStreak();
+            int  finalScore  = CalculateScore.calculateEndlessScore(streak, timeSeconds);
 
-            System.out.println("[ENDLESS] Run time: " + timeSeconds + "s | Score: " + finalScore);
+            System.out.println("[ENDLESS] Run time: " + timeSeconds + "s | Streak: " + streak + " | Score: " + finalScore);
 
             new Thread(() -> {
-                new Leaderboard("endless_scores.txt").addScore(username, finalScore, timeSeconds);
+                new Leaderboard("endless_scores.txt")
+                        .addScore(username, finalScore, timeSeconds, streak); // STREAK
                 System.out.println("[Thread] Endless score saved in background.");
             }).start();
 

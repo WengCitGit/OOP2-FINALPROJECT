@@ -169,7 +169,8 @@ public class RankingsScreen implements Screen {
         Leaderboard lbManager = new Leaderboard(fileName);
         ArrayList<PlayerScore> topScores = lbManager.getTopScores();
 
-        boolean showTime = (tab == Tab.ARCADE || tab == Tab.ENDLESS);
+        boolean showTime   = (tab == Tab.ARCADE || tab == Tab.ENDLESS);
+        boolean showStreak = (tab == Tab.ENDLESS);
 
         font.setColor(Color.WHITE);
         float yPos      = 800;
@@ -181,18 +182,21 @@ public class RankingsScreen implements Screen {
             // Header row
             font.setColor(Color.YELLOW);
             font.draw(batch, "PLAYER", 700,  yPos);
-            font.draw(batch, "SCORE",  1350, yPos);
-            if (showTime) font.draw(batch, "TIME", 1600, yPos);
+            font.draw(batch, "SCORE",  1200, yPos);
+            if (showStreak) font.draw(batch, "STREAK", 1400, yPos);
+            if (showTime)   font.draw(batch, "TIME",   1600, yPos);
             yPos -= rowHeight;
 
             font.setColor(Color.WHITE);
             for (int i = 0; i < topScores.size() && yPos > 200; i++) {
-                PlayerScore ps        = topScores.get(i);
-                String      rankText  = (i + 1) + ". " + ps.getPlayer();
-                String      scoreText = String.valueOf(ps.getScore());
+                PlayerScore ps = topScores.get(i);
 
-                font.draw(batch, rankText,  700,  yPos);
-                font.draw(batch, scoreText, 1350, yPos);
+                font.draw(batch, (i + 1) + ". " + ps.getPlayer(), 700,  yPos);
+                font.draw(batch, String.valueOf(ps.getScore()),    1200, yPos);
+
+                if (showStreak) {
+                    font.draw(batch, "x" + ps.getStreak(), 1400, yPos);
+                }
 
                 if (showTime) {
                     long   secs     = ps.getTimeSeconds();
