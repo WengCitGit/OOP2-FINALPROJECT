@@ -79,10 +79,10 @@ public class EndlessBattleScreen extends BaseBattleScreen {
             System.out.println("[ENDLESS] Streak: " + endlessMode.getWinStreak());
             loadNextOpponent();
         } else {
+            int  streak      = endlessMode.getWinStreak();
             endlessMode.onMatchLost();
 
             long timeSeconds = (long) endlessRunTimer;
-            int  streak      = endlessMode.getWinStreak();
             int  finalScore  = CalculateScore.calculateEndlessScore(streak, timeSeconds);
 
             System.out.println("[ENDLESS] Run time: " + timeSeconds + "s | Streak: " + streak + " | Score: " + finalScore);

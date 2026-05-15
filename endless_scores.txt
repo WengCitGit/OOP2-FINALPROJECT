@@ -1,3 +1,4 @@
+rothesa,3990,222,6
 arcena,2995,301,5
 sirkhai,2610,138,2
 Marimar,0,0,0
